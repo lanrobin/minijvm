@@ -6,7 +6,7 @@
 #include "clazz_reader.h"
 
 
-#define DEBUG_READ_FILE_IN_BYTE
+#undef DEBUG_READ_FILE_IN_BYTE
 
 u1 peaku1(std::istream& is)
 {

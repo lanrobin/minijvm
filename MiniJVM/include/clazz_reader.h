@@ -7,7 +7,7 @@
 #include "platform.h"
 #include "base_type.h"
 
-#define DEBUG_READ_CLASS_FILE
+#undef DEBUG_READ_CLASS_FILE
 
 using namespace std;
 
