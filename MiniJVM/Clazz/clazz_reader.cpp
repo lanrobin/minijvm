@@ -5,12 +5,13 @@
 #include "platform.h"
 #include "clazz_reader.h"
 
-#define DEBUG_READ_CLASS_FILE
+
+#define DEBUG_READ_FILE_IN_BYTE
 
 u1 peaku1(std::istream& is)
 {
 	u1 v1 =  is.peek();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	return v1;
@@ -19,15 +20,15 @@ u1 peaku1(std::istream& is)
 
 u2 peaku2(std::istream& is) {
 	u1 v1 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	u1 v2 = is.peek();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
 #endif
 	is.unget();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "rewind at:0x" << is.tellg() << endl;
 #endif
 #ifdef __JVM_LITTLE_ENDIAN__
@@ -40,31 +41,31 @@ u2 peaku2(std::istream& is) {
 
 u4 peaku4(std::istream& is) {
 	u1 v1 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	u1 v2 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
 #endif
 	u1 v3 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v3 << endl;
 #endif
 	u4 v4 = is.peek();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v4 << endl;
 #endif
 	is.unget();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "rewind at:0x" << is.tellg() << endl;
 #endif
 	is.unget();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "rewind at:0x" << is.tellg() << endl;
 #endif
 	is.unget();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "rewind at:0x" << is.tellg() << endl;
 #endif
 #ifdef __JVM_LITTLE_ENDIAN__
@@ -76,7 +77,7 @@ u4 peaku4(std::istream& is) {
 
 u1 readu1(std::istream& is) {
 	u1 value = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)value << endl;
 #endif
 	return value;
@@ -84,11 +85,11 @@ u1 readu1(std::istream& is) {
 
 u2 readu2(std::istream& is) {
 	u1 v1 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	u1 v2 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
 #endif
 #ifdef __JVM_LITTLE_ENDIAN__
@@ -101,19 +102,19 @@ u2 readu2(std::istream& is) {
 
 u4 readu4(std::istream& is) {
 	u1 v1 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	u1 v2 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
 #endif
 	u1 v3 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v3 << endl;
 #endif
 	u4 v4 = is.get();
-#ifdef DEBUG_READ_CLASS_FILE
+#ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v4 << endl;
 #endif
 #ifdef __JVM_LITTLE_ENDIAN__

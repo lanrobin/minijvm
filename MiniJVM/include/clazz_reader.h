@@ -7,6 +7,8 @@
 #include "platform.h"
 #include "base_type.h"
 
+#define DEBUG_READ_CLASS_FILE
+
 using namespace std;
 
 /**
@@ -114,6 +116,9 @@ u4 read_vector(vector<shared_ptr<T>>& v, istream& is, u4 count);
 //常量区定义
 struct CONSTANT_Info {
     u1 tag;
+#ifdef DEBUG_READ_CLASS_FILE
+    string typeName;
+#endif
     CONSTANT_Info(istream& is) {
         tag = readu1(is);
     }
@@ -129,6 +134,9 @@ struct CONSTANT_Class_info : CONSTANT_Info {
     u2 name_index;
     CONSTANT_Class_info(istream& is) :CONSTANT_Info(is) {
         name_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Class_info";
+#endif
     }
 };
 
@@ -139,6 +147,9 @@ struct CONSTANT_Fieldref_info : CONSTANT_Info {
     CONSTANT_Fieldref_info(istream& is) :CONSTANT_Info(is) {
         class_index = readu2(is);
         name_and_type_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Fieldref_info";
+#endif
     }
 };
 
@@ -149,6 +160,9 @@ struct CONSTANT_Methodref_info : CONSTANT_Info {
     CONSTANT_Methodref_info(istream& is) :CONSTANT_Info(is) {
         class_index = readu2(is);
         name_and_type_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Methodref_info";
+#endif
     }
 };
 
@@ -159,6 +173,9 @@ struct CONSTANT_InterfaceMethodref_info : CONSTANT_Info {
     CONSTANT_InterfaceMethodref_info(istream& is) :CONSTANT_Info(is) {
         class_index = readu2(is);
         name_and_type_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_InterfaceMethodref_info";
+#endif
     }
 };
 
@@ -166,6 +183,9 @@ struct CONSTANT_String_info : CONSTANT_Info {
     u2 string_index;
     CONSTANT_String_info(istream& is) :CONSTANT_Info(is) {
         string_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_String_info";
+#endif
     }
 };
 
@@ -173,6 +193,9 @@ struct CONSTANT_Integer_info : CONSTANT_Info {
     u4 bytes;
     CONSTANT_Integer_info(istream& is) :CONSTANT_Info(is) {
         bytes = readu4(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Integer_info";
+#endif
     }
 };
 
@@ -180,6 +203,9 @@ struct CONSTANT_Float_info : CONSTANT_Info {
     u4 bytes;
     CONSTANT_Float_info(istream& is) :CONSTANT_Info(is) {
         bytes = readu4(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Float_info";
+#endif
     }
 };
 
@@ -190,6 +216,9 @@ struct  CONSTANT_Long_info : CONSTANT_Info {
     CONSTANT_Long_info(istream& is) :CONSTANT_Info(is) {
         high_bytes = readu4(is);
         low_bytes = readu4(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Long_info";
+#endif
     }
 };
 
@@ -200,6 +229,9 @@ struct  CONSTANT_Double_info : CONSTANT_Info {
     CONSTANT_Double_info(istream& is) :CONSTANT_Info(is) {
         high_bytes = readu4(is);
         low_bytes = readu4(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Double_info";
+#endif
     }
 };
 
@@ -209,6 +241,9 @@ struct CONSTANT_NameAndType_info : CONSTANT_Info {
     CONSTANT_NameAndType_info(istream& is) :CONSTANT_Info(is) {
         name_index = readu2(is);
         descriptor_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_NameAndType_info";
+#endif
     }
 };
 
@@ -219,6 +254,9 @@ struct CONSTANT_Utf8_info : CONSTANT_Info {
     CONSTANT_Utf8_info(istream& is) :CONSTANT_Info(is) {
         length = readu2(is);
         read_u1_vector(bytes, is, length);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Utf8_info";
+#endif
     }
 
     wstring toUTF8String();
@@ -233,6 +271,9 @@ struct CONSTANT_MethodHandle_info : CONSTANT_Info {
     CONSTANT_MethodHandle_info(istream& is) :CONSTANT_Info(is) {
         reference_kind = readu1(is);
         reference_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_MethodHandle_info";
+#endif
     }
 };
 
@@ -241,6 +282,9 @@ struct CONSTANT_MethodType_info : CONSTANT_Info {
 
     CONSTANT_MethodType_info(istream& is) :CONSTANT_Info(is) {
         descriptor_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_MethodType_info";
+#endif
     }
 };
 
@@ -250,6 +294,9 @@ struct CONSTANT_Dynamic_info : CONSTANT_Info {
     CONSTANT_Dynamic_info(istream& is) :CONSTANT_Info(is) {
         bootstrap_method_attr_index = readu2(is);
         name_and_type_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Dynamic_info";
+#endif
     }
 };
 
@@ -266,6 +313,9 @@ struct CONSTANT_Module_info : CONSTANT_Info {
     u2 name_index;
     CONSTANT_Module_info(istream& is) :CONSTANT_Info(is) {
         name_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Module_info";
+#endif
     }
 };
 
@@ -273,6 +323,9 @@ struct CONSTANT_Package_info : CONSTANT_Info {
     u2 name_index;
     CONSTANT_Package_info(istream& is) :CONSTANT_Info(is) {
         name_index = readu2(is);
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Package_info";
+#endif
     }
 };
 
@@ -280,14 +333,22 @@ struct CONSTANT_Package_info : CONSTANT_Info {
 这个类应该是用不到，只是为了Long和Double的类型占位用的。
 */
 struct CONSTANT_LargeNumberContinuous_info :CONSTANT_Info {
-
+    CONSTANT_LargeNumberContinuous_info() {
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_LargeNumberContinuous_info";
+#endif
+    }
 };
 
 /*
 第一个(Index为0的slot不用，用这个占住。)
 */
 struct CONSTANT_Dummy_info :CONSTANT_Info {
-
+    CONSTANT_Dummy_info(){
+#ifdef DEBUG_READ_CLASS_FILE
+        typeName = "CONSTANT_Dummy_info";
+#endif
+    }
 };
 //常量区定义结束。
 
@@ -486,6 +547,10 @@ struct StackMapTable_attribute : Attribute_Info {
         u2 offset_delta;
         append_frame(istream& is) : stack_map_frame(is) {
             offset_delta = readu2(is);
+            u1 locals_count = frame_type - 251;
+            for (u1 i = 0; i < locals_count; i++) {
+                locals.push_back(readVerificationTypeInfo(is));
+            }
         }
     };
 

@@ -11,7 +11,11 @@ using namespace std;
 int main()
 {
 	cout << "Hello CMake." << endl;
-	const string fileName("D:\\github\\lanjvmtest\\main\\target\\classes\\icu\\mianshi\\main\\SynchronizedDemo.class");
+	//const string fileName("D:\\github\\lanjvmtest\\main\\target\\classes\\icu\\mianshi\\main\\SynchronizedDemo.class");
+	//const string fileName("D:\\github\\java14compiler\\target\\classes\\com\\lan\\tools\\javac\\main\\JavaCompiler.class");
+	//const string fileName("D:\\github\\java14compiler\\target\\classes\\com\\lan\\tools\\javac\\code\\Types.class");
+	//const string fileName("D:\\github\\java14compiler\\target\\classes\\com\\lan\\tools\\javac\\comp\\Attr.class");
+	const string fileName("D:\\github\\java14compiler\\target\\classes\\module-info.class");
 	std::ifstream clazzFile(fileName, ios::binary);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(clazzFile);
 	wcout << sd->getCanonicalClassName() << endl;
