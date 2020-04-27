@@ -304,12 +304,10 @@ struct Attribute_Info {
         attribute_length = readu4(is);
         //read_u1_vector(info, is, attribute_length);
         //shared_ptr<CONSTANT_Utf8_info> entry = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[attribute_name_index]);
+        name = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constantPool[attribute_name_index])->toUTF8String();
     }
 
     wstring getAttributeName() {
-        if (name.empty()) {
-            name = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constantPool[attribute_name_index])->toUTF8String();
-        }
         return name;
     }
 
@@ -364,14 +362,14 @@ struct Code_attribute : Attribute_Info {
         max_locals = readu2(is);
         code_length = readu4(is);
         read_u1_vector(code, is, code_length);
-        attributes_count = readu2(is);
-        for (u2 i = 0; i < attributes_count; i++) {
-            attributes.push_back(readAttributeInfo(is, cp));
-        }
+
+        // exception table
         exception_table_length = readu2(is);
         for (u2 i = 0; i < exception_table_length; i++) {
             exception_table.push_back(make_shared< ExceptionTable>(is));
         }
+
+        // attributes
         attributes_count = readu2(is);
         for (u2 i = 0; i < attributes_count; i++) {
             attributes.push_back(readAttributeInfo(is, cp));
@@ -506,8 +504,6 @@ struct StackMapTable_attribute : Attribute_Info {
         }
     };
 
-    u2 attribute_name_index;
-    u4 attribute_length;
     u2 number_of_entries;
     vector<shared_ptr<stack_map_frame>> entries;
 
@@ -1051,7 +1047,7 @@ struct Module_attribute : Attribute_Info {
 
         // uses
         uses_count = readu2(is);
-        read_vector(uses_index, is, uses_count);
+        read_u2_vector(uses_index, is, uses_count);
 
         // provides
         provides_count = readu2(is);
@@ -1111,7 +1107,7 @@ struct Field_Info {
         descriptor_index = readu2(is);
         attributes_count = readu2(is);
         for (int i = 0; i < attributes_count; i++) {
-            attributes.push_back(make_shared<Attribute_Info>(is, cp));
+            attributes.push_back(readAttributeInfo(is, cp));
         }
     }
 };
@@ -1129,12 +1125,21 @@ struct Method_Info {
     Method_Info(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) {
         access_flags = readu2(is);
         name_index = readu2(is);
+        methodName = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[name_index])->toUTF8String();
         descriptor_index = readu2(is);
         attributes_count = readu2(is);
         for (int i = 0; i < attributes_count; i++) {
-            attributes.push_back(make_shared<Attribute_Info>(is, cp));
+            //attributes.push_back(make_shared<Attribute_Info>(is, cp));
+            attributes.push_back(readAttributeInfo(is, cp));
         }
+        //methodName = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[name_index])->toUTF8String();
     }
+
+    wstring getMethodName() const {
+        return methodName;
+    }
+private:
+    wstring methodName;
 };
 
 //方法区结束

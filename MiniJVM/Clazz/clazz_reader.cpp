@@ -8,14 +8,27 @@
 
 u1 peaku1(std::istream& is)
 {
-	return is.peek();
+	u1 v1 =  is.peek();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+#endif
+	return v1;
 }
 
 
 u2 peaku2(std::istream& is) {
 	u1 v1 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+#endif
 	u1 v2 = is.peek();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
+#endif
 	is.unget();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "rewind at:0x" << is.tellg() << endl;
+#endif
 #ifdef __JVM_LITTLE_ENDIAN__
 	return ((v1 << 8) | v2) & 0xFFFF;
 #else // __LITTLE_ENDIAN__
@@ -26,12 +39,33 @@ u2 peaku2(std::istream& is) {
 
 u4 peaku4(std::istream& is) {
 	u1 v1 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+#endif
 	u1 v2 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
+#endif
 	u1 v3 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v3 << endl;
+#endif
 	u4 v4 = is.peek();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "peak at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v4 << endl;
+#endif
 	is.unget();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "rewind at:0x" << is.tellg() << endl;
+#endif
 	is.unget();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "rewind at:0x" << is.tellg() << endl;
+#endif
 	is.unget();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "rewind at:0x" << is.tellg() << endl;
+#endif
 #ifdef __JVM_LITTLE_ENDIAN__
 	return ((v1 << 24) | (v2 << 16) | (v3 << 8) | v4) & 0xFFFFFFFF;
 #else // __LITTLE_ENDIAN__
@@ -115,7 +149,99 @@ u4 read_vector(vector<shared_ptr<T>>& v, istream& is, u4 count) {
 
 shared_ptr<Attribute_Info> readAttributeInfo(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp)
 {
-	throw runtime_error("Not implemented yet.");
+	u2 attribute_name_index = peaku2(is);
+	auto utf8 = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[attribute_name_index]);
+	wstring attributeName = utf8->toUTF8String();
+
+	// order by https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html#jvms-4.7 Table 4.7-A. Predefined class file attributes (by section)
+	if (attributeName == L"ConstantValue"){
+		return make_shared<ConstantValue_attribute>(is, cp);
+	}
+	else if (attributeName == L"Code") {
+		return make_shared<Code_attribute>(is, cp);
+	}
+	else if (attributeName == L"StackMapTable") {
+		return make_shared<StackMapTable_attribute>(is, cp);
+	}
+	else if (attributeName == L"Exceptions") {
+		return make_shared<Exceptions_attribute>(is, cp);
+	}
+	else if (attributeName == L"InnerClasses") {
+		return make_shared<InnerClasses_attribute>(is, cp);
+	}
+	else if (attributeName == L"EnclosingMethod") {
+		return make_shared<EnclosingMethod_attribute>(is, cp);
+	}
+	else if (attributeName == L"Synthetic") {
+		return make_shared<Synthetic_attribute>(is, cp);
+	}
+	else if (attributeName == L"Signature") {
+		return make_shared<Signature_attribute>(is, cp);
+	}
+	else if (attributeName == L"SourceFile") {
+		return make_shared<SourceFile_attribute>(is, cp);
+	}
+	else if (attributeName == L"SourceDebugExtension") {
+		return make_shared<SourceDebugExtension_attribute>(is, cp);
+	}
+	else if (attributeName == L"LineNumberTable") {
+		return make_shared<LineNumberTable_attribute>(is, cp);
+	}
+	else if (attributeName == L"LocalVariableTable") {
+		return make_shared<LocalVariableTable_attribute>(is, cp);
+	}
+	else if (attributeName == L"LocalVariableTypeTable") {
+		return make_shared<LocalVariableTypeTable_attribute>(is, cp);
+	}
+	else if (attributeName == L"Deprecated") {
+		return make_shared<Deprecated_attribute>(is, cp);
+	}
+	else if (attributeName == L"RuntimeVisibleAnnotations") {
+		return make_shared<RuntimeVisibleAnnotations_attribute>(is, cp);
+	}
+	else if (attributeName == L"RuntimeInvisibleAnnotations") {
+		return make_shared<RuntimeInvisibleAnnotations_attribute>(is, cp);
+	}
+	else if (attributeName == L"RuntimeVisibleParameterAnnotations") {
+		return make_shared<RuntimeVisibleParameterAnnotations_attribute>(is, cp);
+	}
+	else if (attributeName == L"RuntimeInvisibleParameterAnnotations") {
+		return make_shared<RuntimeInvisibleParameterAnnotations_attribute>(is, cp);
+	}
+	else if (attributeName == L"RuntimeVisibleTypeAnnotations") {
+		return make_shared<RuntimeVisibleTypeAnnotations_attribute>(is, cp);
+	}
+	else if (attributeName == L"RuntimeInvisibleTypeAnnotations") {
+		return make_shared<RuntimeInvisibleTypeAnnotations_attribute>(is, cp);
+	}
+	else if (attributeName == L"AnnotationDefault") {
+		return make_shared<AnnotationDefault_attribute>(is, cp);
+	}
+	else if (attributeName == L"BootstrapMethods") {
+		return make_shared<BootstrapMethods_attribute>(is, cp);
+	}
+	else if (attributeName == L"MethodParameters") {
+		return make_shared<MethodParameters_attribute>(is, cp);
+	}
+	else if (attributeName == L"Module") {
+		return make_shared<Module_attribute>(is, cp);
+	}
+	else if (attributeName == L"ModulePackages") {
+		return make_shared<ModulePackages_attribute>(is, cp);
+	}
+	else if (attributeName == L"ModuleMainClass") {
+		return make_shared<ModuleMainClass_attribute>(is, cp);
+	}
+	else if (attributeName == L"NestHost") {
+		return make_shared<NestHost_attribute>(is, cp);
+	}
+	else if (attributeName == L"NestMembers") {
+		return make_shared<NestMembers_attribute>(is, cp);
+	}
+	else {
+		cout << "Unsupported attribute:" << attributeName.c_str() << ", skip it." << endl;
+		return make_shared<Unknown_attribute>(is, cp);
+	}
 }
 
 #ifdef __JVM_LITTLE_ENDIAN__
@@ -123,7 +249,16 @@ const u4 MAGIC_NUMBER = 0xCAFEBABE;
 #else
 const u4 MAGIC_NUMBER = 0xBEBAFECA;
 #endif
+shared_ptr<RuntimeAnnotations_attribute::annotation> RuntimeAnnotations_attribute::readAnnotation(istream& is) {
+	throw runtime_error("Not implemented yet.");
+}
+shared_ptr<RuntimeAnnotations_attribute::element_value> RuntimeAnnotations_attribute::readElementValue(istream& is) {
+	throw runtime_error("Not implemented yet.");
+}
 
+shared_ptr<RuntimeTypeAnnotations::type_target> RuntimeTypeAnnotations::readTypeTarget(istream& is, u1 target_type) {
+	throw runtime_error("Not implemented yet.");
+}
 wstring CONSTANT_Utf8_info::toUTF8String() {
 	if (!utf8String.empty()) {
 		return utf8String;
@@ -339,6 +474,6 @@ void ClassFile::readMethodInfos(istream& is)
 void ClassFile::readAttributes(istream& is)
 {
 	for (int i = 0; i < attributes_count; i++) {
-		attributes.push_back(make_shared<Attribute_Info>(is, constant_pool));
+		attributes.push_back(readAttributeInfo(is, constant_pool));
 	}
 }
