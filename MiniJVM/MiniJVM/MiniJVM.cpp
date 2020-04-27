@@ -12,7 +12,7 @@ int main()
 {
 	cout << "Hello CMake." << endl;
 	const string fileName("D:\\code\\lanjvmtest\\main\\target\\classes\\icu\\mianshi\\main\\SynchronizedDemo.class");
-	std::ifstream clazzFile(fileName);
+	std::ifstream clazzFile(fileName, ios::binary);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(clazzFile);
 	return 0;
 }

@@ -49,6 +49,24 @@ enum ConstantPoolType : u1 {
     Package = 20, // class file version 53, since Java:9
 };
 
+
+// https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html#jvms-4.7.6 Table 4.7.16.1-A. Interpretation of tag values as types
+enum ElementType : u1 {
+    ElementType_Byte = 'B',// value Item:const_value_index, Constant Type:CONSTANT_Integer
+    ElementType_Char = 'C',// value Item:const_value_index, Constant Type:CONSTANT_Integer
+    ElementType_Double = 'D',// value Item:const_value_index, Constant Type:CONSTANT_Double
+    ElementType_Float = 'F',// value Item:const_value_index, Constant Type:CONSTANT_Float
+    ElementType_Int = 'I',// value Item:const_value_index, Constant Type:CONSTANT_Integer
+    ElementType_Long = 'J',// value Item:const_value_index, Constant Type:CONSTANT_Long
+    ElementType_Short = 'S',// value Item:const_value_index, Constant Type:CONSTANT_Integer
+    ElementType_Boolean = 'Z',// value Item:const_value_index, Constant Type:CONSTANT_Integer
+    ElementType_String = 's',// value Item:const_value_index, Constant Type:CONSTANT_Utf8
+    ElementType_Enum_type = 'e',// value Item:enum_const_value, Constant Type:Not applicable
+    ElementType_Class = 'c',// value Item:class_info_index, Constant Type:Not applicable
+    ElementType_Annotation_type = '@',// value Item:annotation_value, Constant Type:Not applicable
+    ElementType_Array_type = '[',// value Item:array_value, Constant Type:Not applicable
+};
+
 const u2 METHOD_ACC_PUBLIC = 0x0001; // Declared public; may be accessed from outside its package.
 const u2 METHOD_ACC_PRIVATE = 0x0002; // Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
 const u2 METHOD_ACC_PROTECTED = 0x0004; // Declared protected; may be accessed within subclasses.
@@ -86,6 +104,12 @@ u4 readu4(istream& is);
 u4 read_u1_vector(vector<u1>& v, istream& is, u4 count);
 u4 read_u2_vector(vector<u2>& v, istream& is, u4 count);
 
+template< typename T>
+u4 read_vector(vector<T>& v, istream& is, u4 count);
+
+template< typename T>
+u4 read_vector(vector<shared_ptr<T>>& v, istream& is, u4 count);
+
 
 //常量区定义
 struct CONSTANT_Info {
@@ -93,7 +117,9 @@ struct CONSTANT_Info {
     CONSTANT_Info(istream& is) {
         tag = readu1(is);
     }
-    CONSTANT_Info() {}
+    CONSTANT_Info() {
+        tag = 0;
+    }
     
     //这个是需要的，否则会报 error C2683: 'dynamic_cast': 'CONSTANT_Info' is not a polymorphic type
     virtual ~CONSTANT_Info() {};
@@ -375,6 +401,7 @@ struct StackMapTable_attribute : Attribute_Info {
         verification_type_info(istream& is) {
             tag = readu1(is);
         }
+        ~verification_type_info() {};
     };
     struct Top_variable_info : verification_type_info {
         Top_variable_info(istream& is) : verification_type_info(is) {}
@@ -418,6 +445,7 @@ struct StackMapTable_attribute : Attribute_Info {
         stack_map_frame(istream& is) {
             frame_type = readu1(is);
         }
+        virtual ~stack_map_frame() {};
     protected:
         void readVerificaitonTypes(vector< shared_ptr<verification_type_info>>& vec, istream& is, u2 numbers) {
             for (u2 i = 0; i < numbers; i++) {
@@ -523,9 +551,7 @@ struct InnerClasses_attribute : Attribute_Info {
 
     InnerClasses_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
         number_of_classes = readu2(is);
-        for (u2 i = 0; i < number_of_classes; i++) {
-            classes.push_back(make_shared< InnerClass>(is));
-        }
+        read_vector(classes, is, number_of_classes);
     }
 };
 
@@ -578,9 +604,7 @@ struct LineNumberTable_attribute : Attribute_Info {
     vector<shared_ptr<LineNumberTable>> line_number_table;
     LineNumberTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
         line_number_table_length = readu2(is);
-        for (u2 i = 0; i < line_number_table_length; i++) {
-            line_number_table.push_back(make_shared< LineNumberTable>(is));
-        }
+        read_vector(line_number_table, is, line_number_table_length);
     }
 };
 
@@ -604,9 +628,7 @@ struct LocalVariableTable_attribute : Attribute_Info {
     vector<shared_ptr< LocalVariableTable>> local_variable_table;
     LocalVariableTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
         local_variable_table_length = readu2(is);
-        for (u2 i = 0; i < local_variable_table_length; i++) {
-            local_variable_table.push_back(make_shared<LocalVariableTable>(is));
-        }
+        read_vector(local_variable_table, is, local_variable_table_length);
     }
 };
 
@@ -630,9 +652,7 @@ struct LocalVariableTypeTable_attribute : Attribute_Info {
     vector<shared_ptr< LocalVariableTypeTable>> local_variable_type_table;
     LocalVariableTypeTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
         local_variable_type_table_length = readu2(is);
-        for (u2 i = 0; i < local_variable_type_table_length; i++) {
-            local_variable_type_table.push_back(make_shared<LocalVariableTypeTable>(is));
-        }
+        read_vector(local_variable_type_table, is, local_variable_type_table_length);
     }
 };
 
@@ -641,8 +661,441 @@ struct Deprecated_attribute : Attribute_Info {
     }
 };
 
+struct RuntimeAnnotations_attribute : Attribute_Info {
+
+    // 先在这里申明一下，下面有循环指针引用。
+    struct annotation;
+
+    struct element_value {
+        u1 tag;
+        element_value(istream& is) {
+            tag = readu1(is);
+        }
+        virtual ~element_value() {};
+    };
+
+    struct const_element_value : element_value {
+        u2 const_value_index;
+        const_element_value(istream& is) :element_value(is) {
+            const_value_index = readu2(is);
+        }
+    };
+
+    struct enum_const_value : element_value
+    {
+        u2 type_name_index;
+        u2 const_name_index;
+        enum_const_value(istream& is) :element_value(is) {
+            type_name_index = readu2(is);
+            const_name_index = readu2(is);
+        }
+    };
+
+    struct class_element_value : element_value {
+        u2 class_info_index;
+        class_element_value(istream& is) :element_value(is) {
+            class_info_index = readu2(is);
+        }
+    };
+
+    struct annotation_element_value : element_value {
+        shared_ptr<annotation> annotation_value;
+        annotation_element_value(istream& is) :element_value(is) {
+            annotation_value = readAnnotation(is);
+        }
+    };
+
+    struct array_element_value :element_value {
+        u2  num_values;
+        vector<shared_ptr<element_value>> values;
+        array_element_value(istream& is) :element_value(is) {
+            num_values = readu2(is);
+            for (u2 i = 0; i < num_values; i++) {
+                values.push_back(readElementValue(is));
+            }
+        }
+    };
+
+    struct element_value_pair {
+        u2 element_name_index;
+        shared_ptr<element_value> value;
+        element_value_pair(istream& is) {
+            element_name_index = readu2(is);
+            value = readElementValue(is);
+        }
+    };
+    struct annotation {
+        u2 type_index;
+        u2 num_element_value_pairs;
+        vector<shared_ptr<element_value_pair>> element_value_pairs;
+        annotation(istream& is) {
+            type_index = readu2(is);
+            num_element_value_pairs = readu2(is);
+            read_vector(element_value_pairs, is, num_element_value_pairs);
+        }
+    };
+
+    RuntimeAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+    }
+
+protected:
+    static shared_ptr<annotation> readAnnotation(istream& is);
+    static shared_ptr<element_value> readElementValue(istream& is);
+};
+
+struct RuntimeVisibleAnnotations_attribute : RuntimeAnnotations_attribute {
+    u2 num_annotations;
+    vector<shared_ptr<annotation>> annotations;
+
+    RuntimeVisibleAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(is, cp) {
+        num_annotations = readu2(is);
+        read_vector(annotations, is, num_annotations);
+    }
+};
+
+struct RuntimeInvisibleAnnotations_attribute : RuntimeVisibleAnnotations_attribute {
+    RuntimeInvisibleAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleAnnotations_attribute(is, cp) {}
+};
+
+struct RuntimeVisibleParameterAnnotations_attribute :RuntimeAnnotations_attribute {
+    struct parameter_annotation {
+        u2         num_annotations;
+        vector<shared_ptr<annotation>> annotations;
+        parameter_annotation(istream& is) {
+            num_annotations = readu2(is);
+            read_vector(annotations, is, num_annotations);
+        }
+    };
+    u1 num_parameters;
+    vector<shared_ptr< parameter_annotation>> parameter_annotations;
+    RuntimeVisibleParameterAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(is, cp) {
+        num_parameters = readu1(is);
+        read_vector(parameter_annotations, is, num_parameters);
+    }
+};
+
+// 4.7.19. The RuntimeInvisibleParameterAnnotations Attribute
+struct RuntimeInvisibleParameterAnnotations_attribute :RuntimeVisibleParameterAnnotations_attribute {
+    RuntimeInvisibleParameterAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleParameterAnnotations_attribute(is, cp) {}
+};
+
+struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
+
+    struct type_annotation;
+
+    struct localvar_target_table {
+        u2 start_pc;
+        u2 length;
+        u2 index;
+        localvar_target_table(istream& is) {
+            start_pc = readu2(is);
+            length = readu2(is);
+            index = readu2(is);
+        }
+    };
+    struct type_target {
+        ~type_target() {};
+    };
+
+    struct type_parameter_target :type_target {
+        u1 type_parameter_index;
+        type_parameter_target(istream& is) {
+            type_parameter_index = readu1(is);
+        }
+    };
+    struct supertype_target : type_target {
+        u2 supertype_index;
+        supertype_target(istream& is) {
+            supertype_index = readu2(is);
+        }
+    };
+    struct type_parameter_bound_target : type_target {
+        u1 type_parameter_index;
+        u1 bound_index;
+        type_parameter_bound_target(istream& is) {
+            type_parameter_index = readu1(is);
+            bound_index = readu1(is);
+        }
+    };
+
+    struct empty_target :type_target {
+        empty_target(istream& is) {}
+    };
+
+    struct formal_parameter_target : type_target {
+        u1 formal_parameter_index;
+        formal_parameter_target(istream& is) {
+            formal_parameter_index = readu1(is);
+        }
+    };
+
+    struct throws_target : type_target {
+        u2 throws_type_index;
+        throws_target(istream& is) {
+            throws_type_index = readu2(is);
+        }
+    };
+
+    struct localvar_target : type_target {
+        u2 table_length;
+        vector<shared_ptr< localvar_target_table>> table;
+        localvar_target(istream& is) {
+            table_length = readu2(is);
+            read_vector(table, is, table_length);
+        }
+    };
+
+    struct catch_target : type_target {
+        u2 exception_table_index;
+        catch_target(istream& is) {
+            exception_table_index = readu2(is);
+        }
+    };
+
+    struct offset_target : type_target {
+        u2 offset;
+        offset_target(istream& is) {
+            offset = readu2(is);
+        }
+    };
+
+    struct type_argument_target : type_target {
+        u2 offset;
+        u1 type_argument_index;
+        type_argument_target(istream& is) {
+            offset = readu2(is);
+            type_argument_index = readu1(is);
+        }
+    };
+    struct path_struct {
+        u1 type_path_kind;
+        u1 type_argument_index;
+        path_struct(istream& is) {
+            type_path_kind = readu1(is);
+            type_argument_index = readu1(is);
+        }
+    };
+    struct type_path {
+        u1 path_length;
+        vector<shared_ptr< path_struct>> path;
+        type_path(istream& is) {
+            path_length = readu1(is);
+            read_vector(path, is, path_length);
+        }
+    };
+
+    struct type_annotation {
+        u1 target_type;
+        shared_ptr<type_target> target_info;
+        shared_ptr<type_path> target_path;
+        u2        type_index;
+        u2        num_element_value_pairs;
+        vector<shared_ptr<element_value_pair>> element_value_pairs;
+        type_annotation(istream& is) {
+            target_type = readu1(is);
+            target_info = readTypeTarget(is, target_type);
+            target_path = make_shared< type_path>(is);
+            type_index = readu2(is);
+            num_element_value_pairs = readu2(is);
+            read_vector(element_value_pairs, is, num_element_value_pairs);
+        }
+    };
+    RuntimeTypeAnnotations(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(is, cp) {}
+protected:
+    static shared_ptr<type_target> readTypeTarget(istream& is, u1 target_type);
+};
+
+struct RuntimeVisibleTypeAnnotations_attribute : RuntimeTypeAnnotations {
+    u2 num_annotations;
+    vector <shared_ptr< type_annotation>> annotations;
+    RuntimeVisibleTypeAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(is, cp) {
+        num_annotations = readu2(is);
+        read_vector(annotations, is, num_annotations);
+    }
+};
+
+struct RuntimeInvisibleTypeAnnotations_attribute : RuntimeVisibleTypeAnnotations_attribute {
+    RuntimeInvisibleTypeAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleTypeAnnotations_attribute(is, cp) {}
+};
+
+struct AnnotationDefault_attribute : RuntimeTypeAnnotations {
+    shared_ptr< element_value> default_value;
+    AnnotationDefault_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(is, cp) {
+        default_value = readElementValue(is);
+    }
+};
+
+struct BootstrapMethods_attribute : Attribute_Info {
+    struct bootstrap_method {
+        u2 bootstrap_method_ref;
+        u2 num_bootstrap_arguments;
+        vector<u2> bootstrap_arguments;
+        bootstrap_method(istream& is) {
+            bootstrap_method_ref = readu2(is);
+            num_bootstrap_arguments = readu2(is);
+            read_u2_vector(bootstrap_arguments, is, num_bootstrap_arguments);
+        }
+    };
+    u2 num_bootstrap_methods;
+
+    vector<shared_ptr<bootstrap_method>>bootstrap_methods;
+
+    BootstrapMethods_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        num_bootstrap_methods = readu2(is);
+        read_vector(bootstrap_methods, is, num_bootstrap_methods);
+    }
+};
+
+struct MethodParameters_attribute : Attribute_Info {
+    struct parameter {
+        u2 name_index;
+        u2 access_flags;
+        parameter(istream& is) {
+            name_index = readu2(is);
+            access_flags = readu2(is);
+        }
+    };
+    u1 parameters_count;
+    vector<shared_ptr< parameter>> parameters;
+    MethodParameters_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        parameters_count = readu1(is);
+        read_vector(parameters, is, parameters_count);
+    }
+};
+
+struct Module_attribute : Attribute_Info {
+
+    struct require {
+        u2 requires_index;
+        u2 requires_flags;
+        u2 requires_version_index;
+        require(istream& is) {
+            requires_index = readu2(is);
+            requires_flags = readu2(is);
+            requires_version_index = readu2(is);
+        }
+    };
+
+    // since export is keyword in c++, so add _
+    struct _export {
+        u2 exports_index;
+        u2 exports_flags;
+        u2 exports_to_count;
+        vector<u2> exports_to_index;
+        _export(istream& is) {
+            exports_index = readu2(is);
+            exports_flags = readu2(is);
+            exports_to_count = readu2(is);
+            read_u2_vector(exports_to_index, is, exports_to_count);
+        }
+    };
+
+    struct open {
+        u2 opens_index;
+        u2 opens_flags;
+        u2 opens_to_count;
+        vector<u2> opens_to_index;
+        open(istream& is) {
+            opens_index = readu2(is);
+            opens_flags = readu2(is);
+            opens_to_count = readu2(is);
+            read_u2_vector(opens_to_index, is, opens_to_count);
+        }
+    };
+    struct provide {
+        u2 provides_index;
+        u2 provides_with_count;
+        vector<u2> provides_with_index;
+        provide(istream& is) {
+            provides_index = readu2(is);
+            provides_with_count = readu2(is);
+            read_u2_vector(provides_with_index, is, provides_with_count);
+        }
+    };
+
+    u2 module_name_index;
+    u2 module_flags;
+    u2 module_version_index;
+
+    u2 requires_count;
+    vector<shared_ptr< require>> requires;
+
+    u2 exports_count;
+    vector<shared_ptr<_export>> exports;
+
+    u2 opens_count;
+    vector<shared_ptr<open>> opens;
+
+    u2 uses_count;
+    vector<u2> uses_index;
+
+    u2 provides_count;
+    vector<shared_ptr<provide>> provides;
+
+    Module_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        module_name_index = readu2(is);
+        module_flags = readu2(is);
+        module_version_index = readu2(is);
+
+        // requires.
+        requires_count = readu2(is);
+        read_vector(requires, is, requires_count);
+
+        // exportes
+        exports_count = readu2(is);
+        read_vector(exports, is, exports_count);
+
+        // opens
+        opens_count = readu2(is);
+        read_vector(opens, is, opens_count);
+
+        // uses
+        uses_count = readu2(is);
+        read_vector(uses_index, is, uses_count);
+
+        // provides
+        provides_count = readu2(is);
+        read_vector(provides, is, provides_count);
+    }
+};
+
+struct ModulePackages_attribute : Attribute_Info {
+    u2 package_count;
+    vector<u2> package_index;
+    ModulePackages_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        package_count = readu2(is);
+        read_u2_vector(package_index, is, package_count);
+    }
+};
+
+struct ModuleMainClass_attribute : Attribute_Info {
+    u2 main_class_index;
+    ModuleMainClass_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        main_class_index = readu2(is);
+    }
+};
+
+struct NestHost_attribute : Attribute_Info {
+    u2 host_class_index;
+    NestHost_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        host_class_index = readu2(is);
+    }
+};
+
+struct NestMembers_attribute : Attribute_Info {
+    u2 number_of_classes;
+    vector<u2> classes;
+    NestMembers_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        number_of_classes = readu2(is);
+        read_u2_vector(classes, is, number_of_classes);
+    }
+};
+
 struct Unknown_attribute :Attribute_Info {
     vector<u1> info;
+    Unknown_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+        read_u1_vector(info, is, attribute_length);
+    }
 };
 
 //字段区定义

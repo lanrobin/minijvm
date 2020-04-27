@@ -1,7 +1,10 @@
 #include <iostream>
+#include <iomanip>
 #include "base_type.h"
 #include "platform.h"
 #include "clazz_reader.h"
+
+#define DEBUG_READ_CLASS_FILE
 
 u1 peaku1(std::istream& is)
 {
@@ -37,12 +40,22 @@ u4 peaku4(std::istream& is) {
 }
 
 u1 readu1(std::istream& is) {
-	return is.get();
+	u1 value = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)value << endl;
+#endif
+	return value;
 }
 
 u2 readu2(std::istream& is) {
 	u1 v1 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+#endif
 	u1 v2 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
+#endif
 #ifdef __JVM_LITTLE_ENDIAN__
 	return ((v1 << 8) | v2) & 0xFFFF;
 #else // __LITTLE_ENDIAN__
@@ -53,9 +66,21 @@ u2 readu2(std::istream& is) {
 
 u4 readu4(std::istream& is) {
 	u1 v1 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+#endif
 	u1 v2 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
+#endif
 	u1 v3 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v3 << endl;
+#endif
 	u4 v4 = is.get();
+#ifdef DEBUG_READ_CLASS_FILE
+	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v4 << endl;
+#endif
 #ifdef __JVM_LITTLE_ENDIAN__
 	return ((v1 << 24) | (v2 << 16) | (v3 << 8) | v4) & 0xFFFFFFFF;
 #else // __LITTLE_ENDIAN__
@@ -77,6 +102,13 @@ u4 read_u2_vector(vector<u2>& v, istream& is, u4 count) {
 	for (u4 it = 0; it < count; it++) {
 		u2 value = readu2(is);
 		v.push_back(value);
+	}
+	return count;
+}
+template< typename T>
+u4 read_vector(vector<shared_ptr<T>>& v, istream& is, u4 count) {
+	for (u4 it = 0; it < count; it++) {
+		v.push_back(make_shared<T>(is));
 	}
 	return count;
 }
