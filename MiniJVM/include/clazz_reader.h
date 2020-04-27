@@ -697,7 +697,7 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
     struct annotation_element_value : element_value {
         shared_ptr<annotation> annotation_value;
         annotation_element_value(istream& is) :element_value(is) {
-            annotation_value = readAnnotation(is);
+            annotation_value = make_shared< annotation>(is);
         }
     };
 
@@ -735,7 +735,6 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
     }
 
 protected:
-    static shared_ptr<annotation> readAnnotation(istream& is);
     static shared_ptr<element_value> readElementValue(istream& is);
 };
 

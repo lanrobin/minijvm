@@ -11,7 +11,7 @@ using namespace std;
 int main()
 {
 	cout << "Hello CMake." << endl;
-	const string fileName("D:\\github\\lanjvmtest\\main\\target\\classes\\icu\\mianshi\\main\\SynchronizedDemo.class");
+	const string fileName("D:\\github\\lanjvmtest\\main\\target\\classes\\icu\\mianshi\\main\\TestAttributes.class");
 	std::ifstream clazzFile(fileName, ios::binary);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(clazzFile);
 	return 0;

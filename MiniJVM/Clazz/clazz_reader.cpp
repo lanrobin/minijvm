@@ -249,11 +249,35 @@ const u4 MAGIC_NUMBER = 0xCAFEBABE;
 #else
 const u4 MAGIC_NUMBER = 0xBEBAFECA;
 #endif
-shared_ptr<RuntimeAnnotations_attribute::annotation> RuntimeAnnotations_attribute::readAnnotation(istream& is) {
-	throw runtime_error("Not implemented yet.");
-}
+
+/*
+https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html#jvms-4.7.16
+4.7.16.1. The element_value structure
+*/
 shared_ptr<RuntimeAnnotations_attribute::element_value> RuntimeAnnotations_attribute::readElementValue(istream& is) {
-	throw runtime_error("Not implemented yet.");
+	u1 tag = peaku1(is);
+	switch (tag) {
+	case ElementType::ElementType_Byte:
+	case ElementType::ElementType_Char:
+	case ElementType::ElementType_Double:
+	case ElementType::ElementType_Float:
+	case ElementType::ElementType_Int:
+	case ElementType::ElementType_Long:
+	case ElementType::ElementType_Short:
+	case ElementType::ElementType_Boolean:
+	case ElementType::ElementType_String:
+		return make_shared<RuntimeAnnotations_attribute::const_element_value>(is);
+	case ElementType::ElementType_Enum_type:
+		return make_shared< RuntimeAnnotations_attribute::enum_const_value>(is);
+	case ElementType::ElementType_Class:
+		return make_shared< RuntimeAnnotations_attribute::class_element_value>(is);
+	case ElementType::ElementType_Annotation_type:
+		return make_shared< RuntimeAnnotations_attribute::annotation_element_value>(is);
+	case ElementType::ElementType_Array_type:
+		return make_shared< RuntimeAnnotations_attribute::array_element_value>(is);
+	default:
+		throw runtime_error("Uknown element tag:" + tag);
+	}
 }
 
 shared_ptr<RuntimeTypeAnnotations::type_target> RuntimeTypeAnnotations::readTypeTarget(istream& is, u1 target_type) {
