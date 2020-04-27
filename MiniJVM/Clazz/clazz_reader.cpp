@@ -1,4 +1,5 @@
 #include <iostream>
+#include<fstream>
 #include <iomanip>
 #include "base_type.h"
 #include "platform.h"
@@ -382,9 +383,42 @@ shared_ptr<StackMapTable_attribute::stack_map_frame> StackMapTable_attribute::re
 }
 
 ClassFile::ClassFile(istream& is) {
+	parse(is);
+}
+
+ClassFile::ClassFile(wstring& filePath) {
+	std::ifstream filestream(filePath.c_str(), ios::binary);
+	parse(filestream);
+}
+
+ClassFile::ClassFile(string& filePath) {
+	std::ifstream filestream(filePath, ios::binary);
+	parse(filestream);
+}
+
+bool ClassFile::isJavaClassFile() const{
+	return validJavaFile;
+}
+
+wstring ClassFile::getCanonicalClassName() const {
+	return canonicalName;
+}
+bool ClassFile::parse(istream& is) {
+	// rewind to begin and clear the state.
+	is.seekg(0, is.beg);
 	magic = readu4(is);
+	if (magic != MAGIC_NUMBER) {
+		validJavaFile = false;
+		return false;
+	}
 	minor_version = readu2(is);
 	major_version = readu2(is);
+
+	if (major_version < MIN_SUPPORTED_CLASS_FILE_VERSION || major_version > MAX_SUPPORTED_CLASS_FILE_VERSION) {
+		isSupportedVersion = false;
+		return false;
+	}
+
 	constant_pool_count = readu2(is);
 	readConstantPools(is);
 	access_flags = readu2(is);
@@ -398,12 +432,20 @@ ClassFile::ClassFile(istream& is) {
 	readMethodInfos(is);
 	attributes_count = readu2(is);
 	readAttributes(is);
-}
+	parsed = true;
 
-bool ClassFile::checkClassFile() {
+	// extract some properties
+	extract();
 	return true;
 }
 
+void ClassFile::extract() {
+	if (!parsed) {
+		return;
+	}
+	auto thisClazz = std::dynamic_pointer_cast<CONSTANT_Class_info>(constant_pool[this_class]);
+	canonicalName = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constant_pool[thisClazz->name_index])->toUTF8String();
+}
 void ClassFile::readConstantPools(istream& is) {
 	// index是从1开始的。
 	constant_pool.push_back(make_shared< CONSTANT_Dummy_info>());

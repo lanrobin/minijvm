@@ -1165,12 +1165,22 @@ struct ClassFile {
     vector<shared_ptr<Attribute_Info>> attributes;
 
     ClassFile(istream& is);
+    ClassFile(wstring& filepath);
+    ClassFile(string& filepath);
 
-    bool checkClassFile();
-//private:
-    //map<ConstantPoolType, decltype> contants_pool_map;
+    bool isJavaClassFile() const;
+    wstring getCanonicalClassName() const;
 
+    // these are private members.
 private:
+    bool parsed = false;
+    bool validJavaFile = true;
+    bool isSupportedVersion = true;
+    wstring canonicalName;
+
+    // method
+    bool parse(istream& stream);
+    void extract();
     void readConstantPools(istream& is);
     void readInterfaces(istream& is);
     void readFieldInfos(istream& is);
