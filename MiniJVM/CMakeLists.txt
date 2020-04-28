@@ -14,4 +14,4 @@ set(Clazz_File "./Clazz/clazz_reader.cpp")
 
 set(Main_File "./MiniJVM/MiniJVM.cpp" "./MiniJVM/MiniJVM.h")
 
-add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} "Clazz/compressed_file_reader.cpp")
+add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} "Clazz/compressed_file_reader.cpp" "ThirdParties/zip/zip.c")
