@@ -6,3 +6,7 @@ This is a mini jvm
 
 # 目标
 ## 能跑一个HelloWorld.java文件。
+
+# Used third party source code
+## https://github.com/jarro2783/cxxopts for options parse.
+## https://github.com/kuba--/zip for jmob, jar file read.
