@@ -349,3 +349,8 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 MiniJVM/out/*
+MiniJVM/CMakeCache.txt
+MiniJVM/CMakeFiles/*
+MiniJVM/Makefile
+MiniJVM/MiniJVM
+MiniJVM/cmake_install.cmake
