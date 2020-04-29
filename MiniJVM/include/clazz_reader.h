@@ -6,6 +6,7 @@
 #include <map>
 #include "platform.h"
 #include "base_type.h"
+#include "buffer.h"
 
 #undef DEBUG_READ_CLASS_FILE
 
@@ -1232,6 +1233,7 @@ struct ClassFile {
     ClassFile(istream& is);
     ClassFile(wstring& filepath);
     ClassFile(string& filepath);
+    ClassFile(shared_ptr<Buffer> buf);
 
     bool isJavaClassFile() const;
     wstring getCanonicalClassName() const;

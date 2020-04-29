@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include "zip/zip.h"
+#include "buffer.h"
 using namespace std;
 
 class CompressedFileReader {
@@ -11,7 +12,7 @@ public:
 	CompressedFileReader(const wstring& filePath);
 	bool isValidCompressedFile() const;
 	vector<wstring> listItems() const;
-	vector<char> getItemContent(wstring& itemName);
+	shared_ptr<Buffer> getItemContent(wstring& itemName);
 
 	~CompressedFileReader();
 private:

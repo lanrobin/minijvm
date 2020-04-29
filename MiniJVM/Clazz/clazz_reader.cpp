@@ -397,6 +397,10 @@ ClassFile::ClassFile(string& filePath) {
 	parse(filestream);
 }
 
+ClassFile::ClassFile(shared_ptr<Buffer> buf) {
+
+}
+
 bool ClassFile::isJavaClassFile() const{
 	return validJavaFile;
 }

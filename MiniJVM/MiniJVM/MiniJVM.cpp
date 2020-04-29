@@ -28,7 +28,12 @@ int main(int argc, char ** argv)
 	shared_ptr<CompressedFileReader> jarReader = make_shared<CompressedFileReader>(bootstrapJDKPath);
 	auto fileName = jarReader->listItems()[5];
 	auto content = jarReader->getItemContent(fileName);
-	auto last = content[content.size() - 1];
+
+	u1 v1 = content->readu1();
+	u2 v2 = content->readu2();
+	u4 v4 = content->readu4();
+	content->rewind(7);
+
 	std::ifstream clazzFile(targetClassFileName, ios::binary);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(clazzFile);
 	wcout << sd->getCanonicalClassName() << endl;

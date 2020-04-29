@@ -43,23 +43,22 @@ bool CompressedFileReader::isValidCompressedFile() const {
 vector<wstring> CompressedFileReader::listItems() const{
 	return entries;
 }
-vector<char> CompressedFileReader::getItemContent(wstring& itemName) {
-
-	vector<char> content;
+shared_ptr<Buffer> CompressedFileReader::getItemContent(wstring& itemName) {
+	char* buf = NULL;
+	size_t buf_size = 0;
+	ssize_t readSize = 0;
 	// 这个应该需要同步，否则zip不知道读的是哪个？
 	if (zip) {
 		string str = wstringToString(itemName);
 		zip_entry_open(zip, str.c_str());
-		char* buf = NULL;
-		size_t buf_size = 0;
-		ssize_t readSize = zip_entry_read(zip, (void **)&buf, &buf_size);
-		for (ssize_t i = 0; i < readSize; i++) {
-			content.push_back(*(buf + i));
-		}
+		readSize = zip_entry_read(zip, (void **)&buf, &buf_size);
 		zip_entry_close(zip);
+	}
+	auto buffer = make_shared<Buffer>(buf, 0, readSize);
+	if (buf != NULL) {
 		free(buf);
 	}
-	return content;
+	return buffer;
 };
 
 CompressedFileReader::~CompressedFileReader()
