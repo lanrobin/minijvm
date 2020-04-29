@@ -133,10 +133,14 @@ void Buffer::dumpToFile(const string& filePath) {
 
 void Buffer::dumpToFile(const wstring& filePath) {
 	ofstream myfile;
+
+
+
 	myfile.open(filePath, ios::binary | ios::out);
 	myfile.write((char*)buffer, buffer_size);
 	myfile.close();
 }
+
 shared_ptr<Buffer> Buffer::fromFile(const string& filePath) {
 	std::ifstream filestream(filePath.c_str(), ios::binary);
 	return  make_shared< Buffer>(filestream);

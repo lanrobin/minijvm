@@ -31,9 +31,9 @@ int main(int argc, char ** argv)
 	wcout << "Read from jar" << bootstrapJDKPath << ", get file:" << fileName << endl;
 
 	auto content = jarReader->getItemContent(fileName);
-	//wstring winPath(fileName);
-	//replaceAll(winPath, L"/", L"\\\\");
-	content->dumpToFile(L"d:\\jvm\\StopWatch.class");
+	wstring winPath(fileName);
+	replaceAll(winPath, L"/", L"\\");
+	content->dumpToFile(L"d:\\jvm\\" + winPath);
 	auto jarClass = make_shared<ClassFile>(content);
 	auto buf = Buffer::fromFile(targetClassFileName);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(buf);
