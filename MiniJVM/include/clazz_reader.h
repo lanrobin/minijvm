@@ -121,7 +121,7 @@ struct CONSTANT_Info {
 
 struct CONSTANT_Class_info : CONSTANT_Info {
     u2 name_index;
-    CONSTANT_Class_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Class_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         name_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Class_info";
@@ -133,7 +133,7 @@ struct CONSTANT_Fieldref_info : CONSTANT_Info {
     u2 class_index;
     u2 name_and_type_index;
 
-    CONSTANT_Fieldref_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Fieldref_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         class_index = buf->readu2();
         name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -146,7 +146,7 @@ struct CONSTANT_Methodref_info : CONSTANT_Info {
     u2 class_index;
     u2 name_and_type_index;
 
-    CONSTANT_Methodref_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Methodref_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         class_index = buf->readu2();
         name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -159,7 +159,7 @@ struct CONSTANT_InterfaceMethodref_info : CONSTANT_Info {
     u2 class_index;
     u2 name_and_type_index;
 
-    CONSTANT_InterfaceMethodref_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_InterfaceMethodref_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         class_index = buf->readu2();
         name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -170,7 +170,7 @@ struct CONSTANT_InterfaceMethodref_info : CONSTANT_Info {
 
 struct CONSTANT_String_info : CONSTANT_Info {
     u2 string_index;
-    CONSTANT_String_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_String_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         string_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_String_info";
@@ -180,7 +180,7 @@ struct CONSTANT_String_info : CONSTANT_Info {
 
 struct CONSTANT_Integer_info : CONSTANT_Info {
     u4 bytes;
-    CONSTANT_Integer_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Integer_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Integer_info";
@@ -190,7 +190,7 @@ struct CONSTANT_Integer_info : CONSTANT_Info {
 
 struct CONSTANT_Float_info : CONSTANT_Info {
     u4 bytes;
-    CONSTANT_Float_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Float_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Float_info";
@@ -202,7 +202,7 @@ struct  CONSTANT_Long_info : CONSTANT_Info {
     u4 high_bytes;
     u4 low_bytes;
 
-    CONSTANT_Long_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Long_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         high_bytes = buf->readu4();
         low_bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -215,7 +215,7 @@ struct  CONSTANT_Double_info : CONSTANT_Info {
     u4 high_bytes;
     u4 low_bytes;
 
-    CONSTANT_Double_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Double_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         high_bytes = buf->readu4();
         low_bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -227,7 +227,7 @@ struct  CONSTANT_Double_info : CONSTANT_Info {
 struct CONSTANT_NameAndType_info : CONSTANT_Info {
     u2 name_index;
     u2 descriptor_index;
-    CONSTANT_NameAndType_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_NameAndType_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         name_index = buf->readu2();
         descriptor_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -240,7 +240,7 @@ struct CONSTANT_Utf8_info : CONSTANT_Info {
     u2 length;
     vector<u1> bytes;
 
-    CONSTANT_Utf8_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Utf8_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         length = buf->readu2();
         read_u1_vector(bytes, buf, length);
 #ifdef DEBUG_READ_CLASS_FILE
@@ -257,7 +257,7 @@ private:
 struct CONSTANT_MethodHandle_info : CONSTANT_Info {
     u1 reference_kind;
     u2 reference_index;
-    CONSTANT_MethodHandle_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_MethodHandle_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         reference_kind = buf->readu1();
         reference_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -269,7 +269,7 @@ struct CONSTANT_MethodHandle_info : CONSTANT_Info {
 struct CONSTANT_MethodType_info : CONSTANT_Info {
     u2 descriptor_index;
 
-    CONSTANT_MethodType_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_MethodType_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         descriptor_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_MethodType_info";
@@ -280,7 +280,7 @@ struct CONSTANT_MethodType_info : CONSTANT_Info {
 struct CONSTANT_Dynamic_info : CONSTANT_Info {
     u2 bootstrap_method_attr_index;
     u2 name_and_type_index;
-    CONSTANT_Dynamic_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Dynamic_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         bootstrap_method_attr_index = buf->readu2();
         name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
@@ -292,7 +292,7 @@ struct CONSTANT_Dynamic_info : CONSTANT_Info {
 struct CONSTANT_InvokeDynamic_info : CONSTANT_Info {
     u2 bootstrap_method_attr_index;
     u2 name_and_type_index;
-    CONSTANT_InvokeDynamic_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_InvokeDynamic_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         bootstrap_method_attr_index = buf->readu2();
         name_and_type_index = buf->readu2();
     }
@@ -300,7 +300,7 @@ struct CONSTANT_InvokeDynamic_info : CONSTANT_Info {
 
 struct CONSTANT_Module_info : CONSTANT_Info {
     u2 name_index;
-    CONSTANT_Module_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Module_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         name_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Module_info";
@@ -310,7 +310,7 @@ struct CONSTANT_Module_info : CONSTANT_Info {
 
 struct CONSTANT_Package_info : CONSTANT_Info {
     u2 name_index;
-    CONSTANT_Package_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+    CONSTANT_Package_info(shared_ptr<Buffer> buf) :CONSTANT_Info(buf) {
         name_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Package_info";

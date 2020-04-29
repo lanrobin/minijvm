@@ -9,15 +9,15 @@
 
 Buffer::Buffer(istream& is): buffer(nullptr), read_pos(0), buffer_size(0) {
 	is.seekg(0, is.end);
-	vector<char> data;
+	vector<u1> data;
 	is.seekg(0, is.beg);
-	char ch;
+	u1 ch;
 	do {
 		ch = is.get();
 		data.push_back(ch);
 	} while (is.good());
 
-	init(&data[0], 0, data.size());
+	init((char *)&data[0], 0, data.size());
 }
 
 Buffer::Buffer(const char* data, size_t offset, size_t count) : buffer(nullptr), read_pos(0), buffer_size(0) {
