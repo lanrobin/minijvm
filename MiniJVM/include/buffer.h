@@ -27,6 +27,9 @@ public:
 	size_t pos() const;
 	void resetReadPos();
 
+	void dumpToFile(const string& path);
+	void dumpToFile(const wstring& path);
+
 	~Buffer();
 private:
 	void init(const char* buf, size_t offset, size_t count);

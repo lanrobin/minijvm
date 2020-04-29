@@ -65,7 +65,7 @@ u1 Buffer::readu1()
 	return value;
 }
 u2 Buffer::readu2() {
-	assert(buffer_size > read_pos + 2);
+	assert(buffer_size >= read_pos + 2);
 	u1 v1 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
@@ -82,7 +82,7 @@ u2 Buffer::readu2() {
 }
 u4 Buffer::readu4()
 {
-	assert(buffer_size > read_pos + 4);
+	assert(buffer_size >= read_pos + 4);
 	u1 v1 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
 	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
@@ -124,6 +124,19 @@ u4 Buffer::peaku4() {
 	return v;
 }
 
+void Buffer::dumpToFile(const string& filePath) {
+	ofstream myfile;
+	myfile.open(filePath, ios::binary | ios::out);
+	myfile.write((char *)buffer, buffer_size);
+	myfile.close();
+}
+
+void Buffer::dumpToFile(const wstring& filePath) {
+	ofstream myfile;
+	myfile.open(filePath, ios::binary | ios::out);
+	myfile.write((char*)buffer, buffer_size);
+	myfile.close();
+}
 shared_ptr<Buffer> Buffer::fromFile(const string& filePath) {
 	std::ifstream filestream(filePath.c_str(), ios::binary);
 	return  make_shared< Buffer>(filestream);

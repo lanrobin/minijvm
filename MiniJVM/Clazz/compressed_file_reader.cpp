@@ -2,7 +2,7 @@
 #include "compressed_file_reader.h"
 #include "zip/zip.h"
 #include "base_type.h"
-#include "strings.h"
+#include "string_utils.h"
 #include <istream>
 #include <vector>
 #include <string>

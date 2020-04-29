@@ -167,8 +167,44 @@ shared_ptr<RuntimeAnnotations_attribute::element_value> RuntimeAnnotations_attri
 	}
 }
 
+// https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html#jvms-4.4.1 Table 4.7.20-A. Interpretation of target_type values (Part 1)
 shared_ptr<RuntimeTypeAnnotations::type_target> RuntimeTypeAnnotations::readTypeTarget(shared_ptr<Buffer> buf, u1 target_type) {
-	throw runtime_error("Not implemented yet.");
+	switch(target_type){
+	case 0x00:
+	case 0x01:
+		return make_shared< RuntimeTypeAnnotations::type_parameter_target>(buf);
+	case 0x10:
+		return make_shared< RuntimeTypeAnnotations::supertype_target>(buf);
+	case 0x11:
+	case 0x12:
+		return make_shared< RuntimeTypeAnnotations::type_parameter_bound_target>(buf);
+	case 0x13:
+	case 0x14:
+	case 0x15:
+		return make_shared< RuntimeTypeAnnotations::empty_target>(buf);
+	case 0x16:
+		return make_shared< RuntimeTypeAnnotations::formal_parameter_target>(buf);
+	case 0x17:
+		return make_shared< RuntimeTypeAnnotations::throws_target>(buf);
+	case 0x40:
+	case 0x41:
+		return make_shared< RuntimeTypeAnnotations::localvar_target>(buf);
+	case 0x42:
+		return make_shared< RuntimeTypeAnnotations::catch_target>(buf);
+	case 0x43:
+	case 0x44:
+	case 0x45:
+	case 0x46:
+		return make_shared< RuntimeTypeAnnotations::offset_target>(buf);
+	case 0x47:
+	case 0x48:
+	case 0x49:
+	case 0x4A:
+	case 0x4B:
+		return make_shared< RuntimeTypeAnnotations::type_argument_target>(buf);
+	default:
+		throw runtime_error("Unsupported type target:" + target_type);
+	}
 }
 wstring CONSTANT_Utf8_info::toUTF8String() {
 	if (!utf8String.empty()) {
