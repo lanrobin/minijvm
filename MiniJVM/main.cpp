@@ -8,6 +8,7 @@
 
 #include "zip/zip.h"
 #include "compressed_file_reader.h"
+#include "vm.h"
 
 using namespace std;
 
@@ -15,14 +16,19 @@ void test();
 
 int main(int argc, char ** argv)
 {
+#ifndef JVM_DEBUG
 	if (argc != 3) {
 		std::cout << argv[0] << " path/to/bootstrap/modules classfile" << endl;
 	}
 	string bootStrapModuleFolder(argv[1]);
 	string classFileName(argv[2]);
+#else
+	string bootStrapModuleFolder("D:\\jvm\\modules");
+	string classFileName("HelloWorld");
+#endif
 
-	std::cout << "bs:" << bootStrapModuleFolder << ", classFile:" << classFileName << endl;
-	return 0;
+	shared_ptr<VM> vm = make_shared<VM>(bootStrapModuleFolder, classFileName);
+	return vm->run();
 }
 
 void test() {

@@ -1,6 +1,7 @@
 #ifndef __JVM_PLATFORM_H__
 #define __JVM_PLATFORM_H__
 
+#define JVM_DEBUG
 
 #ifdef _WIN32
 #include <Windows.h>

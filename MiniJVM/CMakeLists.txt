@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.10)
 
 
 
-project ("MiniJVM")
+project ("minijava")
 
 include_directories("include")
 
@@ -14,7 +14,7 @@ include_directories("include")
 
 set(Clazz_File "./Clazz/clazz_reader.cpp" "./Clazz/compressed_file_reader.cpp")
 
-set(Main_File "./main.cpp")
+set(Main_File "./main.cpp" "./vm/vm.cpp")
 
 Set(Utils "./Util/buffer.cpp" "./Util/string_utils.cpp")
 
