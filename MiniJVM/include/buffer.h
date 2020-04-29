@@ -25,10 +25,14 @@ public:
 
 	size_t size() const;
 	size_t pos() const;
+	void resetReadPos();
 
 	~Buffer();
 private:
 	void init(const char* buf, size_t offset, size_t count);
 
+public:
+	static shared_ptr<Buffer> fromFile(const string& filePath);
+	static shared_ptr<Buffer> fromFile(const wstring& filePath);
 };
 #endif __JVM_BUFFER_READER__

@@ -20,9 +20,9 @@ int main(int argc, char ** argv)
 	//const string fileName("D:\\github\\java14compiler\\target\\classes\\module-info.class");
 	//const string fileName("D:\\github\\java14compiler\\target\\classes\\lan\\internal\\misc\\VM.class");
 	//const string targetClassFileName("D:\\github\\java14compiler\\target\\classes\\com\\lan\\tools\\javac\\comp\\Check.class");
-	const string targetClassFileName("D:\\jvm\\modules\\java.base\\java\\lang\\Class.class");
+	const string targetClassFileName("D:\\jvm\\modules\\java.base\\classes\\java\\lang\\Class.class");
 	//const string bootstrapJDKPath = "D:\\jdk-14\\jmods\\java.compiler.jmod.skip";
-	const string bootstrapJDKPath = "C:\\Users\\bjtul\\.m2\\repository\\org\\apache\\commons\\commons-lang3\\3.1\\commons-lang3-3.1.jar";
+	const string bootstrapJDKPath = "C:\\Users\\rolan\\.m2\\repository\\org\\apache\\commons\\commons-lang3\\3.1\\commons-lang3-3.1.jar";
 
 
 	shared_ptr<CompressedFileReader> jarReader = make_shared<CompressedFileReader>(bootstrapJDKPath);
@@ -34,8 +34,8 @@ int main(int argc, char ** argv)
 	u4 v4 = content->readu4();
 	content->rewind(7);
 
-	std::ifstream clazzFile(targetClassFileName, ios::binary);
-	shared_ptr<ClassFile> sd = make_shared<ClassFile>(clazzFile);
+	auto buf = Buffer::fromFile(targetClassFileName);
+	shared_ptr<ClassFile> sd = make_shared<ClassFile>(buf);
 	wcout << sd->getCanonicalClassName() << endl;
 	return 0;
 }

@@ -1,15 +1,23 @@
 #include "buffer.h"
 #include "cassert"
+#include <fstream>
+#include <vector>
+#include <iostream>
+#include <iomanip>
+
+#define DEBUG_READ_FILE_IN_BYTE
 
 Buffer::Buffer(istream& is): buffer(nullptr), read_pos(0), buffer_size(0) {
 	is.seekg(0, is.end);
-	auto len = is.tellg();
+	vector<char> data;
 	is.seekg(0, is.beg);
-	char* data = new char[len];
-	assert(data != nullptr);
-	is.read(data, len);
-	init(data, 0, len);
-	delete[] data;
+	char ch;
+	do {
+		ch = is.get();
+		data.push_back(ch);
+	} while (is.good());
+
+	init(&data[0], 0, data.size());
 }
 
 Buffer::Buffer(const char* data, size_t offset, size_t count) : buffer(nullptr), read_pos(0), buffer_size(0) {
@@ -34,9 +42,16 @@ size_t Buffer::pos() const {
 	return read_pos;
 }
 
+void Buffer::resetReadPos() {
+	read_pos = 0;
+}
+
 size_t Buffer::rewind(size_t count) {
 	assert(count >= 0 && count <= read_pos);
 	read_pos -= count;
+#ifdef DEBUG_READ_FILE_IN_BYTE
+	cout << "rewind from :0x" << read_pos + count << " with " << setiosflags(ios::uppercase) << hex << "0x" << (int)count << endl;
+#endif
 	return read_pos;
 }
 
@@ -45,7 +60,7 @@ u1 Buffer::readu1()
 	assert(buffer_size > read_pos);
 	u1 value = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)value << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)value << endl;
 #endif
 	return value;
 }
@@ -53,11 +68,11 @@ u2 Buffer::readu2() {
 	assert(buffer_size > read_pos + 2);
 	u1 v1 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	u1 v2 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
 #endif
 #ifdef __JVM_LITTLE_ENDIAN__
 	return ((v1 << 8) | v2) & 0xFFFF;
@@ -70,19 +85,19 @@ u4 Buffer::readu4()
 	assert(buffer_size > read_pos + 4);
 	u1 v1 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v1 << endl;
 #endif
 	u1 v2 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v2 << endl;
 #endif
 	u1 v3 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v3 << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v3 << endl;
 #endif
 	u4 v4 = *(buffer + read_pos++);
 #ifdef DEBUG_READ_FILE_IN_BYTE
-	cout << "read at:0x" << is.tellg() << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v4 << endl;
+	cout << "read at:0x" << read_pos << " = " << setiosflags(ios::uppercase) << hex << "0x" << (int)v4 << endl;
 #endif
 #ifdef __JVM_LITTLE_ENDIAN__
 	return ((v1 << 24) | (v2 << 16) | (v3 << 8) | v4) & 0xFFFFFFFF;
@@ -107,6 +122,16 @@ u4 Buffer::peaku4() {
 	u4 v = readu4();
 	rewind(4);
 	return v;
+}
+
+shared_ptr<Buffer> Buffer::fromFile(const string& filePath) {
+	std::ifstream filestream(filePath.c_str(), ios::binary);
+	return  make_shared< Buffer>(filestream);
+}
+
+shared_ptr<Buffer> Buffer::fromFile(const wstring& filePath) {
+	std::ifstream filestream(filePath.c_str(), ios::binary);
+	return  make_shared< Buffer>(filestream);
 }
 
 Buffer::~Buffer() {

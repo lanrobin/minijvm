@@ -95,23 +95,11 @@ const u2 NESTED_CLASS_ACC_SYNTHETIC = 0x1000; // Declared synthetic; not present
 const u2 NESTED_CLASS_ACC_ANNOTATION = 0x2000; // Declared as an annotation type.
 const u2 NESTED_CLASS_ACC_ENUM = 0x4000; // Declared as an enum type.
 
-
-u1 peaku1(istream& is);
-u2 peaku2(istream& is);
-u4 peaku4(istream& is);
-
-u1 readu1(istream& is);
-u2 readu2(istream& is);
-u4 readu4(istream& is);
-
-u4 read_u1_vector(vector<u1>& v, istream& is, u4 count);
-u4 read_u2_vector(vector<u2>& v, istream& is, u4 count);
+u4 read_u1_vector(vector<u1>& v, shared_ptr<Buffer> buf, u4 count);
+u4 read_u2_vector(vector<u2>& v, shared_ptr<Buffer> buf, u4 count);
 
 template< typename T>
-u4 read_vector(vector<T>& v, istream& is, u4 count);
-
-template< typename T>
-u4 read_vector(vector<shared_ptr<T>>& v, istream& is, u4 count);
+u4 read_vector(vector<shared_ptr<T>>& v, shared_ptr<Buffer> buf, u4 count);
 
 
 //常量区定义
@@ -120,8 +108,8 @@ struct CONSTANT_Info {
 #ifdef DEBUG_READ_CLASS_FILE
     string typeName;
 #endif
-    CONSTANT_Info(istream& is) {
-        tag = readu1(is);
+    CONSTANT_Info(shared_ptr<Buffer> buf) {
+        tag = buf->readu1();
     }
     CONSTANT_Info() {
         tag = 0;
@@ -133,8 +121,8 @@ struct CONSTANT_Info {
 
 struct CONSTANT_Class_info : CONSTANT_Info {
     u2 name_index;
-    CONSTANT_Class_info(istream& is) :CONSTANT_Info(is) {
-        name_index = readu2(is);
+    CONSTANT_Class_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        name_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Class_info";
 #endif
@@ -145,9 +133,9 @@ struct CONSTANT_Fieldref_info : CONSTANT_Info {
     u2 class_index;
     u2 name_and_type_index;
 
-    CONSTANT_Fieldref_info(istream& is) :CONSTANT_Info(is) {
-        class_index = readu2(is);
-        name_and_type_index = readu2(is);
+    CONSTANT_Fieldref_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        class_index = buf->readu2();
+        name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Fieldref_info";
 #endif
@@ -158,9 +146,9 @@ struct CONSTANT_Methodref_info : CONSTANT_Info {
     u2 class_index;
     u2 name_and_type_index;
 
-    CONSTANT_Methodref_info(istream& is) :CONSTANT_Info(is) {
-        class_index = readu2(is);
-        name_and_type_index = readu2(is);
+    CONSTANT_Methodref_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        class_index = buf->readu2();
+        name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Methodref_info";
 #endif
@@ -171,9 +159,9 @@ struct CONSTANT_InterfaceMethodref_info : CONSTANT_Info {
     u2 class_index;
     u2 name_and_type_index;
 
-    CONSTANT_InterfaceMethodref_info(istream& is) :CONSTANT_Info(is) {
-        class_index = readu2(is);
-        name_and_type_index = readu2(is);
+    CONSTANT_InterfaceMethodref_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        class_index = buf->readu2();
+        name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_InterfaceMethodref_info";
 #endif
@@ -182,8 +170,8 @@ struct CONSTANT_InterfaceMethodref_info : CONSTANT_Info {
 
 struct CONSTANT_String_info : CONSTANT_Info {
     u2 string_index;
-    CONSTANT_String_info(istream& is) :CONSTANT_Info(is) {
-        string_index = readu2(is);
+    CONSTANT_String_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        string_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_String_info";
 #endif
@@ -192,8 +180,8 @@ struct CONSTANT_String_info : CONSTANT_Info {
 
 struct CONSTANT_Integer_info : CONSTANT_Info {
     u4 bytes;
-    CONSTANT_Integer_info(istream& is) :CONSTANT_Info(is) {
-        bytes = readu4(is);
+    CONSTANT_Integer_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Integer_info";
 #endif
@@ -202,8 +190,8 @@ struct CONSTANT_Integer_info : CONSTANT_Info {
 
 struct CONSTANT_Float_info : CONSTANT_Info {
     u4 bytes;
-    CONSTANT_Float_info(istream& is) :CONSTANT_Info(is) {
-        bytes = readu4(is);
+    CONSTANT_Float_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Float_info";
 #endif
@@ -214,9 +202,9 @@ struct  CONSTANT_Long_info : CONSTANT_Info {
     u4 high_bytes;
     u4 low_bytes;
 
-    CONSTANT_Long_info(istream& is) :CONSTANT_Info(is) {
-        high_bytes = readu4(is);
-        low_bytes = readu4(is);
+    CONSTANT_Long_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        high_bytes = buf->readu4();
+        low_bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Long_info";
 #endif
@@ -227,9 +215,9 @@ struct  CONSTANT_Double_info : CONSTANT_Info {
     u4 high_bytes;
     u4 low_bytes;
 
-    CONSTANT_Double_info(istream& is) :CONSTANT_Info(is) {
-        high_bytes = readu4(is);
-        low_bytes = readu4(is);
+    CONSTANT_Double_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        high_bytes = buf->readu4();
+        low_bytes = buf->readu4();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Double_info";
 #endif
@@ -239,9 +227,9 @@ struct  CONSTANT_Double_info : CONSTANT_Info {
 struct CONSTANT_NameAndType_info : CONSTANT_Info {
     u2 name_index;
     u2 descriptor_index;
-    CONSTANT_NameAndType_info(istream& is) :CONSTANT_Info(is) {
-        name_index = readu2(is);
-        descriptor_index = readu2(is);
+    CONSTANT_NameAndType_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        name_index = buf->readu2();
+        descriptor_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_NameAndType_info";
 #endif
@@ -252,9 +240,9 @@ struct CONSTANT_Utf8_info : CONSTANT_Info {
     u2 length;
     vector<u1> bytes;
 
-    CONSTANT_Utf8_info(istream& is) :CONSTANT_Info(is) {
-        length = readu2(is);
-        read_u1_vector(bytes, is, length);
+    CONSTANT_Utf8_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        length = buf->readu2();
+        read_u1_vector(bytes, buf, length);
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Utf8_info";
 #endif
@@ -269,9 +257,9 @@ private:
 struct CONSTANT_MethodHandle_info : CONSTANT_Info {
     u1 reference_kind;
     u2 reference_index;
-    CONSTANT_MethodHandle_info(istream& is) :CONSTANT_Info(is) {
-        reference_kind = readu1(is);
-        reference_index = readu2(is);
+    CONSTANT_MethodHandle_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        reference_kind = buf->readu1();
+        reference_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_MethodHandle_info";
 #endif
@@ -281,8 +269,8 @@ struct CONSTANT_MethodHandle_info : CONSTANT_Info {
 struct CONSTANT_MethodType_info : CONSTANT_Info {
     u2 descriptor_index;
 
-    CONSTANT_MethodType_info(istream& is) :CONSTANT_Info(is) {
-        descriptor_index = readu2(is);
+    CONSTANT_MethodType_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        descriptor_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_MethodType_info";
 #endif
@@ -292,9 +280,9 @@ struct CONSTANT_MethodType_info : CONSTANT_Info {
 struct CONSTANT_Dynamic_info : CONSTANT_Info {
     u2 bootstrap_method_attr_index;
     u2 name_and_type_index;
-    CONSTANT_Dynamic_info(istream& is) :CONSTANT_Info(is) {
-        bootstrap_method_attr_index = readu2(is);
-        name_and_type_index = readu2(is);
+    CONSTANT_Dynamic_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        bootstrap_method_attr_index = buf->readu2();
+        name_and_type_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Dynamic_info";
 #endif
@@ -304,16 +292,16 @@ struct CONSTANT_Dynamic_info : CONSTANT_Info {
 struct CONSTANT_InvokeDynamic_info : CONSTANT_Info {
     u2 bootstrap_method_attr_index;
     u2 name_and_type_index;
-    CONSTANT_InvokeDynamic_info(istream& is) :CONSTANT_Info(is) {
-        bootstrap_method_attr_index = readu2(is);
-        name_and_type_index = readu2(is);
+    CONSTANT_InvokeDynamic_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        bootstrap_method_attr_index = buf->readu2();
+        name_and_type_index = buf->readu2();
     }
 };
 
 struct CONSTANT_Module_info : CONSTANT_Info {
     u2 name_index;
-    CONSTANT_Module_info(istream& is) :CONSTANT_Info(is) {
-        name_index = readu2(is);
+    CONSTANT_Module_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        name_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Module_info";
 #endif
@@ -322,8 +310,8 @@ struct CONSTANT_Module_info : CONSTANT_Info {
 
 struct CONSTANT_Package_info : CONSTANT_Info {
     u2 name_index;
-    CONSTANT_Package_info(istream& is) :CONSTANT_Info(is) {
-        name_index = readu2(is);
+    CONSTANT_Package_info(shared_ptr<Buffer> buf) :CONSTANT_Info() {
+        name_index = buf->readu2();
 #ifdef DEBUG_READ_CLASS_FILE
         typeName = "CONSTANT_Package_info";
 #endif
@@ -361,10 +349,10 @@ struct Attribute_Info {
     u4 attribute_length;
 
     //vector<u1> info;
-    Attribute_Info(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) :constantPool(cp) {
-        attribute_name_index = readu2(is);
-        attribute_length = readu4(is);
-        //read_u1_vector(info, is, attribute_length);
+    Attribute_Info(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) :constantPool(cp) {
+        attribute_name_index = buf->readu2();
+        attribute_length = buf->readu4();
+        //read_u1_vector(info, buf, attribute_length);
         //shared_ptr<CONSTANT_Utf8_info> entry = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[attribute_name_index]);
         name = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constantPool[attribute_name_index])->toUTF8String();
     }
@@ -385,13 +373,13 @@ protected:
 /*
 读取Attribute_Info
 */
-shared_ptr<Attribute_Info> readAttributeInfo(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp);
+shared_ptr<Attribute_Info> readAttributeInfo(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp);
 
 struct ConstantValue_attribute :Attribute_Info {
     u2 constantvalue_index;
-    ConstantValue_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp)
+    ConstantValue_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp)
     {
-        constantvalue_index = readu2(is);
+        constantvalue_index = buf->readu2();
     }
 };
 
@@ -402,11 +390,11 @@ struct Code_attribute : Attribute_Info {
         u2 end_pc;
         u2 handler_pc;
         u2 catch_type;
-        ExceptionTable(istream& is) {
-            start_pc = readu2(is);
-            end_pc = readu2(is);
-            handler_pc = readu2(is);
-            catch_type = readu2(is);
+        ExceptionTable(shared_ptr<Buffer> buf) {
+            start_pc = buf->readu2();
+            end_pc = buf->readu2();
+            handler_pc = buf->readu2();
+            catch_type = buf->readu2();
         }
     };
 
@@ -419,22 +407,22 @@ struct Code_attribute : Attribute_Info {
     u2 attributes_count;
     vector<shared_ptr<Attribute_Info>> attributes;
 
-    Code_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        max_stack = readu2(is);
-        max_locals = readu2(is);
-        code_length = readu4(is);
-        read_u1_vector(code, is, code_length);
+    Code_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        max_stack = buf->readu2();
+        max_locals = buf->readu2();
+        code_length = buf->readu4();
+        read_u1_vector(code, buf, code_length);
 
         // exception table
-        exception_table_length = readu2(is);
+        exception_table_length = buf->readu2();
         for (u2 i = 0; i < exception_table_length; i++) {
-            exception_table.push_back(make_shared< ExceptionTable>(is));
+            exception_table.push_back(make_shared<ExceptionTable>(buf));
         }
 
         // attributes
-        attributes_count = readu2(is);
+        attributes_count = buf->readu2();
         for (u2 i = 0; i < attributes_count; i++) {
-            attributes.push_back(readAttributeInfo(is, cp));
+            attributes.push_back(readAttributeInfo(buf, cp));
         }
     }
 };
@@ -458,43 +446,43 @@ struct StackMapTable_attribute : Attribute_Info {
     
     struct verification_type_info {
         u1 tag;
-        verification_type_info(istream& is) {
-            tag = readu1(is);
+        verification_type_info(shared_ptr<Buffer> buf) {
+            tag = buf->readu1();
         }
         ~verification_type_info() {};
     };
     struct Top_variable_info : verification_type_info {
-        Top_variable_info(istream& is) : verification_type_info(is) {}
+        Top_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     struct Integer_variable_info : verification_type_info {
-        Integer_variable_info(istream& is) : verification_type_info(is) {}
+        Integer_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     struct Float_variable_info : verification_type_info {
-        Float_variable_info(istream& is) : verification_type_info(is) {}
+        Float_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     struct Null_variable_info : verification_type_info {
-        Null_variable_info(istream& is) : verification_type_info(is) {}
+        Null_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     struct UninitializedThis_variable_info : verification_type_info {
-        UninitializedThis_variable_info(istream& is) : verification_type_info(is) {}
+        UninitializedThis_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     struct Object_variable_info : verification_type_info {
         u2 cpool_index;
-        Object_variable_info(istream& is) : verification_type_info(is) {
-            cpool_index = readu2(is);
+        Object_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {
+            cpool_index = buf->readu2();
         }
     };
     struct Uninitialized_variable_info : verification_type_info {
         u2 offset;
-        Uninitialized_variable_info(istream& is) : verification_type_info(is) {
-            offset = readu2(is);
+        Uninitialized_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {
+            offset = buf->readu2();
         }
     };
     struct Long_variable_info : verification_type_info {
-        Long_variable_info(istream& is) : verification_type_info(is) {}
+        Long_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     struct Double_variable_info : verification_type_info {
-        Double_variable_info(istream& is) : verification_type_info(is) {}
+        Double_variable_info(shared_ptr<Buffer> buf) : verification_type_info(buf) {}
     };
     /*
     Verification definition end
@@ -502,55 +490,55 @@ struct StackMapTable_attribute : Attribute_Info {
 
     struct stack_map_frame {
         u1 frame_type;
-        stack_map_frame(istream& is) {
-            frame_type = readu1(is);
+        stack_map_frame(shared_ptr<Buffer> buf) {
+            frame_type = buf->readu1();
         }
         virtual ~stack_map_frame() {};
     protected:
-        void readVerificaitonTypes(vector< shared_ptr<verification_type_info>>& vec, istream& is, u2 numbers) {
+        void readVerificaitonTypes(vector< shared_ptr<verification_type_info>>& vec, shared_ptr<Buffer> buf, u2 numbers) {
             for (u2 i = 0; i < numbers; i++) {
-                vec.push_back(readVerificationTypeInfo(is));
+                vec.push_back(readVerificationTypeInfo(buf));
             }
         }
     };
 
     struct same_frame :stack_map_frame {
-        same_frame(istream& is) : stack_map_frame(is) {}
+        same_frame(shared_ptr<Buffer> buf) : stack_map_frame(buf) {}
     };
     struct same_locals_1_stack_item_frame :stack_map_frame {
         vector< shared_ptr<verification_type_info>> stack; // 只有一个
-        same_locals_1_stack_item_frame(istream& is) : stack_map_frame(is) {
-            readVerificaitonTypes(stack, is, 1);
+        same_locals_1_stack_item_frame(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
+            readVerificaitonTypes(stack, buf, 1);
         }
     };
     struct same_locals_1_stack_item_frame_extended :stack_map_frame {
         u2 offset_delta;
         vector< shared_ptr<verification_type_info>> stack; //只有一个
-        same_locals_1_stack_item_frame_extended(istream& is) : stack_map_frame(is) {
-            offset_delta = readu2(is);
-            readVerificaitonTypes(stack, is, 1);
+        same_locals_1_stack_item_frame_extended(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
+            offset_delta = buf->readu2();
+            readVerificaitonTypes(stack, buf, 1);
         }
     };
     struct chop_frame :stack_map_frame {
         u2 offset_delta;
-        chop_frame(istream& is) : stack_map_frame(is) {
-            offset_delta = readu2(is);
+        chop_frame(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
+            offset_delta = buf->readu2();
         }
     };
     struct same_frame_extended :stack_map_frame {
         u2 offset_delta;
-        same_frame_extended(istream& is) : stack_map_frame(is) {
-            offset_delta = readu2(is);
+        same_frame_extended(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
+            offset_delta = buf->readu2();
         }
     };
     struct append_frame :stack_map_frame {
         vector< shared_ptr<verification_type_info>> locals;
         u2 offset_delta;
-        append_frame(istream& is) : stack_map_frame(is) {
-            offset_delta = readu2(is);
+        append_frame(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
+            offset_delta = buf->readu2();
             u1 locals_count = frame_type - 251;
             for (u1 i = 0; i < locals_count; i++) {
-                locals.push_back(readVerificationTypeInfo(is));
+                locals.push_back(readVerificationTypeInfo(buf));
             }
         }
     };
@@ -561,36 +549,36 @@ struct StackMapTable_attribute : Attribute_Info {
         vector<shared_ptr<verification_type_info>> locals;
         u2 number_of_stack_items;
         vector<shared_ptr<verification_type_info>> stack;
-        full_frame(istream& is) : stack_map_frame(is) {
-            offset_delta = readu2(is);
-            number_of_locals = readu2(is);
-            readVerificaitonTypes(locals, is, number_of_locals);
-            number_of_stack_items = readu2(is);
-            readVerificaitonTypes(stack, is, number_of_stack_items);
+        full_frame(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
+            offset_delta = buf->readu2();
+            number_of_locals = buf->readu2();
+            readVerificaitonTypes(locals, buf, number_of_locals);
+            number_of_stack_items = buf->readu2();
+            readVerificaitonTypes(stack, buf, number_of_stack_items);
         }
     };
 
     u2 number_of_entries;
     vector<shared_ptr<stack_map_frame>> entries;
 
-    StackMapTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp)
+    StackMapTable_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp)
     {
-        number_of_entries = readu2(is);
+        number_of_entries = buf->readu2();
         for (u2 i = 0; i < number_of_entries; i++) {
-            entries.push_back(readStackMapFrame(is));
+            entries.push_back(StackMapTable_attribute::readStackMapFrame(buf));
         }
     }
 private:
-    static shared_ptr<verification_type_info> readVerificationTypeInfo(istream& is);
-    static shared_ptr<stack_map_frame> readStackMapFrame(istream& is);
+    static shared_ptr<verification_type_info> readVerificationTypeInfo(shared_ptr<Buffer> buf);
+    static shared_ptr<stack_map_frame> readStackMapFrame(shared_ptr<Buffer> buf);
 };
 
 struct Exceptions_attribute :Attribute_Info {
     u2 number_of_exceptions;
     vector<u2> exception_index_table;
-    Exceptions_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        number_of_exceptions = readu2(is);
-        read_u2_vector(exception_index_table, is, number_of_exceptions);
+    Exceptions_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        number_of_exceptions = buf->readu2();
+        read_u2_vector(exception_index_table, buf, number_of_exceptions);
     }
 };
 
@@ -600,20 +588,20 @@ struct InnerClasses_attribute : Attribute_Info {
         u2 outer_class_info_index;
         u2 inner_name_index;
         u2 inner_class_access_flags;
-        InnerClass(istream& is) {
-            inner_class_info_index = readu2(is);
-            outer_class_info_index = readu2(is);
-            inner_name_index = readu2(is);
-            inner_class_access_flags = readu2(is);
+        InnerClass(shared_ptr<Buffer> buf) {
+            inner_class_info_index = buf->readu2();
+            outer_class_info_index = buf->readu2();
+            inner_name_index = buf->readu2();
+            inner_class_access_flags = buf->readu2();
         }
     };
 
     u2 number_of_classes;
     vector<shared_ptr< InnerClass>> classes;
 
-    InnerClasses_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        number_of_classes = readu2(is);
-        read_vector(classes, is, number_of_classes);
+    InnerClasses_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        number_of_classes = buf->readu2();
+        read_vector(classes, buf, number_of_classes);
     }
 };
 
@@ -621,35 +609,35 @@ struct EnclosingMethod_attribute : Attribute_Info {
     u2 class_index;
     u2 method_index;
 
-    EnclosingMethod_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        class_index = readu2(is);
-        method_index = readu2(is);
+    EnclosingMethod_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        class_index = buf->readu2();
+        method_index = buf->readu2();
     }
 };
 
 struct Synthetic_attribute : Attribute_Info {
-    Synthetic_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
+    Synthetic_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
     }
 };
 
 struct Signature_attribute : Attribute_Info {
     u2 signature_index;
-    Signature_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        signature_index = readu2(is);
+    Signature_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        signature_index = buf->readu2();
     }
 };
 
 struct SourceFile_attribute : Attribute_Info {
     u2 sourcefile_index;
-    SourceFile_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        sourcefile_index = readu2(is);
+    SourceFile_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        sourcefile_index = buf->readu2();
     }
 };
 
 struct SourceDebugExtension_attribute : Attribute_Info {
     vector<u1> debug_extension;
-    SourceDebugExtension_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        read_u1_vector(debug_extension, is, attribute_length);
+    SourceDebugExtension_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        read_u1_vector(debug_extension, buf, attribute_length);
     }
 };
 
@@ -657,16 +645,16 @@ struct LineNumberTable_attribute : Attribute_Info {
     struct LineNumberTable {
         u2 start_pc;
         u2 line_number;
-        LineNumberTable(istream& is) {
-            start_pc = readu2(is);
-            line_number = readu2(is);
+        LineNumberTable(shared_ptr<Buffer> buf) {
+            start_pc = buf->readu2();
+            line_number = buf->readu2();
         }
     };
     u2 line_number_table_length;
     vector<shared_ptr<LineNumberTable>> line_number_table;
-    LineNumberTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        line_number_table_length = readu2(is);
-        read_vector(line_number_table, is, line_number_table_length);
+    LineNumberTable_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        line_number_table_length = buf->readu2();
+        read_vector(line_number_table, buf, line_number_table_length);
     }
 };
 
@@ -677,20 +665,20 @@ struct LocalVariableTable_attribute : Attribute_Info {
         u2 name_index;
         u2 descriptor_index;
         u2 index;
-        LocalVariableTable(istream& is)
+        LocalVariableTable(shared_ptr<Buffer> buf)
         {
-            start_pc = readu2(is);
-            length = readu2(is);
-            name_index = readu2(is);
-            descriptor_index = readu2(is);
-            index = readu2(is);
+            start_pc = buf->readu2();
+            length = buf->readu2();
+            name_index = buf->readu2();
+            descriptor_index = buf->readu2();
+            index = buf->readu2();
         }
     };
     u2 local_variable_table_length;
     vector<shared_ptr< LocalVariableTable>> local_variable_table;
-    LocalVariableTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        local_variable_table_length = readu2(is);
-        read_vector(local_variable_table, is, local_variable_table_length);
+    LocalVariableTable_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        local_variable_table_length = buf->readu2();
+        read_vector(local_variable_table, buf, local_variable_table_length);
     }
 };
 
@@ -701,25 +689,25 @@ struct LocalVariableTypeTable_attribute : Attribute_Info {
         u2 name_index;
         u2 signature_index;
         u2 index;
-        LocalVariableTypeTable(istream& is)
+        LocalVariableTypeTable(shared_ptr<Buffer> buf)
         {
-            start_pc = readu2(is);
-            length = readu2(is);
-            name_index = readu2(is);
-            signature_index = readu2(is);
-            index = readu2(is);
+            start_pc = buf->readu2();
+            length = buf->readu2();
+            name_index = buf->readu2();
+            signature_index = buf->readu2();
+            index = buf->readu2();
         }
     };
     u2 local_variable_type_table_length;
     vector<shared_ptr< LocalVariableTypeTable>> local_variable_type_table;
-    LocalVariableTypeTable_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(is, cp) {
-        local_variable_type_table_length = readu2(is);
-        read_vector(local_variable_type_table, is, local_variable_type_table_length);
+    LocalVariableTypeTable_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
+        local_variable_type_table_length = buf->readu2();
+        read_vector(local_variable_type_table, buf, local_variable_type_table_length);
     }
 };
 
 struct Deprecated_attribute : Attribute_Info {
-    Deprecated_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+    Deprecated_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
     }
 };
 
@@ -730,16 +718,16 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
 
     struct element_value {
         u1 tag;
-        element_value(istream& is) {
-            tag = readu1(is);
+        element_value(shared_ptr<Buffer> buf) {
+            tag = buf->readu1();
         }
         virtual ~element_value() {};
     };
 
     struct const_element_value : element_value {
         u2 const_value_index;
-        const_element_value(istream& is) :element_value(is) {
-            const_value_index = readu2(is);
+        const_element_value(shared_ptr<Buffer> buf) :element_value(buf) {
+            const_value_index = buf->readu2();
         }
     };
 
@@ -747,33 +735,33 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
     {
         u2 type_name_index;
         u2 const_name_index;
-        enum_const_value(istream& is) :element_value(is) {
-            type_name_index = readu2(is);
-            const_name_index = readu2(is);
+        enum_const_value(shared_ptr<Buffer> buf) :element_value(buf) {
+            type_name_index = buf->readu2();
+            const_name_index = buf->readu2();
         }
     };
 
     struct class_element_value : element_value {
         u2 class_info_index;
-        class_element_value(istream& is) :element_value(is) {
-            class_info_index = readu2(is);
+        class_element_value(shared_ptr<Buffer> buf) :element_value(buf) {
+            class_info_index = buf->readu2();
         }
     };
 
     struct annotation_element_value : element_value {
         shared_ptr<annotation> annotation_value;
-        annotation_element_value(istream& is) :element_value(is) {
-            annotation_value = make_shared< annotation>(is);
+        annotation_element_value(shared_ptr<Buffer> buf) :element_value(buf) {
+            annotation_value = make_shared<annotation>(buf);
         }
     };
 
     struct array_element_value :element_value {
         u2  num_values;
         vector<shared_ptr<element_value>> values;
-        array_element_value(istream& is) :element_value(is) {
-            num_values = readu2(is);
+        array_element_value(shared_ptr<Buffer> buf) :element_value(buf) {
+            num_values = buf->readu2();
             for (u2 i = 0; i < num_values; i++) {
-                values.push_back(readElementValue(is));
+                values.push_back(readElementValue(buf));
             }
         }
     };
@@ -781,63 +769,63 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
     struct element_value_pair {
         u2 element_name_index;
         shared_ptr<element_value> value;
-        element_value_pair(istream& is) {
-            element_name_index = readu2(is);
-            value = readElementValue(is);
+        element_value_pair(shared_ptr<Buffer> buf) {
+            element_name_index = buf->readu2();
+            value = readElementValue(buf);
         }
     };
     struct annotation {
         u2 type_index;
         u2 num_element_value_pairs;
         vector<shared_ptr<element_value_pair>> element_value_pairs;
-        annotation(istream& is) {
-            type_index = readu2(is);
-            num_element_value_pairs = readu2(is);
-            read_vector(element_value_pairs, is, num_element_value_pairs);
+        annotation(shared_ptr<Buffer> buf) {
+            type_index = buf->readu2();
+            num_element_value_pairs = buf->readu2();
+            read_vector(element_value_pairs, buf, num_element_value_pairs);
         }
     };
 
-    RuntimeAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
+    RuntimeAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
     }
 
 protected:
-    static shared_ptr<element_value> readElementValue(istream& is);
+    static shared_ptr<element_value> readElementValue(shared_ptr<Buffer> buf);
 };
 
 struct RuntimeVisibleAnnotations_attribute : RuntimeAnnotations_attribute {
     u2 num_annotations;
     vector<shared_ptr<annotation>> annotations;
 
-    RuntimeVisibleAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(is, cp) {
-        num_annotations = readu2(is);
-        read_vector(annotations, is, num_annotations);
+    RuntimeVisibleAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(buf, cp) {
+        num_annotations = buf->readu2();
+        read_vector(annotations, buf, num_annotations);
     }
 };
 
 struct RuntimeInvisibleAnnotations_attribute : RuntimeVisibleAnnotations_attribute {
-    RuntimeInvisibleAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleAnnotations_attribute(is, cp) {}
+    RuntimeInvisibleAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleAnnotations_attribute(buf, cp) {}
 };
 
 struct RuntimeVisibleParameterAnnotations_attribute :RuntimeAnnotations_attribute {
     struct parameter_annotation {
         u2         num_annotations;
         vector<shared_ptr<annotation>> annotations;
-        parameter_annotation(istream& is) {
-            num_annotations = readu2(is);
-            read_vector(annotations, is, num_annotations);
+        parameter_annotation(shared_ptr<Buffer> buf) {
+            num_annotations = buf->readu2();
+            read_vector(annotations, buf, num_annotations);
         }
     };
     u1 num_parameters;
     vector<shared_ptr< parameter_annotation>> parameter_annotations;
-    RuntimeVisibleParameterAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(is, cp) {
-        num_parameters = readu1(is);
-        read_vector(parameter_annotations, is, num_parameters);
+    RuntimeVisibleParameterAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(buf, cp) {
+        num_parameters = buf->readu1();
+        read_vector(parameter_annotations, buf, num_parameters);
     }
 };
 
-// 4.7.19. The RuntimeInvisibleParameterAnnotations Attribute
+// 4.7.19. The RuntimeInVisibleParameterAnnotations Attribute
 struct RuntimeInvisibleParameterAnnotations_attribute :RuntimeVisibleParameterAnnotations_attribute {
-    RuntimeInvisibleParameterAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleParameterAnnotations_attribute(is, cp) {}
+    RuntimeInvisibleParameterAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleParameterAnnotations_attribute(buf, cp) {}
 };
 
 struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
@@ -848,10 +836,10 @@ struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
         u2 start_pc;
         u2 length;
         u2 index;
-        localvar_target_table(istream& is) {
-            start_pc = readu2(is);
-            length = readu2(is);
-            index = readu2(is);
+        localvar_target_table(shared_ptr<Buffer> buf) {
+            start_pc = buf->readu2();
+            length = buf->readu2();
+            index = buf->readu2();
         }
     };
     struct type_target {
@@ -860,88 +848,88 @@ struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
 
     struct type_parameter_target :type_target {
         u1 type_parameter_index;
-        type_parameter_target(istream& is) {
-            type_parameter_index = readu1(is);
+        type_parameter_target(shared_ptr<Buffer> buf) {
+            type_parameter_index = buf->readu1();
         }
     };
     struct supertype_target : type_target {
         u2 supertype_index;
-        supertype_target(istream& is) {
-            supertype_index = readu2(is);
+        supertype_target(shared_ptr<Buffer> buf) {
+            supertype_index = buf->readu2();
         }
     };
     struct type_parameter_bound_target : type_target {
         u1 type_parameter_index;
         u1 bound_index;
-        type_parameter_bound_target(istream& is) {
-            type_parameter_index = readu1(is);
-            bound_index = readu1(is);
+        type_parameter_bound_target(shared_ptr<Buffer> buf) {
+            type_parameter_index = buf->readu1();
+            bound_index = buf->readu1();
         }
     };
 
     struct empty_target :type_target {
-        empty_target(istream& is) {}
+        empty_target(shared_ptr<Buffer> buf) {}
     };
 
     struct formal_parameter_target : type_target {
         u1 formal_parameter_index;
-        formal_parameter_target(istream& is) {
-            formal_parameter_index = readu1(is);
+        formal_parameter_target(shared_ptr<Buffer> buf) {
+            formal_parameter_index = buf->readu1();
         }
     };
 
     struct throws_target : type_target {
         u2 throws_type_index;
-        throws_target(istream& is) {
-            throws_type_index = readu2(is);
+        throws_target(shared_ptr<Buffer> buf) {
+            throws_type_index = buf->readu2();
         }
     };
 
     struct localvar_target : type_target {
         u2 table_length;
         vector<shared_ptr< localvar_target_table>> table;
-        localvar_target(istream& is) {
-            table_length = readu2(is);
-            read_vector(table, is, table_length);
+        localvar_target(shared_ptr<Buffer> buf) {
+            table_length = buf->readu2();
+            read_vector(table, buf, table_length);
         }
     };
 
     struct catch_target : type_target {
         u2 exception_table_index;
-        catch_target(istream& is) {
-            exception_table_index = readu2(is);
+        catch_target(shared_ptr<Buffer> buf) {
+            exception_table_index = buf->readu2();
         }
     };
 
     struct offset_target : type_target {
         u2 offset;
-        offset_target(istream& is) {
-            offset = readu2(is);
+        offset_target(shared_ptr<Buffer> buf) {
+            offset = buf->readu2();
         }
     };
 
     struct type_argument_target : type_target {
         u2 offset;
         u1 type_argument_index;
-        type_argument_target(istream& is) {
-            offset = readu2(is);
-            type_argument_index = readu1(is);
+        type_argument_target(shared_ptr<Buffer> buf) {
+            offset = buf->readu2();
+            type_argument_index = buf->readu1();
         }
     };
     struct path_struct {
         u1 type_path_kind;
         u1 type_argument_index;
-        path_struct(istream& is) {
-            type_path_kind = readu1(is);
-            type_argument_index = readu1(is);
+        path_struct(shared_ptr<Buffer> buf) {
+            type_path_kind = buf->readu1();
+            type_argument_index = buf->readu1();
         }
     };
     struct type_path {
         u1 path_length;
         vector<shared_ptr< path_struct>> path;
-        type_path(istream& is) {
-            path_length = readu1(is);
-            read_vector(path, is, path_length);
+        type_path(shared_ptr<Buffer> buf) {
+            path_length = buf->readu1();
+            read_vector(path, buf, path_length);
         }
     };
 
@@ -952,37 +940,37 @@ struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
         u2        type_index;
         u2        num_element_value_pairs;
         vector<shared_ptr<element_value_pair>> element_value_pairs;
-        type_annotation(istream& is) {
-            target_type = readu1(is);
-            target_info = readTypeTarget(is, target_type);
-            target_path = make_shared< type_path>(is);
-            type_index = readu2(is);
-            num_element_value_pairs = readu2(is);
-            read_vector(element_value_pairs, is, num_element_value_pairs);
+        type_annotation(shared_ptr<Buffer> buf) {
+            target_type = buf->readu1();
+            target_info = readTypeTarget(buf, target_type);
+            target_path = make_shared< type_path>(buf);
+            type_index = buf->readu2();
+            num_element_value_pairs = buf->readu2();
+            read_vector(element_value_pairs, buf, num_element_value_pairs);
         }
     };
-    RuntimeTypeAnnotations(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(is, cp) {}
+    RuntimeTypeAnnotations(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(buf, cp) {}
 protected:
-    static shared_ptr<type_target> readTypeTarget(istream& is, u1 target_type);
+    static shared_ptr<type_target> readTypeTarget(shared_ptr<Buffer> buf, u1 target_type);
 };
 
 struct RuntimeVisibleTypeAnnotations_attribute : RuntimeTypeAnnotations {
     u2 num_annotations;
     vector <shared_ptr< type_annotation>> annotations;
-    RuntimeVisibleTypeAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(is, cp) {
-        num_annotations = readu2(is);
-        read_vector(annotations, is, num_annotations);
+    RuntimeVisibleTypeAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(buf, cp) {
+        num_annotations = buf->readu2();
+        read_vector(annotations, buf, num_annotations);
     }
 };
 
 struct RuntimeInvisibleTypeAnnotations_attribute : RuntimeVisibleTypeAnnotations_attribute {
-    RuntimeInvisibleTypeAnnotations_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleTypeAnnotations_attribute(is, cp) {}
+    RuntimeInvisibleTypeAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeVisibleTypeAnnotations_attribute(buf, cp) {}
 };
 
 struct AnnotationDefault_attribute : RuntimeTypeAnnotations {
     shared_ptr< element_value> default_value;
-    AnnotationDefault_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(is, cp) {
-        default_value = readElementValue(is);
+    AnnotationDefault_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(buf, cp) {
+        default_value = readElementValue(buf);
     }
 };
 
@@ -991,19 +979,19 @@ struct BootstrapMethods_attribute : Attribute_Info {
         u2 bootstrap_method_ref;
         u2 num_bootstrap_arguments;
         vector<u2> bootstrap_arguments;
-        bootstrap_method(istream& is) {
-            bootstrap_method_ref = readu2(is);
-            num_bootstrap_arguments = readu2(is);
-            read_u2_vector(bootstrap_arguments, is, num_bootstrap_arguments);
+        bootstrap_method(shared_ptr<Buffer> buf) {
+            bootstrap_method_ref = buf->readu2();
+            num_bootstrap_arguments = buf->readu2();
+            read_u2_vector(bootstrap_arguments, buf, num_bootstrap_arguments);
         }
     };
     u2 num_bootstrap_methods;
 
     vector<shared_ptr<bootstrap_method>>bootstrap_methods;
 
-    BootstrapMethods_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        num_bootstrap_methods = readu2(is);
-        read_vector(bootstrap_methods, is, num_bootstrap_methods);
+    BootstrapMethods_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        num_bootstrap_methods = buf->readu2();
+        read_vector(bootstrap_methods, buf, num_bootstrap_methods);
     }
 };
 
@@ -1011,16 +999,16 @@ struct MethodParameters_attribute : Attribute_Info {
     struct parameter {
         u2 name_index;
         u2 access_flags;
-        parameter(istream& is) {
-            name_index = readu2(is);
-            access_flags = readu2(is);
+        parameter(shared_ptr<Buffer> buf) {
+            name_index = buf->readu2();
+            access_flags = buf->readu2();
         }
     };
     u1 parameters_count;
     vector<shared_ptr< parameter>> parameters;
-    MethodParameters_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        parameters_count = readu1(is);
-        read_vector(parameters, is, parameters_count);
+    MethodParameters_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        parameters_count = buf->readu1();
+        read_vector(parameters, buf, parameters_count);
     }
 };
 
@@ -1030,24 +1018,24 @@ struct Module_attribute : Attribute_Info {
         u2 requires_index;
         u2 requires_flags;
         u2 requires_version_index;
-        require(istream& is) {
-            requires_index = readu2(is);
-            requires_flags = readu2(is);
-            requires_version_index = readu2(is);
+        require(shared_ptr<Buffer> buf) {
+            requires_index = buf->readu2();
+            requires_flags = buf->readu2();
+            requires_version_index = buf->readu2();
         }
     };
 
-    // since export is keyword in c++, so add _
+    // since export buf keyword in c++, so add _
     struct _export {
         u2 exports_index;
         u2 exports_flags;
         u2 exports_to_count;
         vector<u2> exports_to_index;
-        _export(istream& is) {
-            exports_index = readu2(is);
-            exports_flags = readu2(is);
-            exports_to_count = readu2(is);
-            read_u2_vector(exports_to_index, is, exports_to_count);
+        _export(shared_ptr<Buffer> buf) {
+            exports_index = buf->readu2();
+            exports_flags = buf->readu2();
+            exports_to_count = buf->readu2();
+            read_u2_vector(exports_to_index, buf, exports_to_count);
         }
     };
 
@@ -1056,21 +1044,21 @@ struct Module_attribute : Attribute_Info {
         u2 opens_flags;
         u2 opens_to_count;
         vector<u2> opens_to_index;
-        open(istream& is) {
-            opens_index = readu2(is);
-            opens_flags = readu2(is);
-            opens_to_count = readu2(is);
-            read_u2_vector(opens_to_index, is, opens_to_count);
+        open(shared_ptr<Buffer> buf) {
+            opens_index = buf->readu2();
+            opens_flags = buf->readu2();
+            opens_to_count = buf->readu2();
+            read_u2_vector(opens_to_index, buf, opens_to_count);
         }
     };
     struct provide {
         u2 provides_index;
         u2 provides_with_count;
         vector<u2> provides_with_index;
-        provide(istream& is) {
-            provides_index = readu2(is);
-            provides_with_count = readu2(is);
-            read_u2_vector(provides_with_index, is, provides_with_count);
+        provide(shared_ptr<Buffer> buf) {
+            provides_index = buf->readu2();
+            provides_with_count = buf->readu2();
+            read_u2_vector(provides_with_index, buf, provides_with_count);
         }
     };
 
@@ -1093,69 +1081,69 @@ struct Module_attribute : Attribute_Info {
     u2 provides_count;
     vector<shared_ptr<provide>> provides;
 
-    Module_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        module_name_index = readu2(is);
-        module_flags = readu2(is);
-        module_version_index = readu2(is);
+    Module_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        module_name_index = buf->readu2();
+        module_flags = buf->readu2();
+        module_version_index = buf->readu2();
 
         // requires.
-        requires_count = readu2(is);
-        read_vector(requires, is, requires_count);
+        requires_count = buf->readu2();
+        read_vector(requires, buf, requires_count);
 
         // exportes
-        exports_count = readu2(is);
-        read_vector(exports, is, exports_count);
+        exports_count = buf->readu2();
+        read_vector(exports, buf, exports_count);
 
         // opens
-        opens_count = readu2(is);
-        read_vector(opens, is, opens_count);
+        opens_count = buf->readu2();
+        read_vector(opens, buf, opens_count);
 
         // uses
-        uses_count = readu2(is);
-        read_u2_vector(uses_index, is, uses_count);
+        uses_count = buf->readu2();
+        read_u2_vector(uses_index, buf, uses_count);
 
         // provides
-        provides_count = readu2(is);
-        read_vector(provides, is, provides_count);
+        provides_count = buf->readu2();
+        read_vector(provides, buf, provides_count);
     }
 };
 
 struct ModulePackages_attribute : Attribute_Info {
     u2 package_count;
     vector<u2> package_index;
-    ModulePackages_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        package_count = readu2(is);
-        read_u2_vector(package_index, is, package_count);
+    ModulePackages_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        package_count = buf->readu2();
+        read_u2_vector(package_index, buf, package_count);
     }
 };
 
 struct ModuleMainClass_attribute : Attribute_Info {
     u2 main_class_index;
-    ModuleMainClass_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        main_class_index = readu2(is);
+    ModuleMainClass_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        main_class_index = buf->readu2();
     }
 };
 
 struct NestHost_attribute : Attribute_Info {
     u2 host_class_index;
-    NestHost_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        host_class_index = readu2(is);
+    NestHost_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        host_class_index = buf->readu2();
     }
 };
 
 struct NestMembers_attribute : Attribute_Info {
     u2 number_of_classes;
     vector<u2> classes;
-    NestMembers_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        number_of_classes = readu2(is);
-        read_u2_vector(classes, is, number_of_classes);
+    NestMembers_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        number_of_classes = buf->readu2();
+        read_u2_vector(classes, buf, number_of_classes);
     }
 };
 
 struct Unknown_attribute :Attribute_Info {
     vector<u1> info;
-    Unknown_attribute(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(is, cp) {
-        read_u1_vector(info, is, attribute_length);
+    Unknown_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
+        read_u1_vector(info, buf, attribute_length);
     }
 };
 
@@ -1166,13 +1154,13 @@ struct Field_Info {
     u2 descriptor_index;
     u2 attributes_count;
     vector<shared_ptr<Attribute_Info>> attributes;
-    Field_Info(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) {
-        access_flags = readu2(is);
-        name_index = readu2(is);
-        descriptor_index = readu2(is);
-        attributes_count = readu2(is);
+    Field_Info(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) {
+        access_flags = buf->readu2();
+        name_index = buf->readu2();
+        descriptor_index = buf->readu2();
+        attributes_count = buf->readu2();
         for (int i = 0; i < attributes_count; i++) {
-            attributes.push_back(readAttributeInfo(is, cp));
+            attributes.push_back(readAttributeInfo(buf, cp));
         }
     }
 };
@@ -1187,15 +1175,15 @@ struct Method_Info {
     u2 descriptor_index;
     u2 attributes_count;
     vector<shared_ptr<Attribute_Info>> attributes;
-    Method_Info(istream& is, const vector<shared_ptr<CONSTANT_Info>>& cp) {
-        access_flags = readu2(is);
-        name_index = readu2(is);
+    Method_Info(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) {
+        access_flags = buf->readu2();
+        name_index = buf->readu2();
         methodName = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[name_index])->toUTF8String();
-        descriptor_index = readu2(is);
-        attributes_count = readu2(is);
+        descriptor_index = buf->readu2();
+        attributes_count = buf->readu2();
         for (int i = 0; i < attributes_count; i++) {
-            //attributes.push_back(make_shared<Attribute_Info>(is, cp));
-            attributes.push_back(readAttributeInfo(is, cp));
+            //attributes.push_back(make_shared<Attribute_Info>(buf, cp));
+            attributes.push_back(readAttributeInfo(buf, cp));
         }
         //methodName = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[name_index])->toUTF8String();
     }
@@ -1230,10 +1218,11 @@ struct ClassFile {
     u2 attributes_count;
     vector<shared_ptr<Attribute_Info>> attributes;
 
-    ClassFile(istream& is);
-    ClassFile(wstring& filepath);
-    ClassFile(string& filepath);
     ClassFile(shared_ptr<Buffer> buf);
+    /*ClassFile(wstring& filepath);
+    ClassFile(string& filepath);
+    ClassFile(ClassFile&& cf) = default;
+    ClassFile(ClassFile& cf) = default;*/
 
     bool isJavaClassFile() const;
     wstring getCanonicalClassName() const;
@@ -1246,13 +1235,13 @@ private:
     wstring canonicalName;
 
     // method
-    bool parse(istream& stream);
+    bool parse(shared_ptr<Buffer> buf);
     void extract();
-    void readConstantPools(istream& is);
-    void readInterfaces(istream& is);
-    void readFieldInfos(istream& is);
-    void readMethodInfos(istream& is);
-    void readAttributes(istream& is);
+    void readConstantPools(shared_ptr<Buffer> buf);
+    void readInterfaces(shared_ptr<Buffer> buf);
+    void readFieldInfos(shared_ptr<Buffer> buf);
+    void readMethodInfos(shared_ptr<Buffer> buf);
+    void readAttributes(shared_ptr<Buffer> buf);
 };
 
 
