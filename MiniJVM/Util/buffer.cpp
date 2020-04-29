@@ -1,9 +1,11 @@
 #include "buffer.h"
-#include "cassert"
+#include "string_utils.h"
+#include <cassert>
 #include <fstream>
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 
 #define DEBUG_READ_FILE_IN_BYTE
 
@@ -31,7 +33,7 @@ void Buffer::init(const char* data, size_t offset, size_t count) {
 	buffer_size = count;
 	read_pos = 0;
 	buffer = new u1[buffer_size];
-	memcpy(buffer, data + offset, count);
+	std::memcpy(buffer, data + offset, count);
 }
 
 size_t Buffer::size() const {
@@ -133,10 +135,8 @@ void Buffer::dumpToFile(const string& filePath) {
 
 void Buffer::dumpToFile(const wstring& filePath) {
 	ofstream myfile;
-
-
-
-	myfile.open(filePath, ios::binary | ios::out);
+	std::string path = wstringToString(filePath);
+	myfile.open(path, ios::binary | ios::out);
 	myfile.write((char*)buffer, buffer_size);
 	myfile.close();
 }
@@ -147,7 +147,8 @@ shared_ptr<Buffer> Buffer::fromFile(const string& filePath) {
 }
 
 shared_ptr<Buffer> Buffer::fromFile(const wstring& filePath) {
-	std::ifstream filestream(filePath.c_str(), ios::binary);
+	std::string path = wstringToString(filePath);
+	std::ifstream filestream(path.c_str(), ios::binary);
 	return  make_shared< Buffer>(filestream);
 }
 

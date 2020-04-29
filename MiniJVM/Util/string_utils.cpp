@@ -1,7 +1,14 @@
 #include "string_utils.h"
 
-#include <codecvt>
-#include <string>
+#include <iostream>       // std::cout, std::hex
+#include <string>         // std::string, std::u32string
+#include <locale>         // std::wstring_convert
+#include <codecvt>        // std::codecvt_utf8
+#include <cstdint>        // std::uint_least32_t
+#include <cstdio>
+#include <cstring>
+
+#include <cwchar>
 
 std::wstring stringToWstring(const std::string& t_str)
 {
@@ -25,13 +32,12 @@ std::wstring charsToWstring(const char* t_str)
 
 std::string wstringToString(const std::wstring& wstr) {
     mbstate_t state;
-    memset(&state, 0, sizeof state);
+    std::memset(&state, 0, sizeof state);
     auto pwstr = wstr.c_str();
-    auto len = wstr.length() * 4 + 1;
-    char* mbstr = new char[len];
-    size_t convertedSize;
-    wcsrtombs_s(&convertedSize, mbstr, len, &pwstr, wstr.length(), &state);
-    std::string result(mbstr, 0, convertedSize);
+    size_t len = 1 + std::wcsrtombs(NULL, &pwstr, 0, &state);
+    char * mbstr = new char[len];
+    wcsrtombs(mbstr, &pwstr, len, &state);
+    std::string result(mbstr, 0, len);
     delete[] mbstr;
     return result;
 }

@@ -2,6 +2,8 @@
 #define __JAVA_BASE_TYPE__
 
 #include <cstdint>
+#include <memory>
+
 using namespace std;
 
 using u1 = std::uint8_t;

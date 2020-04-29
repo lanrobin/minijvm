@@ -4,7 +4,6 @@
 #include<fstream>
 #include<string>
 #include"string_utils.h"
-#include "MiniJVM.h"
 #include "clazz_reader.h"
 
 #include "zip/zip.h"

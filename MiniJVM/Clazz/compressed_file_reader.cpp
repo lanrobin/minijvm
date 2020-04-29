@@ -10,12 +10,12 @@
 
 using namespace std;
 
-CompressedFileReader::CompressedFileReader(const string& filePath): zip(NULL), isValidZipFile(FALSE)
+CompressedFileReader::CompressedFileReader(const string& filePath): zip(nullptr), isValidZipFile(false)
 {
 	init(filePath.c_str());
 }
 
-CompressedFileReader::CompressedFileReader(const wstring& filePath):zip(NULL), isValidZipFile(FALSE)
+CompressedFileReader::CompressedFileReader(const wstring& filePath):zip(nullptr), isValidZipFile(false)
 {
 	string path = wstringToString(filePath);
 	init(path.c_str());

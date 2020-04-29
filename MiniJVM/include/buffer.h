@@ -38,4 +38,4 @@ public:
 	static shared_ptr<Buffer> fromFile(const string& filePath);
 	static shared_ptr<Buffer> fromFile(const wstring& filePath);
 };
-#endif __JVM_BUFFER_READER__
+#endif //__JVM_BUFFER_READER__
