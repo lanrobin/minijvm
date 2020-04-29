@@ -11,8 +11,21 @@
 
 using namespace std;
 
+void test();
+
 int main(int argc, char ** argv)
 {
+	if (argc != 3) {
+		std::cout << argv[0] << " path/to/bootstrap/modules classfile" << endl;
+	}
+	string bootStrapModuleFolder(argv[1]);
+	string classFileName(argv[2]);
+
+	std::cout << "bs:" << bootStrapModuleFolder << ", classFile:" << classFileName << endl;
+	return 0;
+}
+
+void test() {
 	//const string fileName("D:\\github\\lanjvmtest\\main\\target\\classes\\icu\\mianshi\\main\\SynchronizedDemo.class");
 	//const string fileName("D:\\github\\java14compiler\\target\\classes\\com\\lan\\tools\\javac\\main\\JavaCompiler.class");
 	//const string fileName("D:\\github\\java14compiler\\target\\classes\\com\\lan\\tools\\javac\\code\\Types.class");
@@ -27,7 +40,7 @@ int main(int argc, char ** argv)
 
 	shared_ptr<CompressedFileReader> jarReader = make_shared<CompressedFileReader>(bootstrapJDKPath);
 	auto fileName = jarReader->listItems()[5];
-	wcout << "Read from jar" << bootstrapJDKPath << ", get file:" << fileName << endl;
+	std::wcout << "Read from jar" << bootstrapJDKPath << ", get file:" << fileName << endl;
 
 	auto content = jarReader->getItemContent(fileName);
 	wstring winPath(fileName);
@@ -36,6 +49,5 @@ int main(int argc, char ** argv)
 	auto jarClass = make_shared<ClassFile>(content);
 	auto buf = Buffer::fromFile(targetClassFileName);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(buf);
-	wcout << sd->getCanonicalClassName() << endl;
-	return 0;
+	std::wcout << sd->getCanonicalClassName() << endl;
 }
