@@ -4,6 +4,7 @@
 #include<fstream>
 #include<string>
 #include <cstdlib>
+#include <cstdio>
 #include"string_utils.h"
 #include "clazz_reader.h"
 

@@ -5,9 +5,6 @@ cmake_minimum_required (VERSION 3.10)
 
 project ("minijava")
 
-IF (PROJECT_OS_FAMILY MATCHES "unix")
-    add_compile_options(-pthread)
-ENDIF()
 
 IF(WIN32)
     set(PTHREAD_LIB_INCLUDE "./windows/pthread/include")
@@ -23,6 +20,7 @@ IF(WIN32)
 
 ELSE()
     SET(PTHREAD_LIB_INCLUDE "")
+    add_compile_options(-pthread)
 ENDIF()
 
 include_directories("include" ${PTHREAD_LIB_INCLUDE})
@@ -53,7 +51,9 @@ IF(WIN32)
     add_custom_command(TARGET "${PROJECT_NAME}" POST_BUILD        # Adds a post-build event to MyTest
     COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
         "${PTHREAD_LIB_AND_DLL_DIR}/pthreads.dll"      # <--this is in-file
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>)                 # <--this is out-file path    
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)                 # <--this is out-file path
+ELSE()
+        target_link_libraries(${PROJECT_NAME} pthread)
 ENDIF()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
