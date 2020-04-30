@@ -34,7 +34,7 @@ set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp")
 
 set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp")
 
-Set(Utils "./util/buffer.cpp" "./Util/string_utils.cpp")
+Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp")
 
 set(ThirdParty "./thirdparties/zip/zip.c")
 
