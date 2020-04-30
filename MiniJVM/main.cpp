@@ -12,11 +12,7 @@
 #include "compressed_file_reader.h"
 #include "vm.h"
 
-#ifdef WIN32
 #include "pthread.h"
-#else
-#include <pthread.h>
-#endif
 
 using namespace std;
 
