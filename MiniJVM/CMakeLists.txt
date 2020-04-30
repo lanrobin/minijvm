@@ -30,13 +30,13 @@ include_directories("include" ${PTHREAD_LIB_INCLUDE})
 # Include sub-projects.
 #add_subdirectory ("MiniJVM")
 
-set(Clazz_File "./Clazz/clazz_reader.cpp" "./Clazz/compressed_file_reader.cpp")
+set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp")
 
 set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp")
 
-Set(Utils "./Util/buffer.cpp" "./Util/string_utils.cpp")
+Set(Utils "./util/buffer.cpp" "./Util/string_utils.cpp")
 
-set(ThirdParty "./ThirdParties/zip/zip.c")
+set(ThirdParty "./thirdparties/zip/zip.c")
 
 #get_directory_property(_my_link_dirs LINK_DIRECTORIES)
 #message(STATUS "_my_link_dirs = ${_my_link_dirs}") 
