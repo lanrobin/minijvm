@@ -10,3 +10,4 @@ This is a mini jvm
 
 # Used third party source code
 ## https://github.com/kuba--/zip for jmob, jar file read.
+## https://github.com/Tieske/pthreads-win32/tree/master/Pre-built.2 for Windows pthread

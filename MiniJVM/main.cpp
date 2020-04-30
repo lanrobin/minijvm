@@ -3,6 +3,7 @@
 #include<iostream>
 #include<fstream>
 #include<string>
+#include <cstdlib>
 #include"string_utils.h"
 #include "clazz_reader.h"
 
@@ -10,9 +11,16 @@
 #include "compressed_file_reader.h"
 #include "vm.h"
 
+#ifdef WIN32
+#include "pthread.h"
+#else
+#include <pthread.h>
+#endif
+
 using namespace std;
 
 void test();
+void testThreads();
 
 int main(int argc, char ** argv)
 {
@@ -26,7 +34,7 @@ int main(int argc, char ** argv)
 	string bootStrapModuleFolder("D:\\jvm\\modules");
 	string classFileName("HelloWorld");
 #endif
-
+	testThreads();
 	shared_ptr<VM> vm = make_shared<VM>(bootStrapModuleFolder, classFileName);
 	return vm->run();
 }
@@ -56,4 +64,32 @@ void test() {
 	auto buf = Buffer::fromFile(targetClassFileName);
 	shared_ptr<ClassFile> sd = make_shared<ClassFile>(buf);
 	std::wcout << sd->getCanonicalClassName() << endl;
+}
+
+
+#define NUM_THREADS 5
+
+void* PrintHello(void* threadid) {
+	long tid;
+	tid = (long)threadid;
+	cout << "Hello World! Thread ID, " << tid << endl;
+	pthread_exit(NULL);
+	return NULL;
+}
+
+void testThreads() {
+	pthread_t threads[NUM_THREADS];
+	int rc;
+	int i;
+
+	for (i = 0; i < NUM_THREADS; i++) {
+		cout << "main() : creating thread, " << i << endl;
+		rc = pthread_create(&threads[i], NULL, PrintHello, (void*)i);
+
+		if (rc) {
+			cout << "Error:unable to create thread," << rc << endl;
+			exit(-1);
+		}
+	}
+	pthread_exit(NULL);
 }
