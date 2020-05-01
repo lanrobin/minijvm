@@ -3,3 +3,7 @@
 VMThread::VMThread() {
 
 }
+
+VMThread::~VMThread() {
+
+}

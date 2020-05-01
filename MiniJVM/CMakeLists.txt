@@ -42,7 +42,7 @@ set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp")
 
 set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp")
 
-Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp")
+Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp" "vm/vm_class.cpp")
 
 set(ThirdParty "./thirdparties/zip/zip.c")
 
@@ -52,7 +52,7 @@ set(ThirdParty "./thirdparties/zip/zip.c")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 
-add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty})
+add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} "vm/vm_class.cpp")
 
 IF(WIN32)
     

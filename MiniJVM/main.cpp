@@ -33,8 +33,9 @@ int main(int argc, char ** argv)
 	string classFileName("HelloWorld");
 #endif
 	//testThreads();
-	testSystem();
-	shared_ptr<VM> vm = make_shared<VM>(bootStrapModuleFolder, classFileName);
+	//testSystem();
+	VM::initVM(bootStrapModuleFolder, classFileName);
+	shared_ptr<VM> vm = VM::getVM();
 	return vm->run();
 }
 
