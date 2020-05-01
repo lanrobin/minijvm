@@ -5,6 +5,13 @@ cmake_minimum_required (VERSION 3.10)
 
 project ("minijava")
 
+# check compiler version
+if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+    message( SEND_ERROR  "You need g++ version newer than 8.0")
+elseif(MSVC AND MSVC_VERSION VERSION_LESS 1920)
+    message(SEND_ERROR  "You need visual studio 2017 and newer.")
+endif()
+
 
 IF(WIN32)
 
