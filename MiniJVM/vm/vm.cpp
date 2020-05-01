@@ -1,19 +1,21 @@
+#include "base_type.h"
+
 #include <string>
 #include <iostream>
 
 #include "platform.h"
 #include "vm.h"
 
-VM::VM(const std::string& bs, const std::string c) {
+VM::VM(const string& bs, const string c) {
 	bootStrapModulePath = bs;
 	runningClassFile = c;
 }
 
 VM::~VM() {
-	std::cout << "VM is gone" << std::endl;
+	cout << "VM is gone" << endl;
 }
 
 int VM::run() {
-	std::cout << "run vm with bs:" << bootStrapModulePath << ", classFile:" << runningClassFile << std::endl;
+	cout << "run vm with bs:" << bootStrapModulePath << ", classFile:" << runningClassFile << endl;
 	return 0;
 }

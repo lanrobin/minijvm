@@ -7,6 +7,9 @@ project ("minijava")
 
 
 IF(WIN32)
+
+    # we use filesystem for vs 17
+    OPTION(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING "use filesystem in stdc++=14" ON)
     set(PTHREAD_LIB_INCLUDE "./windows/pthread/include")
 
     if("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
@@ -14,7 +17,7 @@ IF(WIN32)
     else()
        set(PTHREAD_LIB_AND_DLL_DIR "${PROJECT_SOURCE_DIR}/windows/pthread/Win32")
     endif()
-    link_directories("${PTHREAD_LIB_AND_DLL_DIR}")
+    link_directories("${PTHREAD_LIB_AND_DLL_DIR}" "Shlwapi.lib")
 
     #https://stackoverflow.com/questions/10671916/how-to-copy-dll-files-into-the-same-folder-as-the-executable-using-cmake
 
@@ -32,7 +35,7 @@ set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp")
 
 set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp")
 
-Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp")
+Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp")
 
 set(ThirdParty "./thirdparties/zip/zip.c")
 
@@ -56,4 +59,4 @@ ELSE()
         target_link_libraries(${PROJECT_NAME} pthread)
 ENDIF()
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)

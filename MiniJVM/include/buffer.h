@@ -4,6 +4,8 @@
 #include "platform.h"
 #include <iostream>
 
+using std::istream;
+
 class Buffer {
 private:
 	u1* buffer;

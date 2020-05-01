@@ -4,7 +4,6 @@
 #include <vector>
 #include "zip/zip.h"
 #include "buffer.h"
-using namespace std;
 
 class CompressedFileReader {
 public:

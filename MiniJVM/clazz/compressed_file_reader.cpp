@@ -8,8 +8,6 @@
 #include <string>
 #include <sstream>
 
-using namespace std;
-
 CompressedFileReader::CompressedFileReader(const string& filePath): zip(nullptr), isValidZipFile(false)
 {
 	init(filePath.c_str());

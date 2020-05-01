@@ -7,6 +7,9 @@
 #include <iomanip>
 #include <cstring>
 
+using std::istream;
+using std::ofstream;
+
 #define DEBUG_READ_FILE_IN_BYTE
 
 Buffer::Buffer(istream& is): buffer(nullptr), read_pos(0), buffer_size(0) {

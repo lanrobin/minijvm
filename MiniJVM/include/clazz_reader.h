@@ -4,13 +4,12 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <memory>
 #include "platform.h"
 #include "base_type.h"
 #include "buffer.h"
 
 #undef DEBUG_READ_CLASS_FILE
-
-using namespace std;
 
 /**
 这个文件主要是解析class文件，参照  https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html

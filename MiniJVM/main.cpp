@@ -5,8 +5,10 @@
 #include<string>
 #include <cstdlib>
 #include <cstdio>
+#include <filesystem>
 #include"string_utils.h"
 #include "clazz_reader.h"
+#include "system.h"
 
 #include "zip/zip.h"
 #include "compressed_file_reader.h"
@@ -14,10 +16,9 @@
 
 #include "pthread.h"
 
-using namespace std;
-
 void test();
 void testThreads();
+void testSystem();
 
 int main(int argc, char ** argv)
 {
@@ -31,7 +32,8 @@ int main(int argc, char ** argv)
 	string bootStrapModuleFolder("D:\\jvm\\modules");
 	string classFileName("HelloWorld");
 #endif
-	testThreads();
+	//testThreads();
+	testSystem();
 	shared_ptr<VM> vm = make_shared<VM>(bootStrapModuleFolder, classFileName);
 	return vm->run();
 }
@@ -89,4 +91,10 @@ void testThreads() {
 		}
 	}
 	pthread_exit(NULL);
+}
+
+
+void testSystem() {
+	auto pwd = std::filesystem::current_path();
+	wcout << "currentPath:" << pwd.wstring() << ", is abosulate:" << pwd.is_absolute() << endl;
 }

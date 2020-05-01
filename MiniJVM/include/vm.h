@@ -1,14 +1,14 @@
 #ifndef __JVM_VM_H__
 #define __JVM_VM_H__
 #include <string>
-
+#include "base_type.h"
 class VM {
 private:
-	std::string bootStrapModulePath;
-	std::string runningClassFile;
+	string bootStrapModulePath;
+	string runningClassFile;
 
 public:
-	VM(const std::string& bs, const std::string c);
+	VM(const string& bs, const string c);
 	~VM();
 	int run();
 };
