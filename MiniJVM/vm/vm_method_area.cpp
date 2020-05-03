@@ -26,4 +26,5 @@ shared_ptr<VMMethodArea> VMMethodAreaFactory::createMethodArea(shared_ptr<Config
 	if (conf->isExtensibleMethodArea()) {
 		return make_shared< VMExtensibleMethodArea>();
 	}
+	return nullptr;
 }

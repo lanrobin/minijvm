@@ -10,7 +10,7 @@ public:
 		return true;
 	}
 
-	string& toString();
+	string toString();
 };
 
 #endif //__JVM_VM_CONFIGURATIONS_H__

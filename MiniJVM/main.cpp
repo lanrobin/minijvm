@@ -81,7 +81,7 @@ void* PrintHello(void* threadid) {
 void testThreads() {
 	pthread_t threads[NUM_THREADS];
 	int rc;
-	int i;
+	long i;
 
 	for (i = 0; i < NUM_THREADS; i++) {
 		cout << "main() : creating thread, " << i << endl;

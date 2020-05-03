@@ -5,7 +5,7 @@ Configurations::Configurations(const wstring& configFilePath, int argc, char** a
 
 }
 
-string& Configurations::toString() {
+string Configurations::toString() {
 	string s;
 	s.append("MethodAreaType:");
 	s.append((this->isExtensibleMethodArea() ? "Exensible" : "Fixed"));
