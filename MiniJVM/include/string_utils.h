@@ -4,11 +4,11 @@
 #include "base_type.h"
 #include <string>
 
-wstring stringToWstring(const string& t_str);
+wstring s2w(const string& t_str);
 
-wstring charsToWstring(const char* t_str);
+wstring c2w(const char* t_str);
 
-string wstringToString(const wstring& wstr);
+string w2s(const wstring& wstr);
 
 
 /// copied from https://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string

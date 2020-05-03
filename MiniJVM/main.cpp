@@ -26,7 +26,7 @@ int main(int argc, char ** argv)
 	// change log pattern
 	spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
 	spdlog::info("Welcome to spdlog!");
-	spdlog::error("Some error message with arg: {}", 1);
+	spdlog::error("Some error message with arg:{}", 1);
 #ifndef JVM_DEBUG
 	if (argc != 3) {
 		std::cout << argv[0] << " path/to/bootstrap/modules classfile" << endl;

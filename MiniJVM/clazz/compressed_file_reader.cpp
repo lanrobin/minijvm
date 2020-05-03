@@ -15,7 +15,7 @@ CompressedFileReader::CompressedFileReader(const string& filePath): zip(nullptr)
 
 CompressedFileReader::CompressedFileReader(const wstring& filePath):zip(nullptr), isValidZipFile(false)
 {
-	string path = wstringToString(filePath);
+	string path = w2s(filePath);
 	init(path.c_str());
 }
 
@@ -28,7 +28,7 @@ void CompressedFileReader::init(const char* file) {
 			const char* name = zip_entry_name(zip);
 			int isdir = zip_entry_isdir(zip);
 			if (isdir == 0) {
-				entries.push_back(charsToWstring(name));
+				entries.push_back(c2w(name));
 			}
 		}
 		zip_entry_close(zip);
@@ -47,7 +47,7 @@ shared_ptr<Buffer> CompressedFileReader::getItemContent(wstring& itemName) {
 	ssize_t readSize = 0;
 	// 这个应该需要同步，否则zip不知道读的是哪个？
 	if (zip) {
-		string str = wstringToString(itemName);
+		string str = w2s(itemName);
 		zip_entry_open(zip, str.c_str());
 		readSize = zip_entry_read(zip, (void **)&buf, &buf_size);
 		zip_entry_close(zip);

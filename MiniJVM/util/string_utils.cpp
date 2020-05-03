@@ -14,7 +14,7 @@
 using std::codecvt_utf8;
 using std::wstring_convert;
 
-wstring stringToWstring(const string& t_str)
+wstring s2w(const string& t_str)
 {
     //setup converter
     typedef codecvt_utf8<wchar_t> convert_type;
@@ -24,7 +24,7 @@ wstring stringToWstring(const string& t_str)
     return converter.from_bytes(t_str);
 }
 
-wstring charsToWstring(const char* t_str)
+wstring c2w(const char* t_str)
 {
     //setup converter
     typedef codecvt_utf8<wchar_t> convert_type;
@@ -34,7 +34,7 @@ wstring charsToWstring(const char* t_str)
     return converter.from_bytes(t_str);
 }
 
-string wstringToString(const wstring& wstr) {
+string w2s(const wstring& wstr) {
     mbstate_t state;
     memset(&state, 0, sizeof state);
     auto pwstr = wstr.c_str();

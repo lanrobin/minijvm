@@ -138,7 +138,7 @@ void Buffer::dumpToFile(const string& filePath) {
 
 void Buffer::dumpToFile(const wstring& filePath) {
 	ofstream myfile;
-	std::string path = wstringToString(filePath);
+	std::string path = w2s(filePath);
 	myfile.open(path, ios::binary | ios::out);
 	myfile.write((char*)buffer, buffer_size);
 	myfile.close();
@@ -150,7 +150,7 @@ shared_ptr<Buffer> Buffer::fromFile(const string& filePath) {
 }
 
 shared_ptr<Buffer> Buffer::fromFile(const wstring& filePath) {
-	std::string path = wstringToString(filePath);
+	std::string path = w2s(filePath);
 	std::ifstream filestream(path.c_str(), ios::binary);
 	return  make_shared< Buffer>(filestream);
 }
