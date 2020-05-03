@@ -9,7 +9,7 @@
 #include"string_utils.h"
 #include "clazz_reader.h"
 #include "system.h"
-
+#include "log.h"
 #include "zip/zip.h"
 #include "compressed_file_reader.h"
 #include "vm.h"
@@ -23,6 +23,10 @@ void testSystem();
 
 int main(int argc, char ** argv)
 {
+	// change log pattern
+	spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
+	spdlog::info("Welcome to spdlog!");
+	spdlog::error("Some error message with arg: {}", 1);
 #ifndef JVM_DEBUG
 	if (argc != 3) {
 		std::cout << argv[0] << " path/to/bootstrap/modules classfile" << endl;
@@ -33,7 +37,7 @@ int main(int argc, char ** argv)
 	string classFileName("HelloWorld");
 	wstring confFilePath(L"./config.txt");
 #endif
-	//testThreads();
+	testThreads();
 	//testSystem();
 	VM::initVM(make_shared<Configurations>(confFilePath, argc, argv));
 	shared_ptr<VM> vm = VM::getVM();
@@ -73,7 +77,7 @@ void test() {
 void* PrintHello(void* threadid) {
 	long tid;
 	tid = (long)threadid;
-	cout << "Hello World! Thread ID, " << tid << endl;
+	spdlog::info("Hello World! Thread ID, {}" ,tid);
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -84,11 +88,11 @@ void testThreads() {
 	long i;
 
 	for (i = 0; i < NUM_THREADS; i++) {
-		cout << "main() : creating thread, " << i << endl;
+		spdlog::info("main() : creating thread {}", i);
 		rc = pthread_create(&threads[i], NULL, PrintHello, (void*)i);
 
 		if (rc) {
-			cout << "Error:unable to create thread," << rc << endl;
+			spdlog::info("Error:unable to create thread:{}" ,rc);
 			exit(-1);
 		}
 	}
