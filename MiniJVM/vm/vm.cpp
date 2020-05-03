@@ -3,31 +3,38 @@
 #include <string>
 #include <iostream>
 #include <cassert>
+#include "base_type.h"
+#include "log.h"
 #include "platform.h"
 #include "vm.h"
 #include "configurations.h"
 #include "vm_method_area.h"
 
-static shared_ptr<VM> VM_INSTANCE = nullptr;
 
-VM::VM(shared_ptr<Configurations> conf): conf(conf){
-	methodArea = VMMethodAreaFactory::createMethodArea(conf);
+VM::VM(): conf(nullptr){
 }
 
 VM::~VM() {
-	cout << "VM is gone" << endl;
+	spdlog::info("VM is gone");
+	//cout << "VM is gone" << endl;
 }
 
 int VM::run() {
-	cout << "run with config:"<<endl << conf->toString()<< endl;
+	spdlog::info("run with config:{}", conf->toString().c_str());
 	return 0;
 }
 
 shared_ptr<VM> VM::getVM() {
+	static shared_ptr<VM> VM_INSTANCE = make_shared<VM>();
 	return VM_INSTANCE;
 }
-void VM::initVM(shared_ptr<Configurations> conf) {
-	assert(VM_INSTANCE == nullptr);
-	VM_INSTANCE = shared_ptr<VM>(new VM(conf));
-	
+void VM::initVM(shared_ptr<Configurations> cfs) {
+	if (!initilized) {
+		initilized = true;
+		conf = cfs;
+		methodArea = VMMethodAreaFactory::createMethodArea(conf);
+	}
+	else {
+		spdlog::warn("VM has already been initialized.");
+	}
 }

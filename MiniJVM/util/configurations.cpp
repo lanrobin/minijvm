@@ -1,8 +1,9 @@
 #include "base_type.h"
 #include "configurations.h"
+#include "log.h"
 
 Configurations::Configurations(const wstring& configFilePath, int argc, char** argv) {
-
+	spdlog::info("Configurations");
 }
 
 string Configurations::toString() {

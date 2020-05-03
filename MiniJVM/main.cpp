@@ -37,11 +37,13 @@ int main(int argc, char ** argv)
 	string classFileName("HelloWorld");
 	wstring confFilePath(L"./config.txt");
 #endif
-	testThreads();
+	//testThreads();
 	//testSystem();
-	VM::initVM(make_shared<Configurations>(confFilePath, argc, argv));
 	shared_ptr<VM> vm = VM::getVM();
-	return vm->run();
+	vm->initVM(make_shared<Configurations>(confFilePath, argc, argv));
+	auto result = vm->run();
+	spdlog::info("vm exit with: {}", result);
+	return result;
 }
 
 void test() {

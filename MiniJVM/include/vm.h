@@ -9,14 +9,16 @@ class VM : public std::enable_shared_from_this<VM> {
 private:
 	shared_ptr<VMMethodArea> methodArea;
 	shared_ptr<Configurations> conf;
-	VM(shared_ptr<Configurations> conf);
+	bool initilized = false;
+
 public:
+	VM();
+	void initVM(shared_ptr<Configurations> conf);
 	~VM();
 	int run();
 
 public:
 	// static 
 	static shared_ptr<VM> getVM();
-	static void initVM(shared_ptr<Configurations> conf);
 };
 #endif //__JVM_VM_H__
