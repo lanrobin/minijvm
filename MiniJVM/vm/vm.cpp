@@ -5,12 +5,13 @@
 #include <cassert>
 #include "platform.h"
 #include "vm.h"
+#include "configurations.h"
+#include "vm_method_area.h"
 
 static shared_ptr<VM> VM_INSTANCE = nullptr;
 
-VM::VM(const string& bs, const string &c) {
-	bootStrapModulePath = bs;
-	runningClassFile = c;
+VM::VM(shared_ptr<Configurations> conf): conf(conf){
+	methodArea = VMMethodAreaFactory::createMethodArea(conf);
 }
 
 VM::~VM() {
@@ -18,15 +19,15 @@ VM::~VM() {
 }
 
 int VM::run() {
-	cout << "run vm with bs:" << bootStrapModulePath << ", classFile:" << runningClassFile << endl;
+	cout << "run with config:"<<endl << conf->toString()<< endl;
 	return 0;
 }
 
 shared_ptr<VM> VM::getVM() {
 	return VM_INSTANCE;
 }
-void VM::initVM(const string& bs, const string& c) {
+void VM::initVM(shared_ptr<Configurations> conf) {
 	assert(VM_INSTANCE == nullptr);
-	VM_INSTANCE = shared_ptr<VM>(new VM(bs, c));
+	VM_INSTANCE = shared_ptr<VM>(new VM(conf));
 	
 }

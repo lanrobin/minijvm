@@ -2,12 +2,14 @@
 #define __JVM_VM_H__
 #include <string>
 #include "base_type.h"
+#include "configurations.h"
+#include "vm_method_area.h"
+
 class VM : public std::enable_shared_from_this<VM> {
 private:
-	string bootStrapModulePath;
-	string runningClassFile;
-
-	VM(const string& bs, const string &c);
+	shared_ptr<VMMethodArea> methodArea;
+	shared_ptr<Configurations> conf;
+	VM(shared_ptr<Configurations> conf);
 public:
 	~VM();
 	int run();
@@ -15,6 +17,6 @@ public:
 public:
 	// static 
 	static shared_ptr<VM> getVM();
-	static void initVM(const string& bs, const string & c);
+	static void initVM(shared_ptr<Configurations> conf);
 };
 #endif //__JVM_VM_H__

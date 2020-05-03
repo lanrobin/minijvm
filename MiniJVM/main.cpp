@@ -13,6 +13,7 @@
 #include "zip/zip.h"
 #include "compressed_file_reader.h"
 #include "vm.h"
+#include "configurations.h"
 
 #include "pthread.h"
 
@@ -29,12 +30,12 @@ int main(int argc, char ** argv)
 	string bootStrapModuleFolder(argv[1]);
 	string classFileName(argv[2]);
 #else
-	string bootStrapModuleFolder("D:\\jvm\\modules");
 	string classFileName("HelloWorld");
+	wstring confFilePath(L"./config.txt");
 #endif
 	//testThreads();
 	//testSystem();
-	VM::initVM(bootStrapModuleFolder, classFileName);
+	VM::initVM(make_shared<Configurations>(confFilePath, argc, argv));
 	shared_ptr<VM> vm = VM::getVM();
 	return vm->run();
 }

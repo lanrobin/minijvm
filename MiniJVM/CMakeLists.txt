@@ -38,11 +38,11 @@ include_directories("include" ${PTHREAD_LIB_INCLUDE})
 # Include sub-projects.
 #add_subdirectory ("MiniJVM")
 
-set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp")
+set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp" "clazz/bootstrap_classloader.cpp")
 
-set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp")
+set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp")
 
-Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp" "vm/vm_class.cpp")
+Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp"  "util/configurations.cpp")
 
 set(ThirdParty "./thirdparties/zip/zip.c")
 
@@ -52,7 +52,7 @@ set(ThirdParty "./thirdparties/zip/zip.c")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 
-add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} "vm/vm_class.cpp")
+add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} "util/configurations.cpp")
 
 IF(WIN32)
     
@@ -65,5 +65,11 @@ IF(WIN32)
 ELSE()
         target_link_libraries(${PROJECT_NAME} pthread)
 ENDIF()
+
+# config config file.
+add_custom_command(TARGET "${PROJECT_NAME}" POST_BUILD        # Adds a post-build event to MyTest
+COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+        "${PROJECT_SOURCE_DIR}/config.txt"      # <--this is in-file
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)                 # <--this is out-file path
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
