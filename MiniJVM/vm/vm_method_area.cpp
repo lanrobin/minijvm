@@ -21,6 +21,34 @@ shared_ptr<VMClass> VMExtensibleMethodArea::get(const wstring& className) {
 	return nullptr;
 }
 
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstant(const wstring& t)
+{
+	throw runtime_error("Not implemented yet.");
+};
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstantDouble(u4 high, u4 low) 
+{
+	throw runtime_error("Not implemented yet.");
+};
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstantLong(u4 high, u4 low)
+{
+	throw runtime_error("Not implemented yet.");
+};
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstant(u4 v) {
+	throw runtime_error("Not implemented yet.");
+};
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstant(u2 v) {
+	throw runtime_error("Not implemented yet.");
+};
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstant(u1 v) {
+	throw runtime_error("Not implemented yet.");
+};
+std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstantChar(u2 v) {
+	throw runtime_error("Not implemented yet.");
+};
+shared_ptr<VMConstantItem> VMExtensibleMethodArea::getConstant(size_t index) {
+	throw runtime_error("Not implemented yet.");
+};
+
 VMExtensibleMethodArea::~VMExtensibleMethodArea(){
 	spdlog::info("VMExtensibleMethodArea gone");
 }

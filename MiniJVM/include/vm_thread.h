@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 #include "pthread.h"
-#include "vm_method.h"
+#include "vm_class.h"
 
 using namespace std;
 
@@ -15,8 +15,10 @@ struct VMThreadStackFrame {
 	vector<u4> localVirableSlots;
 	
 	// 当前栈桢所属的方法。
-	shared_ptr<VMMethod> method;
+	shared_ptr<VMClassMethod> method;
 };
+
+
 struct VMThread {
 private:
 	// 表示这个线程的program connter, 如果是native方法调用的时候就是-1, 表示undefined.
