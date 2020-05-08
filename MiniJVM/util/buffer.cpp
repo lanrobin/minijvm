@@ -12,7 +12,8 @@ using std::ofstream;
 
 #define DEBUG_READ_FILE_IN_BYTE
 
-Buffer::Buffer(istream& is): buffer(nullptr), read_pos(0), buffer_size(0) {
+Buffer::Buffer(istream& is, const wstring& ff = std::wstring()): buffer(nullptr), read_pos(0), buffer_size(0) {
+	this->mappingFromFile = ff.empty() ? L"MEMORY_BUFFER" : ff;
 	is.seekg(0, is.end);
 	vector<u1> data;
 	is.seekg(0, is.beg);
@@ -25,7 +26,8 @@ Buffer::Buffer(istream& is): buffer(nullptr), read_pos(0), buffer_size(0) {
 	init((char *)&data[0], 0, data.size());
 }
 
-Buffer::Buffer(const char* data, size_t offset, size_t count) : buffer(nullptr), read_pos(0), buffer_size(0) {
+Buffer::Buffer(const char* data, size_t offset, size_t count, const wstring& ff = std::wstring()) : buffer(nullptr), read_pos(0), buffer_size(0) {
+	this->mappingFromFile = ff.empty() ? L"MEMORY_BUFFER" : ff;
 	if (data != nullptr)
 	{
 		init(data, offset, count);
@@ -146,13 +148,13 @@ void Buffer::dumpToFile(const wstring& filePath) {
 
 shared_ptr<Buffer> Buffer::fromFile(const string& filePath) {
 	std::ifstream filestream(filePath.c_str(), ios::binary);
-	return  make_shared< Buffer>(filestream);
+	return  make_shared< Buffer>(filestream, s2w(filePath));
 }
 
 shared_ptr<Buffer> Buffer::fromFile(const wstring& filePath) {
 	std::string path = w2s(filePath);
 	std::ifstream filestream(path.c_str(), ios::binary);
-	return  make_shared< Buffer>(filestream);
+	return  make_shared< Buffer>(filestream, filePath);
 }
 
 Buffer::~Buffer() {

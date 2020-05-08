@@ -16,6 +16,7 @@ public:
 	void initVM(shared_ptr<Configurations> conf);
 	~VM();
 	int run();
+	shared_ptr<VMMethodArea> getMethodArea() const { return methodArea; }
 
 public:
 	// static 

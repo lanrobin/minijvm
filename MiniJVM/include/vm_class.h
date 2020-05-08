@@ -2,6 +2,7 @@
 #define __JVM_VM_CLASS_H__
 #include "base_type.h"
 #include "clazz_reader.h"
+#include "vm_classloader.h"
 #include "vm_field.h"
 #include "vm_heap.h"
 
@@ -50,22 +51,45 @@ struct VMClassField {
 struct VMClass {
 
 	enum ClassType {
-		ClassTypeOrdinaryClass, ClassTypeInterface,
+		ClassTypeOrdinaryClass,
+		ClassTypeInterface,
+		ClassTypeArrayClass
 	};
 
 	const wstring& className() const { return name; };
-	VMClass(shared_ptr< ClassFile>& cf);
-	
+	VMClass(shared_ptr< ClassFile> cf, shared_ptr<ClassLoader> cl);
+	virtual ~VMClass() {};
 protected:
 	wstring name;
 	u2 accessFlags;
 	shared_ptr<VMClass> super;
 	vector<shared_ptr<VMClass>> interfaces;
+	ClassType classType;
 
 	static unordered_map<wstring, shared_ptr< VMClassField>> classStaticFieldLayout;
 
 	static unordered_map<wstring, shared_ptr<VMHeapObject>> classStaticFields;
 
 	static unordered_map<wstring, shared_ptr< VMClassField>> classInstanceFieldLayout;
+
 };
+
+struct VMOrdinaryClass : public VMClass {
+	VMOrdinaryClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl);
+protected:
+	// 这里保存各个对象的属性性。
+	unordered_map<wstring, shared_ptr<VMHeapObject>> classFields;
+};
+
+struct VMInterfaceClass : public VMClass {
+	VMInterfaceClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl);
+};
+
+struct VMArrayClass : public VMClass {
+	VMArrayClass(shared_ptr<ClassFile> cf);
+	shared_ptr<VMClass> componentType;
+	u4 lenghth;
+	vector <shared_ptr<VMHeapObject> elements;
+};
+
 #endif //__JVM_VM_CLASS_H__

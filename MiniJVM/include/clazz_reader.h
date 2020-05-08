@@ -20,16 +20,16 @@ const u2 MIN_SUPPORTED_CLASS_FILE_VERSION = 45;
 
 
 
-/// field access flag
-const u2 FIELD_ACC_PUBLIC = 0x0001; //Declared public; may be accessed from outside its package.
-const u2 FIELD_ACC_FINAL = 0x0010; //Declared final; no subclasses allowed.
-const u2 FIELD_ACC_SUPER = 0x0020; //Treat superclass methods specially when invoked by the invokespecial instruction.
-const u2 FIELD_ACC_INTERFACE = 0x0200; //Is an interface, not a class.
-const u2 FIELD_ACC_ABSTRACT = 0x0400; //Declared abstract; must not be instantiated.
-const u2 FIELD_ACC_SYNTHETIC = 0x1000; //Declared synthetic; not present in the source code.
-const u2 FIELD_ACC_ANNOTATION = 0x2000; //Declared as an annotation type.
-const u2 FIELD_ACC_ENUM = 0x4000; //Declared as an enum type.
-const u2 FIELD_ACC_MODULE = 0x8000; //Is a module, not a class or interface.
+/// class file access flag
+const u2 CLASS_ACC_PUBLIC = 0x0001; //Declared public; may be accessed from outside its package.
+const u2 CLASS_ACC_FINAL = 0x0010; //Declared final; no subclasses allowed.
+const u2 CLASS_ACC_SUPER = 0x0020; //Treat superclass methods specially when invoked by the invokespecial instruction.
+const u2 CLASS_ACC_INTERFACE = 0x0200; //Is an interface, not a class.
+const u2 CLASS_ACC_ABSTRACT = 0x0400; //Declared abstract; must not be instantiated.
+const u2 CLASS_ACC_SYNTHETIC = 0x1000; //Declared synthetic; not present in the source code.
+const u2 CLASS_ACC_ANNOTATION = 0x2000; //Declared as an annotation type.
+const u2 CLASS_ACC_ENUM = 0x4000; //Declared as an enum type.
+const u2 CLASS_ACC_MODULE = 0x8000; //Is a module, not a class or interface.
 
 enum ConstantPoolType : u1 {
     Utf8 = 1, // class file version 45.3, since Java:1.0.2
@@ -1225,6 +1225,10 @@ struct ClassFile {
 
     bool isJavaClassFile() const;
     wstring getCanonicalClassName() const;
+    bool isSupportedClassFile() const { return isSupportedClassFile; }
+
+    bool isInterface() const{ return ((access_flags & CLASS_ACC_INTERFACE) == CLASS_ACC_INTERFACE); }
+    wstring getClassName(u2 index);
 
     // these are private members.
 private:

@@ -13,6 +13,7 @@ class VMMethodArea {
 public:
 	virtual shared_ptr<VMClass> put(const wstring& className, shared_ptr<VMClass> clz) = 0;
 	virtual shared_ptr<VMClass> get(const wstring& className) = 0;
+	virtual bool classExists(const wstring& className) const = 0;
 
 	virtual std::pair<size_t, shared_ptr<VMConstantItem>>putConstant(const wstring & t) = 0;
 	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstantDouble(u4 high, u4 low) = 0;
@@ -30,6 +31,9 @@ class VMExtensibleMethodArea : public VMMethodArea {
 public:
 	shared_ptr<VMClass> put(const wstring& className, shared_ptr<VMClass> clz) override;
 	shared_ptr<VMClass> get(const wstring& className) override;
+	bool classExists(const wstring& className) const override;
+
+
 	std::pair<size_t, shared_ptr<VMConstantItem>>putConstant(const wstring& t) override;
 	std::pair<size_t, shared_ptr<VMConstantItem>> putConstantDouble(u4 high, u4 low) override;
 	std::pair<size_t, shared_ptr<VMConstantItem>> putConstantLong(u4 high, u4 low) override;

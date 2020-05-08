@@ -11,9 +11,11 @@ private:
 	u1* buffer;
 	size_t buffer_size;
 	size_t read_pos;
+	// 这个有可能没有。
+	wstring mappingFromFile;
 public:
-	Buffer(istream& is);
-	Buffer(const char* buf, size_t offset, size_t count);
+	Buffer(istream& is, const wstring & fromFile = std::wstring());
+	Buffer(const char* buf, size_t offset, size_t count, const wstring& fromFile = std::wstring());
 
 	u1 readu1();
 	u2 readu2();
@@ -31,6 +33,8 @@ public:
 
 	void dumpToFile(const string& path);
 	void dumpToFile(const wstring& path);
+
+	wstring getMappingFile() const { return mappingFromFile; }
 
 	~Buffer();
 private:

@@ -40,7 +40,7 @@ include_directories("include" ${PTHREAD_LIB_INCLUDE})
 
 set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp" "clazz/bootstrap_classloader.cpp")
 
-set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp")
+set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp" "vm/vm_classloader.cpp")
 
 Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp"  "util/configurations.cpp")
 
@@ -52,7 +52,7 @@ set(ThirdParty "./thirdparties/zip/zip.c")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 
-add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} "util/configurations.cpp")
+add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} "util/configurations.cpp" "vm/vm_classloader.cpp")
 
 IF(WIN32)
     

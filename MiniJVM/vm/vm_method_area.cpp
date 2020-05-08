@@ -21,6 +21,11 @@ shared_ptr<VMClass> VMExtensibleMethodArea::get(const wstring& className) {
 	return nullptr;
 }
 
+bool VMExtensibleMethodArea::classExists(const wstring& className) const{
+	auto existing = classes.find(className);
+	return (existing != classes.end());
+}
+
 std::pair<size_t, shared_ptr<VMConstantItem>> VMExtensibleMethodArea::putConstant(const wstring& t)
 {
 	throw runtime_error("Not implemented yet.");
