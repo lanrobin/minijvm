@@ -12,7 +12,7 @@ using std::ofstream;
 
 #define DEBUG_READ_FILE_IN_BYTE
 
-Buffer::Buffer(istream& is, const wstring& ff = std::wstring()): buffer(nullptr), read_pos(0), buffer_size(0) {
+Buffer::Buffer(istream& is, const wstring& ff): buffer(nullptr), read_pos(0), buffer_size(0) {
 	this->mappingFromFile = ff.empty() ? L"MEMORY_BUFFER" : ff;
 	is.seekg(0, is.end);
 	vector<u1> data;
@@ -26,7 +26,7 @@ Buffer::Buffer(istream& is, const wstring& ff = std::wstring()): buffer(nullptr)
 	init((char *)&data[0], 0, data.size());
 }
 
-Buffer::Buffer(const char* data, size_t offset, size_t count, const wstring& ff = std::wstring()) : buffer(nullptr), read_pos(0), buffer_size(0) {
+Buffer::Buffer(const char* data, size_t offset, size_t count, const wstring& ff) : buffer(nullptr), read_pos(0), buffer_size(0) {
 	this->mappingFromFile = ff.empty() ? L"MEMORY_BUFFER" : ff;
 	if (data != nullptr)
 	{

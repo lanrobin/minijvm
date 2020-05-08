@@ -20,7 +20,7 @@ VM::~VM() {
 }
 
 int VM::run() {
-	spdlog::info("run with config:{}", conf->toString().c_str());
+	spdlog::info("run with config:{}", conf->toString());
 	return 0;
 }
 

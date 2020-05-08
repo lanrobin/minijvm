@@ -5,6 +5,8 @@
 #include "vm_class.h"
 #include "buffer.h"
 
+struct VMClass;
+
 class ClassLoader : public std::enable_shared_from_this<ClassLoader> {
 public:
 	virtual shared_ptr<VMClass> loadClass(const wstring& className) = 0;

@@ -1225,7 +1225,7 @@ struct ClassFile {
 
     bool isJavaClassFile() const;
     wstring getCanonicalClassName() const;
-    bool isSupportedClassFile() const { return isSupportedClassFile; }
+    bool isSupportedClassFile() const { return isSupportedVersion; }
 
     bool isInterface() const{ return ((access_flags & CLASS_ACC_INTERFACE) == CLASS_ACC_INTERFACE); }
     wstring getClassName(u2 index);

@@ -10,7 +10,9 @@
 
 using std::unordered_map;
 
+class ClassLoader;
 struct VMClass;
+
 
 struct VMMethodExceptionTable {
 	u2 startPC;
@@ -89,7 +91,7 @@ struct VMArrayClass : public VMClass {
 	VMArrayClass(shared_ptr<ClassFile> cf);
 	shared_ptr<VMClass> componentType;
 	u4 lenghth;
-	vector <shared_ptr<VMHeapObject> elements;
+	vector <shared_ptr<VMHeapObject>> elements;
 };
 
 #endif //__JVM_VM_CLASS_H__

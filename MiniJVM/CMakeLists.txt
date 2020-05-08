@@ -38,7 +38,7 @@ include_directories("include" ${PTHREAD_LIB_INCLUDE})
 # Include sub-projects.
 #add_subdirectory ("MiniJVM")
 
-set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp" "clazz/bootstrap_classloader.cpp")
+set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp" )
 
 set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp" "vm/vm_classloader.cpp")
 
