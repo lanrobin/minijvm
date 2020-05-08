@@ -22,7 +22,7 @@ struct VMHeapObject {
 
 	VMHeapObjectType type;
 
-	~VMHeapObject() {};
+	virtual ~VMHeapObject() {};
 };
 
 struct PrimitiveVMHeapObject : public VMHeapObject {
@@ -63,6 +63,7 @@ struct InterfaceVMHeapObject : public ReferenceVMHeapObject {
 };
 
 class VMHeapPool {
-
+public:
+	static shared_ptr< VMHeapObject> createVMHeapObject(const wstring& signature);
 };
 #endif // __JVM_VM_HEAP_H__

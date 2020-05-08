@@ -12,13 +12,15 @@ using std::unordered_map;
 
 class ClassLoader;
 struct VMClass;
+struct VMHeapObject;
 
 
 struct VMMethodExceptionTable {
 	u2 startPC;
 	u2 endPC;
-	u2 handler_pc;
+	u2 handlerPC;
 	wstring catchType;
+	VMMethodExceptionTable(shared_ptr< ClassFile> cf, shared_ptr<Code_attribute::ExceptionTable> et);
 };
 
 struct VMClassMethod {
@@ -30,29 +32,32 @@ struct VMClassMethod {
 	bool isVarAgurs() { return ((accessFlags & METHOD_ACC_VARARGS) == METHOD_ACC_VARARGS); }
 	bool isDeprected() const { return deprecated; }
 
-	const u2 accessFlags;
-	const bool deprecated = false;
-	const wstring name;
-	const wstring signature;
+	u2 accessFlags;
+	bool deprecated = false;
+	wstring name;
+	wstring signature;
 	//const shared_ptr<VMClass> clazz;
-	const vector<u1> codes;
-	const u2 maxStack;
-	const u2 maxLocals;
-	vector<VMMethodExceptionTable> exceptionTable;
+	vector<u1> codes;
+	u2 maxStack;
+	u2 maxLocals;
+	vector<shared_ptr<VMMethodExceptionTable>> exceptionTable;
 	vector<wstring> throwExceptions;
-	VMClassMethod(shared_ptr<Method_Info> mi);
+	VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi);
 };
 
 struct VMClassField {
+	bool isStatic() const { return ((accessFlags & FIELD_ACC_STATIC) == FIELD_ACC_STATIC); }
 	u2 accessFlags;
 	wstring name;
 	wstring signature;
-	const bool deprecated = false;
+	bool deprecated = false;
+
+	VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi);
 };
 
 struct VMClass {
 
-	enum ClassType {
+	enum class ClassType {
 		ClassTypeOrdinaryClass,
 		ClassTypeInterface,
 		ClassTypeArrayClass
@@ -60,6 +65,7 @@ struct VMClass {
 
 	const wstring& className() const { return name; };
 	VMClass(shared_ptr< ClassFile> cf, shared_ptr<ClassLoader> cl);
+	VMClass(const wstring& signature);
 	virtual ~VMClass() {};
 protected:
 	wstring name;
@@ -67,20 +73,24 @@ protected:
 	shared_ptr<VMClass> super;
 	vector<shared_ptr<VMClass>> interfaces;
 	ClassType classType;
+	shared_ptr<ClassLoader> classLoader;
 
-	static unordered_map<wstring, shared_ptr< VMClassField>> classStaticFieldLayout;
+	unordered_map<wstring, shared_ptr< VMClassField>> classStaticFieldLayout;
 
-	static unordered_map<wstring, shared_ptr<VMHeapObject>> classStaticFields;
+	unordered_map<wstring, shared_ptr<VMHeapObject>> classStaticFields;
 
-	static unordered_map<wstring, shared_ptr< VMClassField>> classInstanceFieldLayout;
+	unordered_map<wstring, shared_ptr< VMClassField>> classInstanceFieldLayout;
+
+	unordered_map<wstring, shared_ptr< VMClassMethod>> methods;
+
+public:
+	static wstring getNextDimensionSignature(const wstring& sig);
+	static vector<wstring> splitSignatureToElement(const wstring& sig);
 
 };
 
 struct VMOrdinaryClass : public VMClass {
 	VMOrdinaryClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl);
-protected:
-	// 这里保存各个对象的属性性。
-	unordered_map<wstring, shared_ptr<VMHeapObject>> classFields;
 };
 
 struct VMInterfaceClass : public VMClass {
@@ -88,7 +98,7 @@ struct VMInterfaceClass : public VMClass {
 };
 
 struct VMArrayClass : public VMClass {
-	VMArrayClass(shared_ptr<ClassFile> cf);
+	VMArrayClass(const wstring& compenentSignature, u4 l);
 	shared_ptr<VMClass> componentType;
 	u4 lenghth;
 	vector <shared_ptr<VMHeapObject>> elements;

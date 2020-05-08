@@ -52,7 +52,7 @@ shared_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
 		auto buffer = Buffer::fromFile(clazz.wstring());
 		return loadClass(buffer);
 	}
-	spdlog::error("Cannot laod class:{}", clazz.c_str());
+	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
 }
 
 shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {

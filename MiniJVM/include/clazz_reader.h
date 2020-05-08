@@ -94,6 +94,18 @@ const u2 NESTED_CLASS_ACC_SYNTHETIC = 0x1000; // Declared synthetic; not present
 const u2 NESTED_CLASS_ACC_ANNOTATION = 0x2000; // Declared as an annotation type.
 const u2 NESTED_CLASS_ACC_ENUM = 0x4000; // Declared as an enum type.
 
+
+//field.
+const u2 FIELD_ACC_PUBLIC = 0x0001; // Declared public; may be accessed from outside its package.
+const u2 FIELD_ACC_PRIVATE = 0x0002; // Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
+const u2 FIELD_ACC_PROTECTED = 0x0004; // Declared protected; may be accessed within subclasses.
+const u2 FIELD_ACC_STATIC = 0x0008; // Declared static.
+const u2 FIELD_ACC_FINAL = 0x0010; // Declared final; never directly assigned to after object construction (JLS §17.5).
+const u2 FIELD_ACC_VOLATILE = 0x0040; // Declared volatile; cannot be cached.
+const u2 FIELD_ACC_TRANSIENT = 0x0080; // Declared transient; not written or read by a persistent object manager.
+const u2 FIELD_ACC_SYNTHETIC = 0x1000; // Declared synthetic; not present in the source code.
+const u2 FIELD_ACC_ENUM = 0x4000; // Declared as an element of an enum.
+
 u4 read_u1_vector(vector<u1>& v, shared_ptr<Buffer> buf, u4 count);
 u4 read_u2_vector(vector<u2>& v, shared_ptr<Buffer> buf, u4 count);
 
@@ -356,10 +368,12 @@ struct Attribute_Info {
         name = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constantPool[attribute_name_index])->toUTF8String();
     }
 
-    wstring getAttributeName() {
+    wstring getAttributeName() const{
         return name;
     }
 
+    // make it virtual.
+    virtual ~Attribute_Info() {}
 private:
     wstring name;
 
@@ -1229,6 +1243,7 @@ struct ClassFile {
 
     bool isInterface() const{ return ((access_flags & CLASS_ACC_INTERFACE) == CLASS_ACC_INTERFACE); }
     wstring getClassName(u2 index);
+    wstring getUtf8String(u2 index);
 
     // these are private members.
 private:

@@ -40,7 +40,7 @@ include_directories("include" ${PTHREAD_LIB_INCLUDE})
 
 set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp" )
 
-set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp" "vm/vm_classloader.cpp")
+set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp" "vm/vm_classloader.cpp" "vm/vm_heap.cpp")
 
 Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp"  "util/configurations.cpp")
 
