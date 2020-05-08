@@ -20,7 +20,7 @@ IF(WIN32)
     set(PTHREAD_LIB_INCLUDE "./windows/pthread/include")
 
     if("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
-       set(PTHREAD_LIB_AND_DLL_DIR "${PROJECT_SOURCE_DIR}/windows/pthread/x64")
+       set(PTHREAD_LIB_AND_DLL_DIR "${PROJECT_SOURCE_DIR}/windows/pthread/Win64")
     else()
        set(PTHREAD_LIB_AND_DLL_DIR "${PROJECT_SOURCE_DIR}/windows/pthread/Win32")
     endif()
