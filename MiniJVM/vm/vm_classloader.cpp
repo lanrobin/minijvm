@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <filesystem>
 
+ClassLoader::ClassLoader(shared_ptr<ClassLoader> p) : parent(p) {}
+
+
 bool ClassLoader::classLoaded(const wstring& className) {
 	//check if class has been loaded.
 	auto ma = VM::getVM()->getMethodArea();
@@ -30,32 +33,8 @@ shared_ptr<VMClass> ClassLoader::getStoredClass(const wstring& className) const{
 	return ma->get(className);
 }
 
-BootstrapClassLoader::BootstrapClassLoader(const wstring& cp): bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader") {
 
-}
-
-shared_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
-	wstring canonicalClassPath(className);
-	// replace . with /
-	replaceAll(canonicalClassPath, L".", L"/");
-
-	if (classLoaded(canonicalClassPath)) {
-		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
-		return getStoredClass(canonicalClassPath);
-	}
-
-	std::filesystem::path clazz(bootstrapClassPath + L"/" + canonicalClassPath + L".class");
-
-	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
-
-	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz)) {
-		auto buffer = Buffer::fromFile(clazz.wstring());
-		return loadClass(buffer);
-	}
-	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
-}
-
-shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
+shared_ptr<VMClass> ClassLoader::readClass(shared_ptr<Buffer> buf) {
 	auto cf = make_shared<ClassFile>(buf);
 	if (cf != nullptr) {
 
@@ -64,7 +43,7 @@ shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
 			return getStoredClass(cf->getCanonicalClassName());
 		}
 
-		if (cf->isJavaClassFile()) {
+		if (!cf->isJavaClassFile()) {
 			throw runtime_error("Is not supported class file:" + w2s(buf->getMappingFile()));
 		}
 		if (!cf->isSupportedClassFile()) {
@@ -78,8 +57,86 @@ shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
 		}
 	}
 	spdlog::error("Cannot laod class:{}", w2s(buf->getMappingFile()));
+
+	return nullptr;
+}
+BootstrapClassLoader::BootstrapClassLoader(const wstring& cp, shared_ptr<ClassLoader> p):
+	ClassLoader(p), bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader") {
+
 }
 
-wstring BootstrapClassLoader::getClassLoaderName() const {
-	return classLoaderName;
+BootstrapClassLoader::BootstrapClassLoader(shared_ptr<ClassLoader> p) :
+	ClassLoader(p), classLoaderName(L"bootstrapClassLoader") {
+
+}
+
+shared_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
+	wstring canonicalClassPath(className);
+	// replace . with /
+	replaceAll(canonicalClassPath, L".", L"/");
+
+	if (classLoaded(canonicalClassPath)) {
+		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
+		return getStoredClass(canonicalClassPath);
+	}
+
+	std::filesystem::path clazz(getClassRootPath() + L"/" + canonicalClassPath + L".class");
+
+	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
+
+	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz)) {
+		auto buffer = Buffer::fromFile(clazz.wstring());
+		return loadClass(buffer);
+	}
+	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
+	return nullptr;
+}
+
+shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
+	return readClass(buf);
+}
+
+AppClassLoader::AppClassLoader(const wstring& appClassPath, shared_ptr<ClassLoader> p):
+	BootstrapClassLoader(p),
+	appClassRootPath(appClassPath),
+	classLoaderName(L"AppClassLoader"){
+
+}
+
+shared_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
+
+	auto parentReadClass = parent->loadClass(className);
+	if (parentReadClass != nullptr) {
+		spdlog::info("Class:{} read from parent classloader", w2s(className));
+		return parentReadClass;
+	}
+
+	wstring canonicalClassPath(className);
+	// replace . with /
+	replaceAll(canonicalClassPath, L".", L"/");
+
+	if (classLoaded(canonicalClassPath)) {
+		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
+		return getStoredClass(canonicalClassPath);
+	}
+
+	std::filesystem::path clazz(getClassRootPath() + L"/" + canonicalClassPath + L".class");
+
+	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
+
+	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz)) {
+		auto buffer = Buffer::fromFile(clazz.wstring());
+		return loadClass(buffer);
+	}
+	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
+	return nullptr;
+}
+
+shared_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf) {
+	auto parentReadClass = parent->loadClass(buf);
+	if (parentReadClass != nullptr) {
+		spdlog::info("Class:{} read from parent classloader", w2s(buf->getMappingFile()));
+		return parentReadClass;
+	}
+	return readClass(buf);
 }

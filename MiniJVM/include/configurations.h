@@ -10,7 +10,23 @@ public:
 		return true;
 	}
 
+	wstring getBootStrapClassPath() const {
+		return bootStrapClassPath;
+	}
+
+	wstring getAppClassPath() const {
+		return appClassPath;
+	}
+
+	wstring getTargetClass() const {
+		return targetClass;
+	}
+
 	string toString();
+private:
+	wstring bootStrapClassPath;
+	wstring appClassPath;
+	wstring targetClass;
 };
 
 #endif //__JVM_VM_CONFIGURATIONS_H__

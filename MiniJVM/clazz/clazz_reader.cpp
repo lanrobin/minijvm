@@ -467,11 +467,17 @@ void ClassFile::readAttributes(shared_ptr<Buffer> buf)
 }
 
 wstring ClassFile::getClassName(u2 index) {
+	if (index < 1 || index > constant_pool_count) {
+		return wstring();
+	}
 	// 正常的ClassName,如果是数组为内存生成的，不在这里生成。
 	auto classAttri = std::dynamic_pointer_cast<CONSTANT_Class_info>(constant_pool[index]);
 	return getUtf8String(classAttri->name_index);
 }
 
 wstring ClassFile::getUtf8String(u2 index) {
+	if (index < 1 || index > constant_pool_count) {
+		return wstring();
+	}
 	return std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constant_pool[index])->toUTF8String();
 }

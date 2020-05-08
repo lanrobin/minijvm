@@ -3,6 +3,7 @@
 #include "vm_class.h"
 #include "vm_heap.h"
 #include "log.h"
+#include "string_utils.h"
 
 VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
 
@@ -15,7 +16,12 @@ VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
 
 	auto superClassName = cf->getClassName(cf->super_class);
 
-	this->super = cl->loadClass(superClassName);
+	if (superClassName.size() > 0) {
+		this->super = cl->loadClass(superClassName);
+	}
+	else {
+		spdlog::warn("Load java/lang/Object.");
+	}
 
 	auto interfaces = cf->interfaces;
 	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
@@ -55,6 +61,15 @@ wstring VMClass::getNextDimensionSignature(const wstring& signature) {
 vector<wstring> VMClass::splitSignatureToElement(const wstring& signature) {
 	throw runtime_error("not implemented yet.");
 }
+
+shared_ptr<VMClassMethod> VMClass::findMethod(const wstring& methodSignature) const {
+	auto m = methods.find(methodSignature);
+	if (m == methods.end()) {
+		throw runtime_error("No method found for signature:" + w2s(methodSignature));
+	}
+	return m->second;
+}
+
 
 VMOrdinaryClass::VMOrdinaryClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) :VMClass(cf, cl) {
 	classType = VMClass::ClassType::ClassTypeOrdinaryClass;
@@ -104,9 +119,14 @@ VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> 
 
 			// 这里attri还是有其它的attri，暂时不用处理。
 			// 有 LineNumberTable， LocalVariableTable， LocalVariableTypeTable， StackMapTable
-		}
-		else if (attriName == L"Deprecated") {
+		}else if (attriName == L"Deprecated") {
 			deprecated = true;
+		}
+		else if (attriName == L"Exceptions") {
+			auto exAttri = std::dynamic_pointer_cast<Exceptions_attribute>((*m));
+			for (auto e = exAttri->exception_index_table.begin(); e != exAttri->exception_index_table.end(); e++) {
+				throwExceptions.push_back(cf->getClassName(*e));
+			}
 		}
 
 		// 其它的先不处理。

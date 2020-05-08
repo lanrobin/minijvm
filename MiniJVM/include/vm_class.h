@@ -66,6 +66,7 @@ struct VMClass {
 	const wstring& className() const { return name; };
 	VMClass(shared_ptr< ClassFile> cf, shared_ptr<ClassLoader> cl);
 	VMClass(const wstring& signature);
+	shared_ptr<VMClassMethod> findMethod(const wstring& methodSignature) const;
 	virtual ~VMClass() {};
 protected:
 	wstring name;

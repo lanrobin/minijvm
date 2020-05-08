@@ -10,7 +10,7 @@
 using std::istream;
 using std::ofstream;
 
-#define DEBUG_READ_FILE_IN_BYTE
+#undef DEBUG_READ_FILE_IN_BYTE
 
 Buffer::Buffer(istream& is, const wstring& ff): buffer(nullptr), read_pos(0), buffer_size(0) {
 	this->mappingFromFile = ff.empty() ? L"MEMORY_BUFFER" : ff;

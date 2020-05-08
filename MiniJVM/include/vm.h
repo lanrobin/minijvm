@@ -4,11 +4,14 @@
 #include "base_type.h"
 #include "configurations.h"
 #include "vm_method_area.h"
+#include "vm_classloader.h"
 
 class VM : public std::enable_shared_from_this<VM> {
 private:
 	shared_ptr<VMMethodArea> methodArea;
 	shared_ptr<Configurations> conf;
+	shared_ptr<ClassLoader> bootstrapClassLoader;
+	shared_ptr<ClassLoader> appClassLoader;
 	bool initilized = false;
 
 public:
