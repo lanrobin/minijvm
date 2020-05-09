@@ -34,7 +34,7 @@ shared_ptr<VMClass> ClassLoader::getStoredClass(const wstring& className) const{
 }
 
 
-shared_ptr<VMClass> ClassLoader::readClass(shared_ptr<Buffer> buf) {
+shared_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 	auto cf = make_shared<ClassFile>(buf);
 	if (cf != nullptr) {
 
@@ -93,7 +93,7 @@ shared_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
 }
 
 shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
-	return readClass(buf);
+	return defineClass(buf);
 }
 
 AppClassLoader::AppClassLoader(const wstring& appClassPath, shared_ptr<ClassLoader> p):
@@ -138,5 +138,5 @@ shared_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf) {
 		spdlog::info("Class:{} read from parent classloader", w2s(buf->getMappingFile()));
 		return parentReadClass;
 	}
-	return readClass(buf);
+	return defineClass(buf);
 }

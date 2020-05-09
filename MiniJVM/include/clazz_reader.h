@@ -1244,6 +1244,7 @@ struct ClassFile {
     bool isInterface() const{ return ((access_flags & CLASS_ACC_INTERFACE) == CLASS_ACC_INTERFACE); }
     wstring getClassName(u2 index);
     wstring getUtf8String(u2 index);
+    std::pair<wstring, wstring> getNameAndType(u2 index);
 
     // these are private members.
 private:

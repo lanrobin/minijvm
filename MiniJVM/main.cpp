@@ -25,21 +25,10 @@ int main(int argc, char ** argv)
 {
 	// change log pattern
 	spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
-	spdlog::info("Welcome to spdlog!");
-	spdlog::error("Some error message with arg:{}", 1);
-#ifndef JVM_DEBUG
-	if (argc != 3) {
-		std::cout << argv[0] << " path/to/bootstrap/modules classfile" << endl;
-	}
-	string bootStrapModuleFolder(argv[1]);
-	string classFileName(argv[2]);
-#else
-	string classFileName("HelloWorld");
 	wstring confFilePath(L"./config.txt");
-#endif
 	//testThreads();
 	//testSystem();
-	test();
+	// test();
 	shared_ptr<VM> vm = VM::getVM();
 	vm->initVM(make_shared<Configurations>(confFilePath, argc, argv));
 	auto result = vm->run();

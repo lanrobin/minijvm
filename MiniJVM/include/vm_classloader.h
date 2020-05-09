@@ -12,7 +12,7 @@ public:
 	virtual shared_ptr<VMClass> loadClass(const wstring& className) = 0;
 	virtual shared_ptr<VMClass> loadClass(shared_ptr<Buffer> buf) = 0;
 
-	shared_ptr<VMClass> readClass(shared_ptr<Buffer> buf);
+	shared_ptr<VMClass> defineClass(shared_ptr<Buffer> buf);
 
 	virtual wstring getClassLoaderName() const = 0;
 	ClassLoader(shared_ptr<ClassLoader> parent);

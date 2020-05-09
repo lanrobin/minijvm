@@ -5,25 +5,37 @@
 #include "vm_constant_pool.h"
 #include "configurations.h"
 
+struct VMClassConstantPool {
+	wstring className;
+	shared_ptr<VMClass> ownerClass;
+	vector<shared_ptr<VMConstantItem>> constants;
+	VMClassConstantPool(shared_ptr<VMClass> ownerClazz, const vector<shared_ptr<VMConstantItem>>& cs):
+		ownerClass(ownerClazz), constants(cs){
+		className = ownerClass->className();
+	}
+};
+
 /*
  根据JVMS的描述，方法区可以分为固定大小的和可扩展的大小的，为了简单实现，我先实现可扩展的
 */
-
 class VMMethodArea {
 public:
 	virtual shared_ptr<VMClass> put(const wstring& className, shared_ptr<VMClass> clz) = 0;
 	virtual shared_ptr<VMClass> get(const wstring& className) = 0;
 	virtual bool classExists(const wstring& className) const = 0;
 
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>>putConstant(const wstring & t) = 0;
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstantDouble(u4 high, u4 low) = 0;
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstantLong(u4 high, u4 low) = 0;
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstant(u4 v) = 0;
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstant(u2 v) = 0;
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstant(u1 v) = 0;
-	virtual std::pair<size_t, shared_ptr<VMConstantItem>> putConstantChar(u2 v) = 0;
-	virtual shared_ptr<VMConstantItem> getConstant(size_t index) = 0;
+	/*
+	因为JVM规定，所以的字符串必须统一管理，所以在ClassFile里的UTF8 constant都放在这里面。
+	*/
+	virtual size_t putConstantString(const wstring & t) = 0;
+	virtual wstring getConstantString(size_t index) = 0;
+
+	virtual std::pair<size_t, shared_ptr<VMClassConstantPool>> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) = 0;
+	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) = 0;
+	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(size_t index) = 0;
 	virtual ~VMMethodArea() {};
+protected:
+	shared_ptr<VMClassConstantPool> createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz);
 };
 
 
@@ -34,20 +46,25 @@ public:
 	bool classExists(const wstring& className) const override;
 
 
-	std::pair<size_t, shared_ptr<VMConstantItem>>putConstant(const wstring& t) override;
-	std::pair<size_t, shared_ptr<VMConstantItem>> putConstantDouble(u4 high, u4 low) override;
-	std::pair<size_t, shared_ptr<VMConstantItem>> putConstantLong(u4 high, u4 low) override;
-	std::pair<size_t, shared_ptr<VMConstantItem>> putConstant(u4 v) override;
-	std::pair<size_t, shared_ptr<VMConstantItem>> putConstant(u2 v) override;
-	std::pair<size_t, shared_ptr<VMConstantItem>> putConstant(u1 v) override;
-	std::pair<size_t, shared_ptr<VMConstantItem>> putConstantChar(u2 v) override;
-	shared_ptr<VMConstantItem> getConstant(size_t index)override;
+	size_t putConstantString(const wstring& t) override;
+	wstring getConstantString(size_t index)override;
+
+	std::pair<size_t, shared_ptr<VMClassConstantPool>> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) override;
+	shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) override;
+	shared_ptr<VMClassConstantPool> getClassConstantPool(size_t index) override;
 	~VMExtensibleMethodArea();
 
 private:
 	unordered_map<wstring, shared_ptr<VMClass>> classes;
-	unordered_map<shared_ptr<VMConstantItem>, size_t> contantsIndex;
-	vector< shared_ptr<VMConstantItem>> contants;
+
+
+	unordered_map<wstring, shared_ptr<VMClassConstantPool>> classContantsPoolsMap;
+	vector< shared_ptr<VMClassConstantPool>> classContantsPoolsVector;
+	/*
+	我们把string同时存放在两个结构体里，用来实现快速查找，这样会浪费内存，但是增加速度。
+	*/
+	unordered_map<wstring, size_t> stringsMap;
+	vector<wstring> stringsVector;
 };
 
 class VMMethodAreaFactory {

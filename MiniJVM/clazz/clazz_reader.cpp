@@ -481,3 +481,15 @@ wstring ClassFile::getUtf8String(u2 index) {
 	}
 	return std::dynamic_pointer_cast<CONSTANT_Utf8_info>(constant_pool[index])->toUTF8String();
 }
+
+std::pair<wstring, wstring> ClassFile::getNameAndType(u2 index) {
+	wstring name;
+	wstring type;
+	if (index >0 &&  index < constant_pool_count) {
+		auto nat = std::dynamic_pointer_cast<CONSTANT_NameAndType_info>(constant_pool[index]);
+		name = getUtf8String(nat->name_index);
+		type = getUtf8String(nat->descriptor_index);
+		
+	}
+	return std::make_pair(name, type);
+}
