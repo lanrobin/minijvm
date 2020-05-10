@@ -43,24 +43,32 @@ private:
 	long pc;
 	vector<shared_ptr<VMThreadStackFrame>> stackFrames;
 	shared_ptr<VMClassMethod> startJavaMethod;
+	wstring className; // 要运行的类的名称.
+	wstring methodName; // 要运行的方法名称。
+	wstring methodSignature; // 要运行的方法签名。
+	bool needStaticMethod; // 是不是要运行static的方法。只有在main函数的时候才为true.
+	vector<wstring> args; // 给方法的参数，一般只有在main函数的时候才要求，否则都为空。
+	shared_ptr<ReferenceVMHeapObject> instance; // 如果不是调用static方法需要一个对象。
 	// static field.
 private:
 	static const long PC_UNDEFINED = -1L;
 
 public:
-	VMJavaThread(shared_ptr<VMClassMethod> method, pthread_t& pt) : VMThread(pt), startJavaMethod(method), pc(PC_UNDEFINED)
+	VMJavaThread(pthread_t& pt) : VMThread(pt),pc(PC_UNDEFINED), needStaticMethod(false)
 	{
 
 	}
-
-	VMJavaThread(pthread_t& pt) : VMThread(pt),pc(PC_UNDEFINED)
-	{
-
-	}
-
-	void setJavaMethod(shared_ptr<VMClassMethod> method) { startJavaMethod = method; }
 	void startExecute() override;
-	
+	void setRunningParameters(const wstring& targetClass, const wstring& targetMethod, const wstring& signature, bool isStatic = false)
+	{
+		className = targetClass;
+		methodName = targetMethod;
+		methodSignature = signature;
+		needStaticMethod = isStatic;
+	}
+	void setRunningMethodArgs(vector<wstring>& params) {
+		args.insert(args.begin(), params.begin(), params.end());
+	}
 };
 
 struct VMGCThread : public VMThread {

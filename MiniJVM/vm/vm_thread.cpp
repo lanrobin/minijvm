@@ -1,12 +1,25 @@
 #include <vm_thread.h>
 #include "log.h"
 #include "string_utils.h"
+#include "vm.h"
 #include <chrono>
 #include <thread>
 
 
 void VMJavaThread::startExecute() {
-	assert(startJavaMethod != nullptr);
+	
+	auto vm = VM::getVM();
+	auto appClassLoader = vm->getAppClassLoader();
+
+	shared_ptr<VMClass> mainClass = appClassLoader->loadClass(className);
+	startJavaMethod = mainClass->findMethod(methodSignature, methodName);
+	if (startJavaMethod == nullptr) {
+		throw runtime_error("No start method found:" + w2s(methodName));
+	}
+	if (startJavaMethod->isStatic() != needStaticMethod) {
+		throw runtime_error("Method staticness is incorrect.");
+	}
+
 	spdlog::info("startExecute:{} with signature:{}", w2s(startJavaMethod->name), w2s(startJavaMethod->signature));
 	int count = 0;
 	while (count < 15) {
@@ -39,7 +52,7 @@ void* VMGCThread::gc(void* ptr) {
 		pthread_mutex_lock(&thiz->mutex);
 		spdlog::info("GC waiting");
 		pthread_cond_timedwait(&thiz->cond, &thiz->mutex, &timeout);
-		std::this_thread::sleep_for(4s);
+		//std::this_thread::sleep_for(4s);
 		spdlog::info("GC active:{}", exitCount);
 		pthread_mutex_unlock(&thiz->mutex);
 		exitCount++;

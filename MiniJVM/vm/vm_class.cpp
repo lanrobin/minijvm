@@ -32,19 +32,21 @@ VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
 	auto methods = cf->methods;
 	for (auto m = methods.begin(); m != methods.end(); m++) {
 		auto cm = make_shared< VMClassMethod>(cf, *m);
-		this->methods[cm->signature] = cm;
+		this->methods[cm->lookupKey()] = cm;
 	}
 
 	auto fs = cf->fields;
 	for (auto f = fs.begin(); f != fs.end(); f++) {
 		auto field = make_shared<VMClassField>(cf, *f);
+		auto key = field->lookupKey();
 		if (field->isStatic()) {
-			classStaticFieldLayout[field->signature] = field;
+			
+			classStaticFieldLayout[key] = field;
 			// 创建对应存储的空间。
-			classStaticFields[field->signature] = VMHeapPool::createVMHeapObject(field->signature);
+			classStaticFields[key] = VMHeapPool::createVMHeapObject(field->signature);
 		}
 		else {
-			classInstanceFieldLayout[field->signature] = field;
+			classInstanceFieldLayout[key] = field;
 		}
 	}
 }
@@ -64,14 +66,25 @@ vector<wstring> VMClass::splitSignatureToElement(const wstring& signature) {
 	throw runtime_error("not implemented yet.");
 }
 
-shared_ptr<VMClassMethod> VMClass::findMethod(const wstring& methodSignature) const {
-	auto m = methods.find(methodSignature);
+shared_ptr<VMClassMethod> VMClass::findMethod(const wstring& methodSignature, const wstring & name) const {
+	auto key = VMClassMethod::makeLookupKey(methodSignature, name);
+	auto m = methods.find(key);
 	if (m == methods.end()) {
-		throw runtime_error("No method found for signature:" + w2s(methodSignature));
+		spdlog::warn("No method found for key:{}", w2s(key));
+		return nullptr;
 	}
 	return m->second;
 }
 
+shared_ptr<VMHeapObject> VMClass::findStaticField(const wstring& methodSignature, const wstring& name) const {
+	auto key = VMClassField::makeLookupKey(methodSignature, name);
+	auto value = classStaticFields.find(key);
+	if (value == classStaticFields.end()) {
+		spdlog::warn("No field found for key:{}", w2s(key));
+		return nullptr;
+	}
+	return value->second;
+}
 
 VMOrdinaryClass::VMOrdinaryClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) :VMClass(cf, cl) {
 	classType = VMClass::ClassType::ClassTypeOrdinaryClass;

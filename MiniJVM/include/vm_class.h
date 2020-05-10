@@ -45,6 +45,13 @@ struct VMClassMethod {
 	vector<shared_ptr<VMMethodExceptionTable>> exceptionTable;
 	vector<wstring> throwExceptions;
 	VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi);
+	wstring lookupKey() {
+		return VMClassMethod::makeLookupKey(signature, name);
+	}
+public:
+	static wstring makeLookupKey(const wstring& sig, const wstring name) {
+		return sig + L"$" + name;
+	}
 };
 
 struct VMClassField {
@@ -55,9 +62,23 @@ struct VMClassField {
 	bool deprecated = false;
 
 	VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi);
+
+	wstring lookupKey() {
+		return VMClassField::makeLookupKey(signature, name);
+	}
+public:
+	static wstring makeLookupKey(const wstring& sig, const wstring name) {
+		return sig + L"$" + name;
+	}
 };
 
 struct VMClass {
+
+	enum InitializeState {
+		NotInitialized,
+		Initializing,
+		Initialized
+	};
 
 	enum class ClassType {
 		ClassTypeOrdinaryClass,
@@ -68,7 +89,8 @@ struct VMClass {
 	const wstring& className() const { return name; };
 	VMClass(shared_ptr< ClassFile> cf, shared_ptr<ClassLoader> cl);
 	VMClass(const wstring& signature);
-	shared_ptr<VMClassMethod> findMethod(const wstring& methodSignature) const;
+	shared_ptr<VMClassMethod> findMethod(const wstring& methodSignature, const wstring &name) const;
+	shared_ptr<VMHeapObject> findStaticField(const wstring& methodSignature, const wstring& name) const;
 	virtual ~VMClass() { spdlog::info("Class:{}, type:{} gone", w2s(name), classType); };
 protected:
 	wstring name;
@@ -78,13 +100,16 @@ protected:
 	ClassType classType;
 	shared_ptr<ClassLoader> classLoader;
 
-	unordered_map<wstring, shared_ptr< VMClassField>> classStaticFieldLayout;
+	unordered_map<wstring, shared_ptr<VMClassField>> classStaticFieldLayout;
 
 	unordered_map<wstring, shared_ptr<VMHeapObject>> classStaticFields;
 
 	unordered_map<wstring, shared_ptr< VMClassField>> classInstanceFieldLayout;
 
 	unordered_map<wstring, shared_ptr< VMClassMethod>> methods;
+
+	// class是否调用了 <cinit>函数了。
+	InitializeState state = InitializeState::NotInitialized;
 
 public:
 	static wstring getNextDimensionSignature(const wstring& sig);

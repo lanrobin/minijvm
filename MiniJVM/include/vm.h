@@ -30,6 +30,8 @@ public:
 	int run();
 	shared_ptr<VMMethodArea> getMethodArea() const { return methodArea; }
 
+	shared_ptr<ClassLoader> getAppClassLoader() const { return appClassLoader; };
+
 public:
 	// static 
 	static shared_ptr<VM> getVM();

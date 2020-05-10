@@ -14,28 +14,18 @@
 
 
 VM::VM(): conf(nullptr){
-	mainThread = make_shared<VMJavaThread>(pthread_self());
-	allThreads.push_back(mainThread);
-
-	gcThread = make_shared<VMGCThread>();
-	gcThread->startExecute();
-	allThreads.push_back(gcThread);
+	spdlog::info("VM created.");
 }
 
 VM::~VM() {
-	spdlog::info("VM is gone");
+	spdlog::info("VM gone.");
 	//cout << "VM is gone" << endl;
 }
 
 int VM::run() {
 	spdlog::info("run with config:{}", conf->toString());
 
-
-	shared_ptr<VMClass> mainClass = appClassLoader->loadClass(conf->getTargetClass());
-	auto mainMethod = mainClass->findMethod(L"([Ljava/lang/String;)V");
-	mainThread->setJavaMethod(mainMethod);
 	mainThread->startExecute();
-	spdlog::info("run {}.{}", w2s(mainClass->className()), w2s(mainMethod->name));
 	for (auto t = allThreads.begin(); t != allThreads.end(); t++) {
 		if (!pthread_equal(mainThread->nativeThread, (*t)->nativeThread)) {
 			spdlog::info("waiting for one thread to exit.");
@@ -52,11 +42,24 @@ shared_ptr<VM> VM::getVM() {
 }
 void VM::initVM(shared_ptr<Configurations> cfs) {
 	if (!initilized) {
+		spdlog::info("VM initializing.");
 		initilized = true;
 		conf = cfs;
 		methodArea = VMMethodAreaFactory::createMethodArea(conf);
 		bootstrapClassLoader = make_shared<BootstrapClassLoader>(conf->getBootStrapClassPath(), nullptr);
 		appClassLoader = make_shared<AppClassLoader>(conf->getAppClassPath(), bootstrapClassLoader);
+
+		//其它初始化的代码
+		mainThread = make_shared<VMJavaThread>(pthread_self());
+
+		// 设置好开始的参数
+		mainThread->setRunningParameters(conf->getTargetClass(), L"main", L"([Ljava/lang/String;)V", true);
+		allThreads.push_back(mainThread);
+
+		gcThread = make_shared<VMGCThread>();
+		allThreads.push_back(gcThread);
+		gcThread->startExecute();
+		spdlog::info("VM initialized.");
 	}
 	else {
 		spdlog::warn("VM has already been initialized.");
