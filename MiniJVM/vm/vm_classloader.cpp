@@ -49,12 +49,18 @@ shared_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 		if (!cf->isSupportedClassFile()) {
 			throw runtime_error("Unsupported class file version:" + std::to_string(cf->major_version) + "." + std::to_string(cf->minor_version));
 		}
+		shared_ptr<VMClass> clz = nullptr;
 		if (cf->isInterface()) {
-			return make_shared<VMInterfaceClass>(cf, getSharedPtr());
+			clz = make_shared<VMInterfaceClass>(cf, getSharedPtr());
 		}
 		else {
-			return make_shared<VMOrdinaryClass>(cf, getSharedPtr());
+			clz = make_shared<VMOrdinaryClass>(cf, getSharedPtr());
 		}
+
+		// 把常量放到常量池中
+		VM::getVM()->getMethodArea()->putClassConstantPool(cf, clz);
+
+		return clz;
 	}
 	spdlog::error("Cannot laod class:{}", w2s(buf->getMappingFile()));
 

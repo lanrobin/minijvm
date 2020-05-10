@@ -30,9 +30,8 @@ public:
 	virtual size_t putConstantString(const wstring & t) = 0;
 	virtual wstring getConstantString(size_t index) = 0;
 
-	virtual std::pair<size_t, shared_ptr<VMClassConstantPool>> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) = 0;
+	virtual shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) = 0;
 	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) = 0;
-	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(size_t index) = 0;
 	virtual ~VMMethodArea() {};
 protected:
 	shared_ptr<VMClassConstantPool> createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz);
@@ -49,9 +48,8 @@ public:
 	size_t putConstantString(const wstring& t) override;
 	wstring getConstantString(size_t index)override;
 
-	std::pair<size_t, shared_ptr<VMClassConstantPool>> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) override;
+	shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) override;
 	shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) override;
-	shared_ptr<VMClassConstantPool> getClassConstantPool(size_t index) override;
 	~VMExtensibleMethodArea();
 
 private:
@@ -59,7 +57,7 @@ private:
 
 
 	unordered_map<wstring, shared_ptr<VMClassConstantPool>> classContantsPoolsMap;
-	vector< shared_ptr<VMClassConstantPool>> classContantsPoolsVector;
+
 	/*
 	我们把string同时存放在两个结构体里，用来实现快速查找，这样会浪费内存，但是增加速度。
 	*/

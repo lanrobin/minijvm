@@ -5,6 +5,8 @@
 #include "vm_classloader.h"
 #include "vm_field.h"
 #include "vm_heap.h"
+#include "log.h"
+#include "string_utils.h"
 
 #include <unordered_map>
 
@@ -67,7 +69,7 @@ struct VMClass {
 	VMClass(shared_ptr< ClassFile> cf, shared_ptr<ClassLoader> cl);
 	VMClass(const wstring& signature);
 	shared_ptr<VMClassMethod> findMethod(const wstring& methodSignature) const;
-	virtual ~VMClass() {};
+	virtual ~VMClass() { spdlog::info("Class:{}, type:{} gone", w2s(name), classType); };
 protected:
 	wstring name;
 	u2 accessFlags;

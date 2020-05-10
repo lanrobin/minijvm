@@ -11,7 +11,7 @@ VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
 
 	// 正常的ClassName,如果是数组为内存生成的，不在这里生成。
 	name = cf->getCanonicalClassName();
-
+	spdlog::info("create class:{}", w2s(name));
 	classLoader = cl;
 
 	auto superClassName = cf->getClassName(cf->super_class);
@@ -49,8 +49,10 @@ VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
 	}
 }
 
+
 VMClass::VMClass(const wstring& signature) {
 	name = signature;
+	spdlog::info("create class:{}", w2s(name));
 }
 
 wstring VMClass::getNextDimensionSignature(const wstring& signature) {
