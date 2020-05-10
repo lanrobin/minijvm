@@ -10,12 +10,12 @@
 
 using namespace std;
 
-// ĞéÄâ»úµÄÏß³ÌÕ»£¬Ò»°ãÓĞÁ½ÖÖÊµÏÖ£¬Ò»ÖÖÊÇ¹Ì¶¨µÄÁíÒ»ÖÖÊÇ¿ÉÀ©Õ¹µÄ¡£
+// è™šæ‹Ÿæœºçš„çº¿ç¨‹æ ˆï¼Œä¸€èˆ¬æœ‰ä¸¤ç§å®ç°ï¼Œä¸€ç§æ˜¯å›ºå®šçš„å¦ä¸€ç§æ˜¯å¯æ‰©å±•çš„ã€‚
 struct VMThreadStackFrame {
-	// ¾Ö²¿±äÁ¿±í¡£
+	// å±€éƒ¨å˜é‡è¡¨ã€‚
 	vector<u4> localVirableSlots;
 	
-	// µ±Ç°Õ»èåËùÊôµÄ·½·¨¡£
+	// å½“å‰æ ˆæ¡¢æ‰€å±çš„æ–¹æ³•ã€‚
 	shared_ptr<VMClassMethod> method;
 };
 
@@ -25,7 +25,7 @@ public:
 	pthread_attr_t threadAttri;
 public:
 	virtual void startExecute() = 0;
-	VMThread(pthread_t& pt) 
+	VMThread(pthread_t pt) 
 	{ 
 		pthread_attr_init(&threadAttri);
 		nativeThread = pt;
@@ -39,16 +39,16 @@ public:
 
 struct VMJavaThread : public VMThread {
 private:
-	// ±íÊ¾Õâ¸öÏß³ÌµÄprogram connter, Èç¹ûÊÇnative·½·¨µ÷ÓÃµÄÊ±ºò¾ÍÊÇ-1, ±íÊ¾undefined.
+	// è¡¨ç¤ºè¿™ä¸ªçº¿ç¨‹çš„program connter, å¦‚æœæ˜¯nativeæ–¹æ³•è°ƒç”¨çš„æ—¶å€™å°±æ˜¯-1, è¡¨ç¤ºundefined.
 	long pc;
 	vector<shared_ptr<VMThreadStackFrame>> stackFrames;
 	shared_ptr<VMClassMethod> startJavaMethod;
-	wstring className; // ÒªÔËĞĞµÄÀàµÄÃû³Æ.
-	wstring methodName; // ÒªÔËĞĞµÄ·½·¨Ãû³Æ¡£
-	wstring methodSignature; // ÒªÔËĞĞµÄ·½·¨Ç©Ãû¡£
-	bool needStaticMethod; // ÊÇ²»ÊÇÒªÔËĞĞstaticµÄ·½·¨¡£Ö»ÓĞÔÚmainº¯ÊıµÄÊ±ºò²ÅÎªtrue.
-	vector<wstring> args; // ¸ø·½·¨µÄ²ÎÊı£¬Ò»°ãÖ»ÓĞÔÚmainº¯ÊıµÄÊ±ºò²ÅÒªÇó£¬·ñÔò¶¼Îª¿Õ¡£
-	shared_ptr<ReferenceVMHeapObject> instance; // Èç¹û²»ÊÇµ÷ÓÃstatic·½·¨ĞèÒªÒ»¸ö¶ÔÏó¡£
+	wstring className; // è¦è¿è¡Œçš„ç±»çš„åç§°.
+	wstring methodName; // è¦è¿è¡Œçš„æ–¹æ³•åç§°ã€‚
+	wstring methodSignature; // è¦è¿è¡Œçš„æ–¹æ³•ç­¾åã€‚
+	bool needStaticMethod; // æ˜¯ä¸æ˜¯è¦è¿è¡Œstaticçš„æ–¹æ³•ã€‚åªæœ‰åœ¨mainå‡½æ•°çš„æ—¶å€™æ‰ä¸ºtrue.
+	vector<wstring> args; // ç»™æ–¹æ³•çš„å‚æ•°ï¼Œä¸€èˆ¬åªæœ‰åœ¨mainå‡½æ•°çš„æ—¶å€™æ‰è¦æ±‚ï¼Œå¦åˆ™éƒ½ä¸ºç©ºã€‚
+	shared_ptr<ReferenceVMHeapObject> instance; // å¦‚æœä¸æ˜¯è°ƒç”¨staticæ–¹æ³•éœ€è¦ä¸€ä¸ªå¯¹è±¡ã€‚
 	// static field.
 private:
 	static const long PC_UNDEFINED = -1L;
