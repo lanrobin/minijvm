@@ -11,6 +11,12 @@ VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
 
 	// 正常的ClassName,如果是数组为内存生成的，不在这里生成。
 	name = cf->getCanonicalClassName();
+
+	auto packageEnd = name.find_last_of(L"/");
+	if (packageEnd != wstring::npos) {
+		packageName = name.substr(0, packageEnd);
+	}
+
 	spdlog::info("create class:{}", w2s(name));
 	classLoader = cl;
 
@@ -60,6 +66,56 @@ VMClass::VMClass(const wstring& signature) {
 wstring VMClass::getNextDimensionSignature(const wstring& signature) {
 	assert(signature.size() > 1 && signature.find(L"[") == 0);
 	return signature.substr(1);
+}
+
+
+bool VMClass::equals(shared_ptr<VMClass> other) const {
+	if (other == nullptr) {
+		return false;
+	}
+	// 直接比较全名是不是相等就行了。
+	return name == super->className();
+}
+
+bool VMClass::isSubClassOf(shared_ptr<VMClass> other) const {
+	if (other == nullptr) {
+		return false;
+	}
+	auto super = this->super;
+	while (super != nullptr) {
+		if (super->equals(other)) {
+			return true;
+		}
+		super = super->super;
+	}
+	return false;
+}
+bool VMClass::implemented(shared_ptr<VMClass> other) const {
+	if (other == nullptr || !other->isInterface()) {
+		return false;
+	}
+	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
+		if ((*i)->equals(other)) {
+			return true;
+		}
+	}
+	if (super != nullptr) {
+		return super->implemented(other);
+	}
+	return false;
+}
+bool VMClass::hasAccessibilityTo(shared_ptr<VMClass> other) const {
+	if (other == nullptr) {
+		return false;
+	}
+	if (other->isPublic()) {
+		return true;
+	}
+
+	if (other->isProtected()) {
+		return this->packageName == other->packageName;
+	}
+	return false;
 }
 
 vector<wstring> VMClass::splitSignatureToElement(const wstring& signature) {
@@ -114,6 +170,9 @@ VMClassField::VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi)
 	}
 }
 
+vector<wstring> VMClassField::splitSignature(){
+	throw runtime_error("Not implemented yet.");
+}
 
 VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi) {
 	accessFlags = mi->access_flags;
@@ -148,10 +207,46 @@ VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> 
 	}
 }
 
+vector<wstring> VMClassMethod::splitSignature() {
+	throw runtime_error("Not implemented yet.");
+}
+
 VMMethodExceptionTable::VMMethodExceptionTable(shared_ptr< ClassFile> cf, shared_ptr<Code_attribute::ExceptionTable> et)
 {
 	startPC = et->start_pc;
 	endPC = et->end_pc;
 	handlerPC = et->handler_pc;
 	catchType = cf->getUtf8String(et->catch_type);
+}
+
+const wstring VMClassResolvable::PRIMITIVE_TYPES = L"BCDFIJSZ";
+
+void VMClassResolvable::resolveSymbol() {
+	auto symbols = splitSignature();
+	for (auto s = symbols.begin(); s != symbols.end(); s++) {
+		wstring name = *s;
+		if (PRIMITIVE_TYPES.find(name) != wstring::npos) {
+			spdlog::info("skip to resolve primitive type:{}", w2s(name));
+			continue;
+		}
+		else if (name.find(L"L") == 0) {
+			// 这是一个类。
+			wstring className = name.substr(1, name.length() - 2);
+			auto clz = ownerClass->getClassLoader()->loadClass(className);
+			if (!ownerClass->hasAccessibilityTo(clz)) {
+				throw runtime_error("class:" + w2s(ownerClass->className()) + " has no accessible to " + w2s(clz->className()));
+			}
+		}
+		else if (name.find(L"[") == 0) {
+			// 数组
+			auto clz = resolveArray(name);
+		}
+		else {
+			throw runtime_error("Unknown symbol type:" + w2s(name));
+		}
+	}
+}
+
+shared_ptr<VMClass> VMClassResolvable::resolveArray(const wstring& sym) {
+	return nullptr;
 }

@@ -1,7 +1,6 @@
 #ifndef __JVM_VM_HEAP_H__
 #define __JVM_VM_HEAP_H__
-
-#include "vm_class.h"
+#include "base_type.h"
 /*
 这个类用来表示Java堆中分配的一个对象，可以被GC动态回收的。
 一共有以下几种类型：
