@@ -5,6 +5,7 @@
 #include "configurations.h"
 #include "vm_method_area.h"
 #include "vm_classloader.h"
+#include "vm_thread.h"
 
 class VM : public std::enable_shared_from_this<VM> {
 private:
@@ -13,7 +14,15 @@ private:
 	shared_ptr<ClassLoader> bootstrapClassLoader;
 	shared_ptr<ClassLoader> appClassLoader;
 	bool initilized = false;
+	/*
+	主线程
+	*/
+	shared_ptr<VMJavaThread> mainThread;
 
+	/*GC线程，目前先实现一个GC线程。*/
+	shared_ptr<VMGCThread> gcThread;
+
+	vector<shared_ptr<VMThread>> allThreads;
 public:
 	VM();
 	void initVM(shared_ptr<Configurations> conf);
