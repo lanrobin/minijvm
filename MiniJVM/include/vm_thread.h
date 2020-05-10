@@ -54,7 +54,7 @@ private:
 	static const long PC_UNDEFINED = -1L;
 
 public:
-	VMJavaThread(pthread_t& pt) : VMThread(pt),pc(PC_UNDEFINED), needStaticMethod(false)
+	VMJavaThread(pthread_t pt) : VMThread(pt),pc(PC_UNDEFINED), needStaticMethod(false)
 	{
 
 	}
