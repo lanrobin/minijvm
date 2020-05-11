@@ -228,7 +228,7 @@ shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_p
 shared_ptr<VMClass> VMExtensibleMethodArea::put(const wstring &className, shared_ptr<VMClass> clz)
 {
 	auto existing = classes.find(className);
-	if (existing != classes.end())
+	if (existing != classes.end() && !existing->second->equals(VMClass::LOADING_VMCLASS))
 	{
 		spdlog::info("class:{}  existed in MethodArea", w2s(className));
 		return existing->second;
@@ -240,12 +240,43 @@ shared_ptr<VMClass> VMExtensibleMethodArea::put(const wstring &className, shared
 shared_ptr<VMClass> VMExtensibleMethodArea::get(const wstring &className)
 {
 	auto existing = classes.find(className);
-	if (existing != classes.end())
+	if (existing != classes.end() && !existing->second->equals(VMClass::LOADING_VMCLASS))
 	{
 		return existing->second;
 	}
 	spdlog::info("class: {} doesn't exist in MethodArea", w2s(className));
 	return nullptr;
+}
+
+bool VMExtensibleMethodArea::mark(const wstring& className)
+{
+	auto existing = classes.find(className);
+	if (existing != classes.end())
+	{
+		spdlog::info("class: {} had been loaded or marked.", w2s(className));
+		return false;
+	}
+	spdlog::info("mark class: {}", w2s(className));
+	classes[className] = VMClass::LOADING_VMCLASS;
+	return true;
+}
+
+bool VMExtensibleMethodArea::isClassLoading(const wstring& className)
+{
+	auto existing = classes.find(className);
+	if (existing != classes.end())
+	{
+		if (existing->second->equals(VMClass::LOADING_VMCLASS)) {
+			spdlog::info("class: {} is being load.", w2s(className));
+			return true;
+		}
+		else {
+			spdlog::info("class: {} had been loaded.", w2s(className));
+			return false;
+		}
+	}
+	spdlog::info("class: {} does not start loading yet.", w2s(className));
+	return false;
 }
 
 bool VMExtensibleMethodArea::classExists(const wstring &className) const
