@@ -22,6 +22,10 @@ VM::~VM() {
 	spdlog::info("bootstrapClassLoader use_count:{}", bootstrapClassLoader.use_count());
 	spdlog::info("appClassLoader use_count:{}", appClassLoader.use_count());
 	spdlog::info("conf use_count:{}", conf.use_count());
+	methodArea = nullptr;
+	appClassLoader = nullptr;
+	bootstrapClassLoader = nullptr;
+	conf = nullptr;
 	spdlog::info("VM gone.");
 	//cout << "VM is gone" << endl;
 }
@@ -40,7 +44,7 @@ int VM::run() {
 	return 0;
 }
 
-shared_ptr<VM> VM::getVM() {
+weak_ptr<VM> VM::getVM() {
 	static shared_ptr<VM> VM_INSTANCE = make_shared<VM>();
 	return VM_INSTANCE;
 }
@@ -50,7 +54,7 @@ void VM::initVM(shared_ptr<Configurations> cfs) {
 		initilized = true;
 		conf = cfs;
 		methodArea = VMMethodAreaFactory::createMethodArea(conf);
-		bootstrapClassLoader = make_shared<BootstrapClassLoader>(conf->getBootStrapClassPath(), nullptr);
+		bootstrapClassLoader = make_shared<BootstrapClassLoader>(conf->getBootStrapClassPath(), std::weak_ptr<ClassLoader>());
 		appClassLoader = make_shared<AppClassLoader>(conf->getAppClassPath(), bootstrapClassLoader);
 
 		//其它初始化的代码

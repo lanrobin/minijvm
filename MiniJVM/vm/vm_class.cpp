@@ -10,7 +10,7 @@
 #define RESOLVE_ON_CLASS_LOAD
 
 
-VMClass::VMClass(const wstring& signature, shared_ptr<ClassLoader> cl) {
+VMClass::VMClass(const wstring& signature, weak_ptr<ClassLoader> cl) {
 	name = signature;
 	auto packageEnd = name.find_last_of(L"/");
 	if (packageEnd != wstring::npos) {
@@ -26,51 +26,51 @@ wstring VMClass::getNextDimensionSignature(const wstring& signature) {
 }
 
 
-bool VMClass::equals(shared_ptr<VMClass> other) const {
-	if (other == nullptr) {
+bool VMClass::equals(weak_ptr<VMClass> other) const {
+	if (other.expired()) {
 		return false;
 	}
 	// 直接比较全名是不是相等就行了。
-	return name == other->className();
+	return name == other.lock()->className();
 }
 
-bool VMClass::isSubClassOf(shared_ptr<VMClass> other) const {
-	if (other == nullptr) {
+bool VMClass::isSubClassOf(weak_ptr<VMClass> other) const {
+	if (other.expired()) {
 		return false;
 	}
 	auto super = this->super;
-	while (super != nullptr) {
-		if (super->equals(other)) {
+	while (!super.expired()) {
+		if (super.lock()->equals(other)) {
 			return true;
 		}
-		super = super->super;
+		super = super.lock()->super;
 	}
 	return false;
 }
-bool VMClass::implemented(shared_ptr<VMClass> other) const {
-	if (other == nullptr || !other->isInterface()) {
+bool VMClass::implemented(weak_ptr<VMClass> other) const {
+	if (other.expired() || !other.lock()->isInterface()) {
 		return false;
 	}
 	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
-		if ((*i)->equals(other)) {
+		if (!(*i).expired() && (*i).lock()->equals(other)) {
 			return true;
 		}
 	}
-	if (super != nullptr) {
-		return super->implemented(other);
+	if (!super.expired()) {
+		return super.lock()->implemented(other);
 	}
 	return false;
 }
-bool VMClass::hasAccessibilityTo(shared_ptr<VMClass> other) const {
-	if (other == nullptr) {
+bool VMClass::hasAccessibilityTo(weak_ptr<VMClass> other) const {
+	if (other.expired()) {
 		return false;
 	}
-	if (other->isPublic()) {
+	if (other.lock()->isPublic()) {
 		return true;
 	}
 
-	if (other->isProtected()) {
-		return this->packageName == other->packageName;
+	if (other.lock()->isProtected()) {
+		return this->packageName == other.lock()->packageName;
 	}
 	return false;
 }
@@ -79,22 +79,22 @@ vector<wstring> VMClass::splitSignatureToElement(const wstring& signature) {
 	throw runtime_error("not implemented yet.");
 }
 
-shared_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring& methodSignature, const wstring & name) const {
+weak_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring& methodSignature, const wstring & name) const {
 	auto key = VMClassMethod::makeLookupKey(methodSignature, name);
 	auto m = methods.find(key);
 	if (m == methods.end()) {
 		spdlog::warn("No method found for key:{}", w2s(key));
-		return nullptr;
+		return std::weak_ptr<VMClassMethod>();
 	}
 	return m->second;
 }
 
-shared_ptr<VMHeapObject> VMReferenceClass::findStaticField(const wstring& methodSignature, const wstring& name) const {
+weak_ptr<VMHeapObject> VMReferenceClass::findStaticField(const wstring& methodSignature, const wstring& name) const {
 	auto key = VMClassField::makeLookupKey(methodSignature, name);
 	auto value = staticFields.find(key);
 	if (value == staticFields.end()) {
 		spdlog::warn("No field found for key:{}", w2s(key));
-		return nullptr;
+		return std::weak_ptr< VMHeapObject>();
 	}
 	return value->second;
 }
@@ -102,12 +102,14 @@ shared_ptr<VMHeapObject> VMReferenceClass::findStaticField(const wstring& method
 
 void VMReferenceClass::resolveSymbol() {
 
-	if (super != nullptr) {
-		super->resolveSymbol();
+	if (!super.expired()) {
+		super.lock()->resolveSymbol();
 	}
 
 	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
-		(*i)->resolveSymbol();
+		if (!(*i).expired()) {
+			(*i).lock()->resolveSymbol();
+		}
 	}
 	for(auto m = methods.begin(); m != methods.end(); m++) {
 		m->second->resolveSymbol();
@@ -123,8 +125,8 @@ void VMReferenceClass::resolveSymbol() {
 
 }
 
-void VMReferenceClass::classLoaded(shared_ptr< VMReferenceClass> other) {
-	if (other != nullptr) {
+void VMReferenceClass::classLoaded(weak_ptr< VMReferenceClass> other) {
+	if (!other.expired()) {
 		hasAccessibilityTo(other);
 	}
 }
@@ -136,7 +138,7 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf) {
 	auto superClassName = cf->getClassName(cf->super_class);
 
 	if (superClassName.size() > 0) {
-		this->super = classLoader->loadClass(superClassName);
+		this->super = classLoader.lock()->loadClass(superClassName);
 		//this->super->resolveSymbol();
 	}
 	else {
@@ -146,7 +148,7 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf) {
 	auto interfaces = cf->interfaces;
 	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
 		auto interfaceName = cf->getClassName(*i);
-		auto thisInterface = classLoader->loadClass(interfaceName);
+		auto thisInterface = classLoader.lock()->loadClass(interfaceName);
 		//thisInterface->resolveSymbol();
 		this->interfaces.push_back(thisInterface);
 	}
@@ -188,7 +190,7 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf) {
 }
 
 
-VMClassField::VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi, shared_ptr<VMClass> owner):VMClassResolvable(owner){
+VMClassField::VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi, weak_ptr<VMClass> owner):VMClassResolvable(owner){
 	accessFlags = fi->access_flags;
 	name = cf->getUtf8String(fi->name_index);
 	signature = cf->getUtf8String(fi->descriptor_index);
@@ -208,7 +210,7 @@ vector<wstring> VMClassField::splitSignature(){
 	return elements;
 }
 
-VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi, shared_ptr<VMClass> owner) :VMClassResolvable(owner) {
+VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi, weak_ptr<VMClass> owner) :VMClassResolvable(owner) {
 	accessFlags = mi->access_flags;
 	name = cf->getUtf8String(mi->name_index);
 	signature = cf->getUtf8String(mi->descriptor_index);
@@ -291,7 +293,7 @@ vector<wstring> VMClassMethod::splitSignature() {
 void VMClassMethod::resolveSymbol() {
 	VMClassResolvable::resolveSymbol();
 	for (auto e = exceptionTable.begin(); e != exceptionTable.end(); e++) {
-		(*e)->resolveSymbol(ownerClass->getClassLoader());
+		(*e)->resolveSymbol(ownerClass.lock()->getClassLoader());
 	}
 }
 
@@ -303,12 +305,12 @@ VMMethodExceptionTable::VMMethodExceptionTable(shared_ptr< ClassFile> cf, shared
 	catchType = cf->getClassName(et->catch_type);
 }
 
-void VMMethodExceptionTable::resolveSymbol(shared_ptr<ClassLoader> cl) {
-	if (catchType.length() == 0) {
+void VMMethodExceptionTable::resolveSymbol(weak_ptr<ClassLoader> cl) {
+	if (catchType.length() == 0 || cl.expired()) {
 		// any exception type.
 		return;
 	}
-	cl->loadClass(catchType);
+	cl.lock()->loadClass(catchType);
 }
 
 const unordered_map<wchar_t, int> VMClassResolvable::PRIMITIVE_TYPES =
@@ -334,15 +336,17 @@ void VMClassResolvable::resolveSymbol() {
 		}
 		else if (name.find(L"L") == 0) {
 			// 这是一个类。
+			auto cl = ownerClass.lock()->getClassLoader().lock();
 			wstring className = name.substr(1, name.length() - 2);
-			auto clz = ownerClass->getClassLoader()->loadClass(className);
-			if (!ownerClass->hasAccessibilityTo(clz)) {
-				throw runtime_error("class:" + w2s(ownerClass->className()) + " has no accessible to " + w2s(clz->className()));
+			auto clz = cl->loadClass(className);
+			auto ownerClz = ownerClass.lock();
+			if (!ownerClz->hasAccessibilityTo(clz)) {
+				throw runtime_error("class:" + w2s(ownerClz->className()) + " has no accessible to " + w2s(clz.lock()->className()));
 			}
 		}
 		else if (name.find(L"[") == 0) {
 			// 数组, 需要创建数组类。
-			auto clz = ownerClass->getClassLoader()->defineClass(name);
+			auto clz = ownerClass.lock()->getClassLoader().lock()->defineClass(name);
 		}
 		else {
 			throw runtime_error("Unknown symbol type:" + w2s(name));

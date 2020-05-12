@@ -42,7 +42,7 @@ private:
 	// 表示这个线程的program connter, 如果是native方法调用的时候就是-1, 表示undefined.
 	long pc;
 	vector<shared_ptr<VMThreadStackFrame>> stackFrames;
-	shared_ptr<VMClassMethod> startJavaMethod;
+	weak_ptr<VMClassMethod> startJavaMethod;
 	wstring className; // 要运行的类的名称.
 	wstring methodName; // 要运行的方法名称。
 	wstring methodSignature; // 要运行的方法签名。

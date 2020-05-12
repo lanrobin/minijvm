@@ -7,6 +7,9 @@
 #include "vm_classloader.h"
 #include "vm_thread.h"
 
+/*
+内存管理是只保存一份shared_ptr,因为它会一直存在，所以用weak_ptr给别人用。
+*/
 class VM : public std::enable_shared_from_this<VM> {
 private:
 	shared_ptr<VMMethodArea> methodArea;
@@ -28,12 +31,15 @@ public:
 	void initVM(shared_ptr<Configurations> conf);
 	~VM();
 	int run();
-	shared_ptr<VMMethodArea> getMethodArea() const { return methodArea; }
+	weak_ptr<VMMethodArea> getMethodArea() const { return methodArea; }
 
-	shared_ptr<ClassLoader> getAppClassLoader() const { return appClassLoader; };
+	weak_ptr<ClassLoader> getAppClassLoader() const { return appClassLoader; };
+	weak_ptr<ClassLoader> boostrapClassLoader() const { return bootstrapClassLoader; };
+
+	weak_ptr< Configurations> getConf() const { return conf; }
 
 public:
 	// static 
-	static shared_ptr<VM> getVM();
+	static weak_ptr<VM> getVM();
 };
 #endif //__JVM_VM_H__

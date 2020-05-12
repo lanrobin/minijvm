@@ -29,7 +29,7 @@ int main(int argc, char ** argv)
 	//testThreads();
 	//testSystem();
 	// test();
-	shared_ptr<VM> vm = VM::getVM();
+	shared_ptr<VM> vm = VM::getVM().lock();
 	vm->initVM(make_shared<Configurations>(confFilePath, argc, argv));
 	auto result = vm->run();
 	spdlog::info("vm exit with: {}", result);

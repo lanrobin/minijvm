@@ -19,6 +19,7 @@ using std::wstring;
 using std::vector;
 using std::shared_ptr;
 using std::make_shared;
+using std::weak_ptr;
 
 using std::runtime_error;
 

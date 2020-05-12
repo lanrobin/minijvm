@@ -8,19 +8,19 @@
 
 void VMJavaThread::startExecute() {
 	
-	auto vm = VM::getVM();
-	auto appClassLoader = vm->getAppClassLoader();
+	auto appClassLoader = VM::getVM().lock()->getAppClassLoader().lock();
 
-	shared_ptr<VMClass> mainClass = appClassLoader->loadClass(className);
+	shared_ptr<VMClass> mainClass = appClassLoader->loadClass(className).lock();
 	startJavaMethod = mainClass->findMethod(methodSignature, methodName);
-	if (startJavaMethod == nullptr) {
+	if (startJavaMethod.expired()) {
 		throw runtime_error("No start method found:" + w2s(methodName));
 	}
-	if (startJavaMethod->isStatic() != needStaticMethod) {
+	auto method = startJavaMethod.lock();
+	if (method->isStatic() != needStaticMethod) {
 		throw runtime_error("Method staticness is incorrect.");
 	}
 
-	spdlog::info("startExecute:{} with signature:{}", w2s(startJavaMethod->name), w2s(startJavaMethod->signature));
+	spdlog::info("startExecute:{} with signature:{}", w2s(method->name), w2s(method->signature));
 	int count = 0;
 	while (count < 15) {
 		spdlog::info("running:{}", count);

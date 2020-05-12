@@ -9,22 +9,22 @@
 #include <cstdint>
 #include <filesystem>
 
-ClassLoader::ClassLoader(shared_ptr<ClassLoader> p) : parent(p) {}
+ClassLoader::ClassLoader(weak_ptr<ClassLoader> p) : parent(p) {}
 
 
 bool ClassLoader::classLoaded(const wstring& className) {
 	//check if class has been loaded.
-	auto ma = VM::getVM()->getMethodArea();
-	return ma->classExists(className);
+	auto ma = VM::getVM().lock()->getMethodArea();
+	return ma.lock()->classExists(className);
 }
 
-shared_ptr<VMClass> ClassLoader::getStoredClass(const wstring& className) const{
-	auto ma = VM::getVM()->getMethodArea();
-	return ma->get(className);
+weak_ptr<VMClass> ClassLoader::getStoredClass(const wstring& className) const{
+	auto ma = VM::getVM().lock()->getMethodArea();
+	return ma.lock()->get(className);
 }
 
 
-shared_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
+weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 	auto cf = make_shared<ClassFile>(buf);
 	if (cf != nullptr) {
 		auto className = cf->getCanonicalClassName();
@@ -39,6 +39,8 @@ shared_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 		if (!cf->isSupportedClassFile()) {
 			throw runtime_error("Unsupported class file version:" + std::to_string(cf->major_version) + "." + std::to_string(cf->minor_version));
 		}
+
+		// 这里是需要真正存储class，所以用shared_ptr.
 		shared_ptr<VMLoadableClass> clz = nullptr;
 		
 		if (cf->isInterface()) {
@@ -47,13 +49,19 @@ shared_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 		else {
 			clz = make_shared<VMOrdinaryClass>(className, getSharedPtr());
 		}
-		auto ma = VM::getVM()->getMethodArea();
+		auto ma = VM::getVM().lock()->getMethodArea().lock();
 
 		if (ma->put(className, clz)) {
 
 			if (clz->loadClassInfo(cf)) {
 				// 把常量放到常量池中
 				ma->putClassConstantPool(cf, clz);
+				for (auto waiter = clz->loadWaitingList.begin(); waiter != clz->loadWaitingList.end(); waiter++) {
+					if (!(*waiter).expired()) {
+						(*waiter).lock()->classLoaded(clz);
+					}
+				}
+				clz->loadWaitingList.clear();
 			}
 			else {
 				ma->remove(className);
@@ -67,19 +75,19 @@ shared_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 	}
 	spdlog::error("Cannot load class:{}", w2s(buf->getMappingFile()));
 
-	return nullptr;
+	return std::weak_ptr<VMClass>();
 }
 
-shared_ptr<VMClass> ClassLoader::defineClass(const wstring & sym) {
+weak_ptr<VMClass> ClassLoader::defineClass(const wstring & sym) {
 	if (sym.length() == 0) {
 		throw runtime_error("Error in resolverArray, left sym is empty.");
 	}
-	auto ma = VM::getVM()->getMethodArea();
+	auto ma = VM::getVM().lock()->getMethodArea().lock();
 
-	shared_ptr<VMClass> componentType = ma->get(sym);
+	weak_ptr<VMClass> componentType = ma->get(sym);
 
 	// 如果类已经存在，则直接返回。
-	if (componentType != nullptr) {
+	if (!componentType.expired()) {
 		return componentType;
 	}
 
@@ -87,10 +95,11 @@ shared_ptr<VMClass> ClassLoader::defineClass(const wstring & sym) {
 		// 如果还是数组，则递归
 		wstring subName = sym.substr(1, sym.length() - 1);
 		auto subComponentType = defineClass(subName);
-		componentType = make_shared<VMArrayClass>(subName, subComponentType, getSharedPtr());
-		componentType->super = loadClass(L"java/lang/Object");
+		auto newArrayClass = make_shared<VMArrayClass>(subName, subComponentType, getSharedPtr());
+		newArrayClass->super = loadClass(L"java/lang/Object");
 		// 新创建了一个类，需要放到类常量池里。
-		ma->put(sym, componentType);
+		ma->put(sym, newArrayClass);
+		componentType = newArrayClass;
 	}
 	else if (sym[0] == L'L') {
 		// 如果是正常的引用类型。
@@ -107,17 +116,17 @@ shared_ptr<VMClass> ClassLoader::defineClass(const wstring & sym) {
 	}
 	return componentType;
 }
-BootstrapClassLoader::BootstrapClassLoader(const wstring& cp, shared_ptr<ClassLoader> p):
+BootstrapClassLoader::BootstrapClassLoader(const wstring& cp, weak_ptr<ClassLoader> p):
 	ClassLoader(p), bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader") {
 
 }
 
-BootstrapClassLoader::BootstrapClassLoader(shared_ptr<ClassLoader> p) :
+BootstrapClassLoader::BootstrapClassLoader(weak_ptr<ClassLoader> p) :
 	ClassLoader(p), classLoaderName(L"bootstrapClassLoader") {
 
 }
 
-shared_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
+weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
 	wstring canonicalClassPath(className);
 	// replace . with /
 	replaceAll(canonicalClassPath, L".", L"/");
@@ -136,24 +145,24 @@ shared_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
 		return loadClass(buffer);
 	}
 	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
-	return nullptr;
+	return std::weak_ptr<VMClass>();
 }
 
-shared_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
+weak_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
 	return defineClass(buf);
 }
 
-AppClassLoader::AppClassLoader(const wstring& appClassPath, shared_ptr<ClassLoader> p):
+AppClassLoader::AppClassLoader(const wstring& appClassPath, weak_ptr<ClassLoader> p):
 	BootstrapClassLoader(p),
 	appClassRootPath(appClassPath),
 	classLoaderName(L"AppClassLoader"){
 
 }
 
-shared_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
+weak_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
 
-	auto parentReadClass = parent->loadClass(className);
-	if (parentReadClass != nullptr) {
+	auto parentReadClass = parent.lock()->loadClass(className);
+	if (!parentReadClass.expired()) {
 		spdlog::info("Class:{} read from parent classloader", w2s(className));
 		return parentReadClass;
 	}
@@ -176,12 +185,12 @@ shared_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
 		return loadClass(buffer);
 	}
 	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
-	return nullptr;
+	return std::weak_ptr<VMClass>();
 }
 
-shared_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf) {
-	auto parentReadClass = parent->loadClass(buf);
-	if (parentReadClass != nullptr) {
+weak_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf) {
+	auto parentReadClass = parent.lock()->loadClass(buf);
+	if (!parentReadClass.expired()) {
 		spdlog::info("Class:{} read from parent classloader", w2s(buf->getMappingFile()));
 		return parentReadClass;
 	}

@@ -5,6 +5,8 @@
 #include "platform.h"
 #include "buffer.h"
 #include "clazz_reader.h"
+#include "log.h"
+#include "string_utils.h"
 
 
 #undef DEBUG_READ_FILE_IN_BYTE
@@ -503,4 +505,11 @@ shared_ptr<Attribute_Info> ClassFile::getAttributeByName(const wstring& name) co
 		}
 	}
 	return nullptr;
+}
+
+ClassFile::~ClassFile() {
+	constant_pool.clear();
+	methods.clear();
+	attributes.clear();
+	spdlog::info("ClassFile:{} gone", w2s(canonicalName));
 }

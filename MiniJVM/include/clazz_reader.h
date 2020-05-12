@@ -9,6 +9,8 @@
 #include "base_type.h"
 #include "java_class_common.h"
 #include "buffer.h"
+#include "log.h"
+#include "string_utils.h"
 
 #define DEBUG_READ_CLASS_FILE
 
@@ -283,7 +285,9 @@ struct Attribute_Info {
     }
 
     // make it virtual.
-    virtual ~Attribute_Info() {}
+    virtual ~Attribute_Info() {
+        spdlog::info("Attribute_Info:{} gone", w2s(name));
+    }
 private:
     wstring name;
 
@@ -347,6 +351,11 @@ struct Code_attribute : Attribute_Info {
         for (u2 i = 0; i < attributes_count; i++) {
             attributes.push_back(readAttributeInfo(buf, cp));
         }
+    }
+
+    ~Code_attribute() {
+        exception_table.clear();
+        attributes.clear();
     }
 };
 
@@ -433,6 +442,9 @@ struct StackMapTable_attribute : Attribute_Info {
         same_locals_1_stack_item_frame(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
             readVerificaitonTypes(stack, buf, 1);
         }
+        ~same_locals_1_stack_item_frame() {
+            stack.clear();
+        }
     };
     struct same_locals_1_stack_item_frame_extended :stack_map_frame {
         u2 offset_delta;
@@ -440,6 +452,9 @@ struct StackMapTable_attribute : Attribute_Info {
         same_locals_1_stack_item_frame_extended(shared_ptr<Buffer> buf) : stack_map_frame(buf) {
             offset_delta = buf->readu2();
             readVerificaitonTypes(stack, buf, 1);
+        }
+        ~same_locals_1_stack_item_frame_extended() {
+            stack.clear();
         }
     };
     struct chop_frame :stack_map_frame {
@@ -464,6 +479,10 @@ struct StackMapTable_attribute : Attribute_Info {
                 locals.push_back(readVerificationTypeInfo(buf));
             }
         }
+
+        ~append_frame() {
+            locals.clear();
+        }
     };
 
     struct full_frame :stack_map_frame {
@@ -479,6 +498,11 @@ struct StackMapTable_attribute : Attribute_Info {
             number_of_stack_items = buf->readu2();
             readVerificaitonTypes(stack, buf, number_of_stack_items);
         }
+
+        ~full_frame() {
+            locals.clear();
+            stack.clear();
+        }
     };
 
     u2 number_of_entries;
@@ -490,6 +514,10 @@ struct StackMapTable_attribute : Attribute_Info {
         for (u2 i = 0; i < number_of_entries; i++) {
             entries.push_back(StackMapTable_attribute::readStackMapFrame(buf));
         }
+    }
+
+    ~StackMapTable_attribute() {
+        entries.clear();
     }
 private:
     static shared_ptr<verification_type_info> readVerificationTypeInfo(shared_ptr<Buffer> buf);
@@ -525,6 +553,10 @@ struct InnerClasses_attribute : Attribute_Info {
     InnerClasses_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
         number_of_classes = buf->readu2();
         read_vector(classes, buf, number_of_classes);
+    }
+
+    ~InnerClasses_attribute() {
+        classes.clear();
     }
 };
 
@@ -579,6 +611,10 @@ struct LineNumberTable_attribute : Attribute_Info {
         line_number_table_length = buf->readu2();
         read_vector(line_number_table, buf, line_number_table_length);
     }
+
+    ~LineNumberTable_attribute() {
+        line_number_table.clear();
+    }
 };
 
 struct LocalVariableTable_attribute : Attribute_Info {
@@ -603,6 +639,10 @@ struct LocalVariableTable_attribute : Attribute_Info {
         local_variable_table_length = buf->readu2();
         read_vector(local_variable_table, buf, local_variable_table_length);
     }
+
+    ~LocalVariableTable_attribute() {
+        local_variable_table.clear();
+    }
 };
 
 struct LocalVariableTypeTable_attribute : Attribute_Info {
@@ -626,6 +666,10 @@ struct LocalVariableTypeTable_attribute : Attribute_Info {
     LocalVariableTypeTable_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>> & cp) : Attribute_Info(buf, cp) {
         local_variable_type_table_length = buf->readu2();
         read_vector(local_variable_type_table, buf, local_variable_type_table_length);
+    }
+
+    ~LocalVariableTypeTable_attribute() {
+        local_variable_type_table.clear();
     }
 };
 
@@ -687,6 +731,9 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
                 values.push_back(readElementValue(buf));
             }
         }
+        ~array_element_value() {
+            values.clear();
+        }
     };
 
     struct element_value_pair {
@@ -697,6 +744,7 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
             value = readElementValue(buf);
         }
     };
+
     struct annotation {
         u2 type_index;
         u2 num_element_value_pairs;
@@ -705,6 +753,9 @@ struct RuntimeAnnotations_attribute : Attribute_Info {
             type_index = buf->readu2();
             num_element_value_pairs = buf->readu2();
             read_vector(element_value_pairs, buf, num_element_value_pairs);
+        }
+        ~annotation() {
+            element_value_pairs.clear();
         }
     };
 
@@ -723,6 +774,10 @@ struct RuntimeVisibleAnnotations_attribute : RuntimeAnnotations_attribute {
         num_annotations = buf->readu2();
         read_vector(annotations, buf, num_annotations);
     }
+
+    ~RuntimeVisibleAnnotations_attribute() {
+        annotations.clear();
+    }
 };
 
 struct RuntimeInvisibleAnnotations_attribute : RuntimeVisibleAnnotations_attribute {
@@ -737,12 +792,20 @@ struct RuntimeVisibleParameterAnnotations_attribute :RuntimeAnnotations_attribut
             num_annotations = buf->readu2();
             read_vector(annotations, buf, num_annotations);
         }
+
+        ~parameter_annotation() {
+            annotations.clear();
+        }
     };
     u1 num_parameters;
     vector<shared_ptr< parameter_annotation>> parameter_annotations;
     RuntimeVisibleParameterAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(buf, cp) {
         num_parameters = buf->readu1();
         read_vector(parameter_annotations, buf, num_parameters);
+    }
+
+    ~RuntimeVisibleParameterAnnotations_attribute() {
+        parameter_annotations.clear();
     }
 };
 
@@ -815,6 +878,10 @@ struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
             table_length = buf->readu2();
             read_vector(table, buf, table_length);
         }
+
+        ~localvar_target() {
+            table.clear();
+        }
     };
 
     struct catch_target : type_target {
@@ -854,6 +921,10 @@ struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
             path_length = buf->readu1();
             read_vector(path, buf, path_length);
         }
+
+        ~type_path() {
+            path.clear();
+        }
     };
 
     struct type_annotation {
@@ -871,6 +942,10 @@ struct RuntimeTypeAnnotations : RuntimeAnnotations_attribute {
             num_element_value_pairs = buf->readu2();
             read_vector(element_value_pairs, buf, num_element_value_pairs);
         }
+
+        ~type_annotation() {
+            element_value_pairs.clear();
+        }
     };
     RuntimeTypeAnnotations(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeAnnotations_attribute(buf, cp) {}
 protected:
@@ -883,6 +958,10 @@ struct RuntimeVisibleTypeAnnotations_attribute : RuntimeTypeAnnotations {
     RuntimeVisibleTypeAnnotations_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : RuntimeTypeAnnotations(buf, cp) {
         num_annotations = buf->readu2();
         read_vector(annotations, buf, num_annotations);
+    }
+
+    ~RuntimeVisibleTypeAnnotations_attribute() {
+        annotations.clear();
     }
 };
 
@@ -916,6 +995,10 @@ struct BootstrapMethods_attribute : Attribute_Info {
         num_bootstrap_methods = buf->readu2();
         read_vector(bootstrap_methods, buf, num_bootstrap_methods);
     }
+
+    ~BootstrapMethods_attribute() {
+        bootstrap_methods.clear();
+    }
 };
 
 struct MethodParameters_attribute : Attribute_Info {
@@ -932,6 +1015,10 @@ struct MethodParameters_attribute : Attribute_Info {
     MethodParameters_attribute(shared_ptr<Buffer> buf, const vector<shared_ptr<CONSTANT_Info>>& cp) : Attribute_Info(buf, cp) {
         parameters_count = buf->readu1();
         read_vector(parameters, buf, parameters_count);
+    }
+
+    ~MethodParameters_attribute() {
+        parameters.clear();
     }
 };
 
@@ -1029,6 +1116,13 @@ struct Module_attribute : Attribute_Info {
         provides_count = buf->readu2();
         read_vector(provides, buf, provides_count);
     }
+
+    ~Module_attribute() {
+        requires.clear();
+        exports.clear();
+        opens.clear();
+        provides.clear();
+    }
 };
 
 struct ModulePackages_attribute : Attribute_Info {
@@ -1086,6 +1180,10 @@ struct Field_Info {
             attributes.push_back(readAttributeInfo(buf, cp));
         }
     }
+
+    ~Field_Info() {
+        attributes.clear();
+    }
 };
 //字段区定义结束
 
@@ -1111,6 +1209,9 @@ struct Method_Info {
         //methodName = std::dynamic_pointer_cast<CONSTANT_Utf8_info>(cp[name_index])->toUTF8String();
     }
 
+    ~Method_Info() {
+        attributes.clear();
+    }
     wstring getMethodName() const {
         return methodName;
     }
@@ -1146,6 +1247,7 @@ struct ClassFile {
     ClassFile(string& filepath);
     ClassFile(ClassFile&& cf) = default;
     ClassFile(ClassFile& cf) = default;*/
+    ~ClassFile();
 
     bool isJavaClassFile() const;
     wstring getCanonicalClassName() const;
