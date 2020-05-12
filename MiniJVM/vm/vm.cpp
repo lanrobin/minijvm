@@ -18,6 +18,10 @@ VM::VM(): conf(nullptr){
 }
 
 VM::~VM() {
+	spdlog::info("methodArea use_count:{}", methodArea.use_count());
+	spdlog::info("bootstrapClassLoader use_count:{}", bootstrapClassLoader.use_count());
+	spdlog::info("appClassLoader use_count:{}", appClassLoader.use_count());
+	spdlog::info("conf use_count:{}", conf.use_count());
 	spdlog::info("VM gone.");
 	//cout << "VM is gone" << endl;
 }

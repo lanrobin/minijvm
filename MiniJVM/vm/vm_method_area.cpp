@@ -152,11 +152,13 @@ shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_p
 				*/
 				auto methodRef = std::dynamic_pointer_cast<CONSTANT_Methodref_info>(cp[ci->reference_index]);
 				auto interfaceMethodRef = std::dynamic_pointer_cast<CONSTANT_InterfaceMethodref_info>(cp[ci->reference_index]);
-				if (methodRef != nullptr) {
+				if (methodRef != nullptr)
+				{
 					clzName = cf->getClassName(methodRef->class_index);
 					nat = cf->getNameAndType(methodRef->name_and_type_index);
 				}
-				else {
+				else
+				{
 					clzName = cf->getClassName(interfaceMethodRef->class_index);
 					nat = cf->getNameAndType(interfaceMethodRef->name_and_type_index);
 				}
@@ -265,16 +267,17 @@ shared_ptr<VMClass> VMExtensibleMethodArea::get(const wstring &className)
 	auto existing = classes.find(className);
 	if (existing != classes.end())
 	{
-		clz =  existing->second;
+		clz = existing->second;
 	}
 	pthread_rwlock_unlock(&classRWLock);
-	if (clz == nullptr) {
+	if (clz == nullptr)
+	{
 		spdlog::info("Class: {}  does not exist in MethodArea.", w2s(className));
 	}
 	return clz;
 }
 
-shared_ptr<VMClass> VMExtensibleMethodArea::remove(const wstring& className)
+shared_ptr<VMClass> VMExtensibleMethodArea::remove(const wstring &className)
 {
 	pthread_rwlock_wrlock(&classRWLock);
 	shared_ptr<VMClass> clz = nullptr;
@@ -289,7 +292,6 @@ shared_ptr<VMClass> VMExtensibleMethodArea::remove(const wstring& className)
 	pthread_rwlock_unlock(&classRWLock);
 	return clz;
 }
-
 
 bool VMExtensibleMethodArea::classExists(const wstring &className)
 {
@@ -323,7 +325,8 @@ shared_ptr<VMClassConstantPool> VMExtensibleMethodArea::putClassConstantPool(sha
 {
 	wstring clzName = clz->className();
 	auto exists = classContantsPoolsMap.find(clzName);
-	if (exists == classContantsPoolsMap.end()) {
+	if (exists == classContantsPoolsMap.end())
+	{
 		auto cp = createVMClassConstantPool(cf, clz);
 		classContantsPoolsMap[clzName] = cp;
 	}
@@ -332,7 +335,8 @@ shared_ptr<VMClassConstantPool> VMExtensibleMethodArea::putClassConstantPool(sha
 shared_ptr<VMClassConstantPool> VMExtensibleMethodArea::getClassConstantPool(const wstring &className)
 {
 	auto exists = classContantsPoolsMap.find(className);
-	if (exists == classContantsPoolsMap.end()) {
+	if (exists == classContantsPoolsMap.end())
+	{
 		return nullptr;
 	}
 	return exists->second;
@@ -340,7 +344,7 @@ shared_ptr<VMClassConstantPool> VMExtensibleMethodArea::getClassConstantPool(con
 VMExtensibleMethodArea::VMExtensibleMethodArea()
 {
 	pthread_rwlock_init(&classRWLock, nullptr);
-	spdlog::info("VMExtensibleMethodArea gone");
+	spdlog::info("VMExtensibleMethodArea created.");
 }
 
 VMExtensibleMethodArea::~VMExtensibleMethodArea()
