@@ -10,7 +10,7 @@
 #include "java_class_common.h"
 #include "buffer.h"
 
-#undef DEBUG_READ_CLASS_FILE
+#define DEBUG_READ_CLASS_FILE
 
 /**
 这个文件主要是解析class文件，参照  https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html
@@ -1155,7 +1155,7 @@ struct ClassFile {
     wstring getClassName(u2 index);
     wstring getUtf8String(u2 index);
     std::pair<wstring, wstring> getNameAndType(u2 index);
-
+    shared_ptr<Attribute_Info> getAttributeByName(const wstring& name) const;
     // these are private members.
 private:
     bool parsed = false;

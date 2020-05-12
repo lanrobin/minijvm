@@ -14,6 +14,9 @@ public:
 
 	shared_ptr<VMClass> defineClass(shared_ptr<Buffer> buf);
 
+	// 这个用来定义数组类。
+	shared_ptr<VMClass> defineClass(const wstring& className);
+
 	virtual wstring getClassLoaderName() const = 0;
 	ClassLoader(shared_ptr<ClassLoader> parent);
 
@@ -24,7 +27,6 @@ protected:
 	shared_ptr<ClassLoader> getSharedPtr() { return shared_from_this(); }
 
 	bool classLoaded(const wstring& className);
-	shared_ptr<VMClass> storeClass(shared_ptr<VMClass> clz);
 	shared_ptr<VMClass> getStoredClass(const wstring& className) const;
 };
 

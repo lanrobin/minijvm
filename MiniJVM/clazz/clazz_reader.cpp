@@ -216,17 +216,17 @@ wstring CONSTANT_Utf8_info::toUTF8String() {
 	*/
 	for (auto it = bytes.begin(); it != bytes.end();) {
 		u2 x = *it++;
-		if ((x & 0x80) == 0) {
+		if (x <= 0x7F) {
 			buf.push_back(x);
 		}
 		else {
 			u2 y = *it++;
-			if ((x & 0xC0) == 0xC0 && (y & 0x80) == 0x80) {
+			if ((x & 0xE0) == 0xC0 && (y & 0xC0) == 0x80) {
 				buf.push_back(((x & 0x1f) << 6) + (y & 0x3f));
 			}
 			else {
 				u2 z = *it++;
-				if ((x & 0xC0) == 0xC0 && (y & 0x80) == 0x80 && (z & 0x80) == 0x80) {
+				if ((x & 0xF0) == 0xE0 && (y & 0xC0) == 0x80 && (z & 0xC0) == 0x80) {
 					buf.push_back(((x & 0xf) << 12) + ((y & 0x3f) << 6) + (z & 0x3f));
 				}
 				else {
@@ -236,8 +236,8 @@ wstring CONSTANT_Utf8_info::toUTF8String() {
 					x = *it++;
 					y = *it++;
 					z = *it++;
-					if ((u == 0xED) && (v & 0xA0) == 0xA0 && (w & 0x80) == 0x80 &&
-						(x == 0xED) && (y & 0xB0) == 0xB0 && (z & 0x80) == 0x80) {
+					if ((u == 0xED) && (v & 0xF0) == 0xA0 && (w & 0xC0) == 0x80 &&
+						(x == 0xED) && (y & 0xF0) == 0xB0 && (z & 0xC0) == 0x80) {
 						buf.push_back(0x10000 + ((v & 0x0f) << 16) + ((w & 0x3f) << 10) +
 							((y & 0x0f) << 6) + (z & 0x3f));
 					}
@@ -492,4 +492,15 @@ std::pair<wstring, wstring> ClassFile::getNameAndType(u2 index) {
 		
 	}
 	return std::make_pair(name, type);
+}
+/*
+先这么实现，应该用unordered_map来加速。
+*/
+shared_ptr<Attribute_Info> ClassFile::getAttributeByName(const wstring& name) const {
+	for (auto a = attributes.begin(); a != attributes.end(); a++) {
+		if ((*a)->getAttributeName() == name) {
+			return *a;
+		}
+	}
+	return nullptr;
 }

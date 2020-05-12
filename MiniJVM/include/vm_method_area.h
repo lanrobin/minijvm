@@ -4,6 +4,7 @@
 #include "vm_class.h"
 #include "vm_constant_pool.h"
 #include "configurations.h"
+#include "pthread.h"
 
 struct VMClassConstantPool {
 	wstring className;
@@ -20,11 +21,10 @@ struct VMClassConstantPool {
 */
 class VMMethodArea {
 public:
-	virtual shared_ptr<VMClass> put(const wstring& className, shared_ptr<VMClass> clz) = 0;
+	virtual bool put(const wstring& className, shared_ptr<VMClass> clz) = 0;
 	virtual shared_ptr<VMClass> get(const wstring& className) = 0;
-	virtual bool mark(const wstring& className) = 0;
-	virtual bool isClassLoading(const wstring& className) = 0;
-	virtual bool classExists(const wstring& className) const = 0;
+	virtual shared_ptr<VMClass> remove(const wstring& className) = 0;
+	virtual bool classExists(const wstring& className) = 0;
 
 	/*
 	因为JVM规定，所以的字符串必须统一管理，所以在ClassFile里的UTF8 constant都放在这里面。
@@ -42,11 +42,10 @@ protected:
 
 class VMExtensibleMethodArea : public VMMethodArea {
 public:
-	shared_ptr<VMClass> put(const wstring& className, shared_ptr<VMClass> clz) override;
+	bool put(const wstring& className, shared_ptr<VMClass> clz) override;
 	shared_ptr<VMClass> get(const wstring& className) override;
-	bool mark(const wstring& className) override;
-	bool isClassLoading(const wstring& className) override;
-	bool classExists(const wstring& className) const override;
+	shared_ptr<VMClass> remove(const wstring& className) override;
+	bool classExists(const wstring& className) override;
 
 
 	size_t putConstantString(const wstring& t) override;
@@ -55,6 +54,7 @@ public:
 	shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) override;
 	shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) override;
 	~VMExtensibleMethodArea();
+	VMExtensibleMethodArea();
 
 private:
 	unordered_map<wstring, shared_ptr<VMClass>> classes;
@@ -67,6 +67,9 @@ private:
 	*/
 	unordered_map<wstring, size_t> stringsMap;
 	vector<wstring> stringsVector;
+
+	/* class的更改需要锁的。*/
+	pthread_rwlock_t classRWLock;
 };
 
 class VMMethodAreaFactory {

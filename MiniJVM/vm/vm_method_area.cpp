@@ -2,6 +2,7 @@
 #include "log.h"
 #include "string_utils.h"
 #include "clazz_reader.h"
+#include "pthread.h"
 
 shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz)
 {
@@ -141,9 +142,24 @@ shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_p
 			case VMConstantMethodHandle::RefType::REF_invokeSpecial:
 			{
 				// CONSTANT_Methodref_info
-				auto ri = std::dynamic_pointer_cast<CONSTANT_Methodref_info>(cp[ci->reference_index]);
-				clzName = cf->getClassName(ri->class_index);
-				nat = cf->getNameAndType(ri->name_and_type_index);
+				/*
+				If the value of the reference_kind item is 6 (REF_invokeStatic) or 7 (REF_invokeSpecial), 
+				then if the class file version number is less than 52.0, 
+				the constant_pool entry at that index must be a CONSTANT_Methodref_info structure representing a class's method for which a method handle is to be created;
+				if the class file version number is 52.0 or above, 
+				the constant_pool entry at that index must be either a CONSTANT_Methodref_info structure or a CONSTANT_InterfaceMethodref_info structure (§4.4.2)
+				representing a class's or interface's method for which a method handle is to be created.
+				*/
+				auto methodRef = std::dynamic_pointer_cast<CONSTANT_Methodref_info>(cp[ci->reference_index]);
+				auto interfaceMethodRef = std::dynamic_pointer_cast<CONSTANT_InterfaceMethodref_info>(cp[ci->reference_index]);
+				if (methodRef != nullptr) {
+					clzName = cf->getClassName(methodRef->class_index);
+					nat = cf->getNameAndType(methodRef->name_and_type_index);
+				}
+				else {
+					clzName = cf->getClassName(interfaceMethodRef->class_index);
+					nat = cf->getNameAndType(interfaceMethodRef->name_and_type_index);
+				}
 				break;
 			}
 			case VMConstantMethodHandle::RefType::REF_invokeInterface:
@@ -176,7 +192,8 @@ shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_p
 		case ConstantPoolType::Dynamic:
 		{
 			auto str = std::dynamic_pointer_cast<CONSTANT_Dynamic_info>(p);
-			auto bma = std::dynamic_pointer_cast<BootstrapMethods_attribute>(cf->attributes[str->bootstrap_method_attr_index]);
+			auto bma = std::dynamic_pointer_cast<BootstrapMethods_attribute>(cf->getAttributeByName(L"BootstrapMethods"));
+			auto attr = bma->bootstrap_methods[str->bootstrap_method_attr_index];
 			auto nat = cf->getNameAndType(str->name_and_type_index);
 			auto cIndex = putConstantString(clz->className());
 			auto nIndex = putConstantString(nat.first);
@@ -190,7 +207,8 @@ shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_p
 		case ConstantPoolType::InvokeDynamic:
 		{
 			auto str = std::dynamic_pointer_cast<CONSTANT_InvokeDynamic_info>(p);
-			auto bma = std::dynamic_pointer_cast<BootstrapMethods_attribute>(cf->attributes[str->bootstrap_method_attr_index]);
+			auto bma = std::dynamic_pointer_cast<BootstrapMethods_attribute>(cf->getAttributeByName(L"BootstrapMethods"));
+			auto attr = bma->bootstrap_methods[str->bootstrap_method_attr_index];
 			auto nat = cf->getNameAndType(str->name_and_type_index);
 			auto cIndex = putConstantString(clz->className());
 			auto nIndex = putConstantString(nat.first);
@@ -225,64 +243,62 @@ shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_p
 	return make_shared<VMClassConstantPool>(clz, cs);
 }
 
-shared_ptr<VMClass> VMExtensibleMethodArea::put(const wstring &className, shared_ptr<VMClass> clz)
+bool VMExtensibleMethodArea::put(const wstring &className, shared_ptr<VMClass> clz)
 {
+	bool ok = false;
+	pthread_rwlock_wrlock(&classRWLock);
 	auto existing = classes.find(className);
-	if (existing != classes.end() && !existing->second->equals(VMClass::LOADING_VMCLASS))
+	if (existing == classes.end())
 	{
-		spdlog::info("class:{}  existed in MethodArea", w2s(className));
-		return existing->second;
+		classes[className] = clz;
+		spdlog::info("class:{} put in MethodArea, total:{}", w2s(className), classes.size());
+		ok = true;
 	}
-	classes[className] = clz;
-	return clz;
+	pthread_rwlock_unlock(&classRWLock);
+	return ok;
 }
 
 shared_ptr<VMClass> VMExtensibleMethodArea::get(const wstring &className)
 {
-	auto existing = classes.find(className);
-	if (existing != classes.end() && !existing->second->equals(VMClass::LOADING_VMCLASS))
-	{
-		return existing->second;
-	}
-	spdlog::info("class: {} doesn't exist in MethodArea", w2s(className));
-	return nullptr;
-}
-
-bool VMExtensibleMethodArea::mark(const wstring& className)
-{
+	shared_ptr<VMClass> clz = nullptr;
+	pthread_rwlock_rdlock(&classRWLock);
 	auto existing = classes.find(className);
 	if (existing != classes.end())
 	{
-		spdlog::info("class: {} had been loaded or marked.", w2s(className));
-		return false;
+		clz =  existing->second;
+	}
+	pthread_rwlock_unlock(&classRWLock);
+	if (clz == nullptr) {
+		spdlog::info("Class: {}  does not exist in MethodArea.", w2s(className));
+	}
+	return clz;
+}
+
+shared_ptr<VMClass> VMExtensibleMethodArea::remove(const wstring& className)
+{
+	pthread_rwlock_wrlock(&classRWLock);
+	shared_ptr<VMClass> clz = nullptr;
+	auto existing = classes.find(className);
+	if (existing != classes.end())
+	{
+		spdlog::info("class: {} had been removed.", w2s(className));
+		clz = existing->second;
+		classes.erase(existing);
 	}
 	spdlog::info("mark class: {}", w2s(className));
-	classes[className] = VMClass::LOADING_VMCLASS;
-	return true;
+	pthread_rwlock_unlock(&classRWLock);
+	return clz;
 }
 
-bool VMExtensibleMethodArea::isClassLoading(const wstring& className)
-{
-	auto existing = classes.find(className);
-	if (existing != classes.end())
-	{
-		if (existing->second->equals(VMClass::LOADING_VMCLASS)) {
-			spdlog::info("class: {} is being load.", w2s(className));
-			return true;
-		}
-		else {
-			spdlog::info("class: {} had been loaded.", w2s(className));
-			return false;
-		}
-	}
-	spdlog::info("class: {} does not start loading yet.", w2s(className));
-	return false;
-}
 
-bool VMExtensibleMethodArea::classExists(const wstring &className) const
+bool VMExtensibleMethodArea::classExists(const wstring &className)
 {
+	bool exists = false;
+	pthread_rwlock_rdlock(&classRWLock);
 	auto existing = classes.find(className);
-	return (existing != classes.end());
+	exists = (existing != classes.end());
+	pthread_rwlock_unlock(&classRWLock);
+	return exists;
 }
 
 size_t VMExtensibleMethodArea::putConstantString(const wstring &t)
@@ -321,9 +337,18 @@ shared_ptr<VMClassConstantPool> VMExtensibleMethodArea::getClassConstantPool(con
 	}
 	return exists->second;
 }
+VMExtensibleMethodArea::VMExtensibleMethodArea()
+{
+	pthread_rwlock_init(&classRWLock, nullptr);
+	spdlog::info("VMExtensibleMethodArea gone");
+}
 
 VMExtensibleMethodArea::~VMExtensibleMethodArea()
 {
+	pthread_rwlock_destroy(&classRWLock);
+	classes.clear();
+	stringsMap.clear();
+	stringsVector.clear();
 	spdlog::info("VMExtensibleMethodArea gone");
 }
 

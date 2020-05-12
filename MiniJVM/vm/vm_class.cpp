@@ -5,67 +5,19 @@
 #include "log.h"
 #include "string_utils.h"
 
-VMClass::VMClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) {
+// 这个是debug的选项，就是在类加载的时候把它的字段和方法对应的方法也resolve了，应该没有必要，可以在执行的时候再resolve.
+//#undef RESOLVE_ON_CLASS_LOAD
+#define RESOLVE_ON_CLASS_LOAD
 
-	accessFlags = cf->access_flags;
 
-	// 正常的ClassName,如果是数组为内存生成的，不在这里生成。
-	name = cf->getCanonicalClassName();
-
+VMClass::VMClass(const wstring& signature, shared_ptr<ClassLoader> cl) {
+	name = signature;
 	auto packageEnd = name.find_last_of(L"/");
 	if (packageEnd != wstring::npos) {
 		packageName = name.substr(0, packageEnd);
 	}
-
-	spdlog::info("create class:{}", w2s(name));
 	classLoader = cl;
-
-	auto superClassName = cf->getClassName(cf->super_class);
-
-	if (superClassName.size() > 0) {
-		this->super = cl->loadClass(superClassName);
-		//this->super->resolveSymbol();
-	}
-	else {
-		spdlog::warn("Load java/lang/Object.");
-	}
-
-	auto interfaces = cf->interfaces;
-	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
-		auto interfaceName = cf->getClassName(*i);
-		auto thisInterface = cl->loadClass(interfaceName);
-		//thisInterface->resolveSymbol();
-		this->interfaces.push_back(thisInterface);
-	}
-
-	auto methods = cf->methods;
-	for (auto m = methods.begin(); m != methods.end(); m++) {
-		auto cm = make_shared< VMClassMethod>(cf, *m);
-		//cm->resolveSymbol();
-		this->methods[cm->lookupKey()] = cm;
-	}
-
-	auto fs = cf->fields;
-	for (auto f = fs.begin(); f != fs.end(); f++) {
-		auto field = make_shared<VMClassField>(cf, *f);
-		//field->resolveSymbol();
-		auto key = field->lookupKey();
-		if (field->isStatic()) {
-			
-			classStaticFieldLayout[key] = field;
-			// 创建对应存储的空间。
-			classStaticFields[key] = VMHeapPool::createVMHeapObject(field->signature);
-		}
-		else {
-			classInstanceFieldLayout[key] = field;
-		}
-	}
-}
-
-
-VMClass::VMClass(const wstring& signature) {
-	name = signature;
-	spdlog::info("create class:{}", w2s(name));
+	spdlog::info("create class:{} and package:{}", w2s(name), w2s(packageName));
 }
 
 wstring VMClass::getNextDimensionSignature(const wstring& signature) {
@@ -79,7 +31,7 @@ bool VMClass::equals(shared_ptr<VMClass> other) const {
 		return false;
 	}
 	// 直接比较全名是不是相等就行了。
-	return name == super->className();
+	return name == other->className();
 }
 
 bool VMClass::isSubClassOf(shared_ptr<VMClass> other) const {
@@ -127,7 +79,7 @@ vector<wstring> VMClass::splitSignatureToElement(const wstring& signature) {
 	throw runtime_error("not implemented yet.");
 }
 
-shared_ptr<VMClassMethod> VMClass::findMethod(const wstring& methodSignature, const wstring & name) const {
+shared_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring& methodSignature, const wstring & name) const {
 	auto key = VMClassMethod::makeLookupKey(methodSignature, name);
 	auto m = methods.find(key);
 	if (m == methods.end()) {
@@ -137,10 +89,10 @@ shared_ptr<VMClassMethod> VMClass::findMethod(const wstring& methodSignature, co
 	return m->second;
 }
 
-shared_ptr<VMHeapObject> VMClass::findStaticField(const wstring& methodSignature, const wstring& name) const {
+shared_ptr<VMHeapObject> VMReferenceClass::findStaticField(const wstring& methodSignature, const wstring& name) const {
 	auto key = VMClassField::makeLookupKey(methodSignature, name);
-	auto value = classStaticFields.find(key);
-	if (value == classStaticFields.end()) {
+	auto value = staticFields.find(key);
+	if (value == staticFields.end()) {
 		spdlog::warn("No field found for key:{}", w2s(key));
 		return nullptr;
 	}
@@ -148,38 +100,95 @@ shared_ptr<VMHeapObject> VMClass::findStaticField(const wstring& methodSignature
 }
 
 
-void VMClass::resolveSymbol() {
+void VMReferenceClass::resolveSymbol() {
+
+	if (super != nullptr) {
+		super->resolveSymbol();
+	}
+
+	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
+		(*i)->resolveSymbol();
+	}
 	for(auto m = methods.begin(); m != methods.end(); m++) {
-		m->second->resolveSymbol(getSharedPtr());
+		m->second->resolveSymbol();
 	}
 
-	for (auto f = classStaticFieldLayout.begin(); f != classStaticFieldLayout.end(); f++) {
-		f->second->resolveSymbol(getSharedPtr());
+	for (auto f = staticFieldLayout.begin(); f != staticFieldLayout.end(); f++) {
+		f->second->resolveSymbol();
 	}
 
-	for (auto f = classInstanceFieldLayout.begin(); f != classInstanceFieldLayout.end(); f++) {
-		f->second->resolveSymbol(getSharedPtr());
+	for (auto f = instanceFieldLayout.begin(); f != instanceFieldLayout.end(); f++) {
+		f->second->resolveSymbol();
+	}
+
+}
+
+void VMReferenceClass::classLoaded(shared_ptr< VMReferenceClass> other) {
+	if (other != nullptr) {
+		hasAccessibilityTo(other);
 	}
 }
-/*
-这个常量是在类被加载的时候的占位，如果没有会出现循环调用。
-*/
-shared_ptr<VMClass> VMClass::LOADING_VMCLASS = make_shared<VMClass>(L"ClassBeingLoadPlaceHolder");
 
-VMOrdinaryClass::VMOrdinaryClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) :VMClass(cf, cl) {
-	classType = VMClass::ClassType::ClassTypeOrdinaryClass;
+bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf) {
+
+	accessFlags = cf->access_flags;
+
+	auto superClassName = cf->getClassName(cf->super_class);
+
+	if (superClassName.size() > 0) {
+		this->super = classLoader->loadClass(superClassName);
+		//this->super->resolveSymbol();
+	}
+	else {
+		spdlog::warn("Load java/lang/Object.");
+	}
+
+	auto interfaces = cf->interfaces;
+	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
+		auto interfaceName = cf->getClassName(*i);
+		auto thisInterface = classLoader->loadClass(interfaceName);
+		//thisInterface->resolveSymbol();
+		this->interfaces.push_back(thisInterface);
+	}
+	bool hasCInitMethod = false;
+	auto methods = cf->methods;
+	for (auto m = methods.begin(); m != methods.end(); m++) {
+		auto cm = make_shared< VMClassMethod>(cf, *m, getSharedPtr());
+
+		// 如果这个类有 <cinit>方法，则需要被初始化，如果没有则不用管。
+		if (cm->signature == L"<cinit>") {
+			hasCInitMethod = true;
+		}
+		//cm->resolveSymbol();
+		this->methods[cm->lookupKey()] = cm;
+	}
+
+	auto fs = cf->fields;
+	for (auto f = fs.begin(); f != fs.end(); f++) {
+		auto field = make_shared<VMClassField>(cf, *f, getSharedPtr());
+		//field->resolveSymbol();
+		auto key = field->lookupKey();
+		if (field->isStatic()) {
+
+			staticFieldLayout[key] = field;
+			// 创建对应存储的空间。
+			//staticFields[key] = VMHeapPool::createVMHeapObject(field->signature);
+		}
+		else {
+			instanceFieldLayout[key] = field;
+		}
+	}
+	
+	state = hasCInitMethod? InitializeState::NotInitialized: InitializeState::NotInitialized;
+#ifdef RESOLVE_ON_CLASS_LOAD
+	// 自己先resolve.
+	resolveSymbol();
+#endif 
+	return true;
 }
 
-VMInterfaceClass::VMInterfaceClass(shared_ptr<ClassFile> cf, shared_ptr<ClassLoader> cl) : VMClass(cf, cl) {
-	classType = VMClass::ClassType::ClassTypeInterface;
-}
 
-VMArrayClass::VMArrayClass(const wstring& componentSignature) : VMClass(componentSignature){
-	classType = VMClass::ClassType::ClassTypeArrayClass;
-}
-
-
-VMClassField::VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi){
+VMClassField::VMClassField(shared_ptr< ClassFile> cf, shared_ptr<Field_Info> fi, shared_ptr<VMClass> owner):VMClassResolvable(owner){
 	accessFlags = fi->access_flags;
 	name = cf->getUtf8String(fi->name_index);
 	signature = cf->getUtf8String(fi->descriptor_index);
@@ -199,7 +208,7 @@ vector<wstring> VMClassField::splitSignature(){
 	return elements;
 }
 
-VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi) {
+VMClassMethod::VMClassMethod(shared_ptr< ClassFile> cf, shared_ptr<Method_Info> mi, shared_ptr<VMClass> owner) :VMClassResolvable(owner) {
 	accessFlags = mi->access_flags;
 	name = cf->getUtf8String(mi->name_index);
 	signature = cf->getUtf8String(mi->descriptor_index);
@@ -279,12 +288,27 @@ vector<wstring> VMClassMethod::splitSignature() {
 	return elements;
 }
 
+void VMClassMethod::resolveSymbol() {
+	VMClassResolvable::resolveSymbol();
+	for (auto e = exceptionTable.begin(); e != exceptionTable.end(); e++) {
+		(*e)->resolveSymbol(ownerClass->getClassLoader());
+	}
+}
+
 VMMethodExceptionTable::VMMethodExceptionTable(shared_ptr< ClassFile> cf, shared_ptr<Code_attribute::ExceptionTable> et)
 {
 	startPC = et->start_pc;
 	endPC = et->end_pc;
 	handlerPC = et->handler_pc;
-	catchType = cf->getUtf8String(et->catch_type);
+	catchType = cf->getClassName(et->catch_type);
+}
+
+void VMMethodExceptionTable::resolveSymbol(shared_ptr<ClassLoader> cl) {
+	if (catchType.length() == 0) {
+		// any exception type.
+		return;
+	}
+	cl->loadClass(catchType);
 }
 
 const unordered_map<wchar_t, int> VMClassResolvable::PRIMITIVE_TYPES =
@@ -300,8 +324,7 @@ const unordered_map<wchar_t, int> VMClassResolvable::PRIMITIVE_TYPES =
 	{L'V', 1}
 };
 
-void VMClassResolvable::resolveSymbol(shared_ptr<VMClass> owner) {
-	ownerClass = owner;
+void VMClassResolvable::resolveSymbol() {
 	auto symbols = splitSignature();
 	for (auto s = symbols.begin(); s != symbols.end(); s++) {
 		wstring name = *s;
@@ -318,8 +341,8 @@ void VMClassResolvable::resolveSymbol(shared_ptr<VMClass> owner) {
 			}
 		}
 		else if (name.find(L"[") == 0) {
-			// 数组
-			auto clz = resolveArray(name);
+			// 数组, 需要创建数组类。
+			auto clz = ownerClass->getClassLoader()->defineClass(name);
 		}
 		else {
 			throw runtime_error("Unknown symbol type:" + w2s(name));
@@ -339,30 +362,3 @@ unordered_map<wstring, shared_ptr< VMPrimitiveClass>> VMPrimitiveClass::AllPrimi
 	{L"Z", make_shared< VMPrimitiveClass >(L"boolean")},
 	{L"V", make_shared< VMPrimitiveClass >(L"void")}
 };
-
-shared_ptr<VMClass> VMClassResolvable::resolveArray(const wstring& sym) {
-	if (sym.length() == 0) {
-		throw runtime_error("Error in resolverArray, left sym is empty.");
-	}
-	shared_ptr<VMClass> componentType = nullptr;
-	if (sym[0] == L'[') {
-		// 如果还是数组，则递归
-		wstring subName = sym.substr(1, sym.length() - 1);
-		auto subComponentType = resolveArray(subName);
-		componentType = make_shared< VMArrayClass>(subName);
-	}
-	else if (sym[0] == L'L') {
-		// 如果是正常的引用类型。
-		wstring className = sym.substr(1, sym.length() - 2);
-		componentType = ownerClass->getClassLoader()->loadClass(className);
-	}
-	else {
-		// 到了这里应该只剩下一个字符了。
-		assert(sym.length() == 1);
-		if (PRIMITIVE_TYPES.find(sym[0]) == PRIMITIVE_TYPES.end()) {
-			throw runtime_error("Unsupported type:" + w2s(sym));
-		}
-		componentType = VMPrimitiveClass::AllPrimitiveClasses.find(sym)->second;
-	}
-	return componentType;
-}
