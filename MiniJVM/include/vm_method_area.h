@@ -20,7 +20,7 @@ struct VMClassConstantPool
 /*
  根据JVMS的描述，方法区可以分为固定大小的和可扩展的大小的，为了简单实现，我先实现可扩展的
 */
-class VMMethodArea
+struct VMMethodArea
 {
 public:
 	virtual bool put(const wstring &className, shared_ptr<VMClass> clz) = 0;
@@ -42,7 +42,7 @@ protected:
 	shared_ptr<VMClassConstantPool> createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz);
 };
 
-class VMExtensibleMethodArea : public VMMethodArea
+struct VMExtensibleMethodArea : public VMMethodArea
 {
 public:
 	bool put(const wstring &className, shared_ptr<VMClass> clz) override;
@@ -69,11 +69,11 @@ private:
 	unordered_map<wstring, size_t> stringsMap;
 	vector<wstring> stringsVector;
 
-	/* class的更改需要锁的。*/
+	/* class的更改需要锁的。 */
 	pthread_rwlock_t classRWLock;
 };
 
-class VMMethodAreaFactory
+struct VMMethodAreaFactory
 {
 public:
 	static shared_ptr<VMMethodArea> createMethodArea(shared_ptr<Configurations> conf);

@@ -61,6 +61,7 @@ void VM::initVM(shared_ptr<Configurations> cfs)
 		initilized = true;
 		conf = cfs;
 		methodArea = VMMethodAreaFactory::createMethodArea(conf);
+		heap = VMHeapPoolFactory::createVMHeapPool(conf);
 		bootstrapClassLoader = make_shared<BootstrapClassLoader>(conf->getBootStrapClassPath(), std::weak_ptr<ClassLoader>());
 		appClassLoader = make_shared<AppClassLoader>(conf->getAppClassPath(), bootstrapClassLoader);
 

@@ -6,7 +6,7 @@
 
 using std::istream;
 
-class Buffer {
+struct Buffer {
 private:
 	u1* buffer;
 	size_t buffer_size;

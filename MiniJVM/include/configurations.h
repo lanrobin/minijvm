@@ -2,7 +2,7 @@
 #define __JVM_VM_CONFIGURATIONS_H__
 #include "base_type.h"
 
-class Configurations {
+struct Configurations {
 public:
 	Configurations(const wstring& configFilePath, int argc, char** argv);
 
@@ -20,6 +20,16 @@ public:
 
 	wstring getTargetClass() const {
 		return targetClass;
+	}
+
+	bool useFixHeap() const {
+		return true;
+	}
+
+	long long maxHeapSize() const {
+
+		// œ»…Ë÷√Œ™2G
+		return 2 * 1024 * 1024 * 1024LL;
 	}
 
 	string toString();

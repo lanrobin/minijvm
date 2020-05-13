@@ -5,7 +5,7 @@
 #include "zip/zip.h"
 #include "buffer.h"
 
-class CompressedFileReader
+struct CompressedFileReader
 {
 public:
 	CompressedFileReader(const string &filePath);

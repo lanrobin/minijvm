@@ -10,6 +10,8 @@
 
 using namespace std;
 
+struct ReferenceVMHeapObject;
+
 // 虚拟机的线程栈，一般有两种实现，一种是固定的另一种是可扩展的。
 struct VMThreadStackFrame
 {

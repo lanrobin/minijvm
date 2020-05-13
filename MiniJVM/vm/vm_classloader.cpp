@@ -128,11 +128,11 @@ weak_ptr<VMClass> ClassLoader::defineClass(const wstring &sym)
 	{
 		// 到了这里应该只剩下一个字符了。
 		assert(sym.length() == 1);
-		if (VMPrimitiveClass::AllPrimitiveClasses.find(sym) == VMPrimitiveClass::AllPrimitiveClasses.end())
+		if (!VMPrimitiveClass::isPrimitiveTypeSignature(sym))
 		{
 			throw runtime_error("Unsupported type:" + w2s(sym));
 		}
-		componentType = VMPrimitiveClass::AllPrimitiveClasses.find(sym)->second;
+		componentType = VMPrimitiveClass::getPrimitiveVMClass(sym);
 	}
 	return componentType;
 }

@@ -2,32 +2,17 @@
 #define __JVM_VM_CLASS_H__
 #include "base_type.h"
 #include "java_class_common.h"
-#include "vm_classloader.h"
-#include "vm_heap.h"
 #include "log.h"
 #include "string_utils.h"
 #include "clazz_reader.h"
 
 #include <unordered_map>
 
-/*
-/// class file access flag
-extern const u2 CLASS_ACC_PUBLIC; //Declared public; may be accessed from outside its package.
-extern const u2 CLASS_ACC_FINAL; //Declared final; no subclasses allowed.
-extern const u2 CLASS_ACC_SUPER; //Treat superclass methods specially when invoked by the invokespecial instruction.
-extern const u2 CLASS_ACC_INTERFACE; //Is an interface, not a class.
-extern const u2 CLASS_ACC_ABSTRACT; //Declared abstract; must not be instantiated.
-extern const u2 CLASS_ACC_SYNTHETIC; //Declared synthetic; not present in the source code.
-extern const u2 CLASS_ACC_ANNOTATION; //Declared as an annotation type.
-extern const u2 CLASS_ACC_ENUM; //Declared as an enum type.
-extern const u2 CLASS_ACC_MODULE; //Is a module, not a class or interface.
-*/
-using std::unordered_map;
-
-class ClassLoader;
-struct VMClass;
+struct ClassLoader;
 struct VMHeapObject;
-struct VMClassMethod;
+struct VMClass;
+
+using std::unordered_map;
 
 struct VMMethodExceptionTable
 {
@@ -47,7 +32,6 @@ public: // fields;
 	wstring signature;
 	bool deprecated = false;
 	weak_ptr<VMClass> ownerClass;
-	static const unordered_map<wchar_t, int> PRIMITIVE_TYPES;
 
 public: // methods
 	virtual void resolveSymbol();
@@ -56,12 +40,12 @@ public: // methods
 		return makeLookupKey(signature, name);
 	}
 
-	VMClassResolvable(weak_ptr<VMClass> owner) : ownerClass(owner){};
+	VMClassResolvable(weak_ptr<VMClass> owner) : ownerClass(owner) {};
 	virtual ~VMClassResolvable() {}
 	virtual vector<wstring> splitSignature() = 0;
 
 public:
-	static wstring makeLookupKey(const wstring &sig, const wstring name)
+	static wstring makeLookupKey(const wstring& sig, const wstring name)
 	{
 		return sig + L"@" + name;
 	}
@@ -124,15 +108,15 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 
 	weak_ptr<ClassLoader> classLoader;
 
-	const wstring &className() const { return name; };
+	const wstring& className() const { return name; };
 
-	VMClass(const wstring &name, weak_ptr<ClassLoader> classLoader);
+	VMClass(const wstring& name, weak_ptr<ClassLoader> classLoader);
 
 	weak_ptr<ClassLoader> getClassLoader() const { return classLoader; };
 	virtual ~VMClass() { spdlog::info("Class:{}, type:{} gone", w2s(name), classType); };
 
-	virtual weak_ptr<VMClassMethod> findMethod(const wstring &methodSignature, const wstring &name) const = 0;
-	virtual weak_ptr<VMHeapObject> findStaticField(const wstring &methodSignature, const wstring &name) const = 0;
+	virtual weak_ptr<VMClassMethod> findMethod(const wstring& methodSignature, const wstring& name) const = 0;
+	virtual weak_ptr<VMHeapObject> findStaticField(const wstring& methodSignature, const wstring& name) const = 0;
 
 	virtual void resolveSymbol() = 0;
 
@@ -163,8 +147,8 @@ protected:
 	weak_ptr<VMClass> getSharedPtr() { return shared_from_this(); }
 
 public:
-	static wstring getNextDimensionSignature(const wstring &sig);
-	static vector<wstring> splitSignatureToElement(const wstring &sig);
+	static wstring getNextDimensionSignature(const wstring& sig);
+	static vector<wstring> splitSignatureToElement(const wstring& sig);
 };
 
 /*
@@ -180,7 +164,7 @@ struct VMReferenceClass : public VMClass
 
 	unordered_map<wstring, shared_ptr<VMClassField>> staticFieldLayout;
 
-	unordered_map<wstring, shared_ptr<VMHeapObject>> staticFields;
+	unordered_map<wstring, weak_ptr<VMHeapObject>> staticFields;
 
 	unordered_map<wstring, shared_ptr<VMClassField>> instanceFieldLayout;
 
@@ -252,8 +236,11 @@ struct VMPrimitiveClass : public VMClass
 
 	//只有与自己比较才相等。
 	bool equals(weak_ptr<VMClass> other) const { return !other.expired() && this == other.lock().get(); }
-
+	static weak_ptr<VMPrimitiveClass> getPrimitiveVMClass(const wstring& signature);
+	static bool isPrimitiveTypeSignature(const wstring& signature);
+private:
 	static unordered_map<wstring, shared_ptr<VMPrimitiveClass>> AllPrimitiveClasses;
+	static const unordered_map<wchar_t, int> PRIMITIVE_TYPES;
 };
 
 #endif //__JVM_VM_CLASS_H__

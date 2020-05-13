@@ -2,6 +2,7 @@
 #include "vm_classloader.h"
 #include "vm_class.h"
 #include "vm_heap.h"
+#include "vm.h"
 #include "log.h"
 #include "string_utils.h"
 
@@ -207,10 +208,11 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 		auto key = field->lookupKey();
 		if (field->isStatic())
 		{
-
+			// 先查检对应的类是不是存在并且可以访问。
+			field->resolveSymbol();
 			staticFieldLayout[key] = field;
 			// 创建对应存储的空间。
-			//staticFields[key] = VMHeapPool::createVMHeapObject(field->signature);
+			staticFields[key] = VM::getVM().lock()->createVMHeapObject(field->signature);
 		}
 		else
 		{
@@ -315,7 +317,7 @@ vector<wstring> VMClassMethod::splitSignature()
 		}
 		else if (inArray)
 		{
-			if (PRIMITIVE_TYPES.find(sig[i]) != PRIMITIVE_TYPES.end())
+			if (VMPrimitiveClass::isPrimitiveTypeSignature(sig))
 			{
 				elements.push_back(sig.substr(previous, i - previous + 1));
 				inArray = false;
@@ -376,17 +378,6 @@ void VMMethodExceptionTable::resolveSymbol(weak_ptr<ClassLoader> cl)
 	cl.lock()->loadClass(catchType);
 }
 
-const unordered_map<wchar_t, int> VMClassResolvable::PRIMITIVE_TYPES =
-	{
-		{L'B', 0},
-		{L'C', 0},
-		{L'D', 0},
-		{L'F', 0},
-		{L'I', 0},
-		{L'J', 0},
-		{L'S', 0},
-		{L'Z', 0},
-		{L'V', 1}};
 
 void VMClassResolvable::resolveSymbol()
 {
@@ -394,7 +385,7 @@ void VMClassResolvable::resolveSymbol()
 	for (auto s = symbols.begin(); s != symbols.end(); s++)
 	{
 		wstring name = *s;
-		if (PRIMITIVE_TYPES.find(name[0]) != PRIMITIVE_TYPES.end())
+		if (VMPrimitiveClass::isPrimitiveTypeSignature(name))
 		{
 			spdlog::info("skip to resolve primitive type:{}", w2s(name));
 			continue;
@@ -423,6 +414,18 @@ void VMClassResolvable::resolveSymbol()
 	}
 }
 
+const unordered_map<wchar_t, int> VMPrimitiveClass::PRIMITIVE_TYPES =
+{
+	{L'B', 0},
+	{L'C', 0},
+	{L'D', 0},
+	{L'F', 0},
+	{L'I', 0},
+	{L'J', 0},
+	{L'S', 0},
+	{L'Z', 0},
+	{L'V', 1} };
+
 unordered_map<wstring, shared_ptr<VMPrimitiveClass>> VMPrimitiveClass::AllPrimitiveClasses =
 	{
 		{L"B", make_shared<VMPrimitiveClass>(L"byte")},
@@ -433,4 +436,23 @@ unordered_map<wstring, shared_ptr<VMPrimitiveClass>> VMPrimitiveClass::AllPrimit
 		{L"J", make_shared<VMPrimitiveClass>(L"long")},
 		{L"S", make_shared<VMPrimitiveClass>(L"short")},
 		{L"Z", make_shared<VMPrimitiveClass>(L"boolean")},
-		{L"V", make_shared<VMPrimitiveClass>(L"void")}};
+		{L"V", make_shared<VMPrimitiveClass>(L"void")}
+	};
+
+weak_ptr<VMPrimitiveClass> VMPrimitiveClass::getPrimitiveVMClass(const wstring& signature) {
+	auto result = std::weak_ptr< VMPrimitiveClass>();
+	if (signature.length() != 1) {
+		return result;
+	}
+	auto clz = AllPrimitiveClasses.find(signature);
+	if (clz != AllPrimitiveClasses.end()) {
+		return clz->second;
+	}
+	return result;
+}
+bool VMPrimitiveClass::isPrimitiveTypeSignature(const wstring& signature) {
+	if (signature.length() != 1) {
+		return false;
+	}
+	return PRIMITIVE_TYPES.find(signature[0]) != PRIMITIVE_TYPES.end();
+}
