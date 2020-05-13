@@ -29,6 +29,19 @@ float, long, double自己一种类型。
 ReferenceType (class types, array types, interface types) https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-2.html#jvms-2.4
 */
 struct VMHeapObject : std::enable_shared_from_this<VMHeapObject> {
+
+	virtual weak_ptr< VMHeapObject> getField(const wstring& signature) const { throw runtime_error("This type of VMHeapObject can not performance getField"); };
+	virtual weak_ptr< VMHeapObject> getStaticField(const wstring& signature) const { throw runtime_error("This type of VMHeapObject can not performance getStaticField"); };
+
+	virtual void putField(const wstring& signature, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type Reference object."); };
+	virtual void putStaticField(const wstring& signature, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type Reference object."); };
+
+	virtual void putArray(size_t index, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type int."); };
+	virtual weak_ptr< VMHeapObject> getArray(size_t index) const { throw runtime_error("This type of VMHeapObject imcompatible type long long."); };
+
+	weak_ptr<VMHeapObject> getWeakPtr() {
+		return shared_from_this();
+	}
 	/*
 	第一个具体的对象都对应一个类，如果是Primitive就对应VMPrimitiveClass的一个具体对象。
 	*/
@@ -93,18 +106,30 @@ struct ReferenceVMHeapObject : public VMHeapObject {
 
 struct ClassVMHeapObject : public ReferenceVMHeapObject {
 	ClassVMHeapObject(weak_ptr<VMClass> typeClz) :ReferenceVMHeapObject(typeClz) {
+		isInterface = typeClz.lock()->isInterface();
 	}
 
 	// 这里存放这个类型的实体字段。
 	unordered_map<wstring, shared_ptr<VMHeapObject>> fields;
 
+
 	~ClassVMHeapObject() {
 		fields.clear();
 	}
+
+	weak_ptr< VMHeapObject> getField(const wstring& signature) const override;
+	weak_ptr< VMHeapObject> getStaticField(const wstring& signature) const override;
+
+	void putField(const wstring& signature, weak_ptr<VMHeapObject> value) override;
+	void putStaticField(const wstring& signature, weak_ptr<VMHeapObject> value) override;
+
+private:
+	bool isInterface = false;
 };
 
 struct ArrayVMHeapObject : public ReferenceVMHeapObject {
-	ArrayVMHeapObject(weak_ptr<VMClass> typeClz) :ReferenceVMHeapObject(typeClz) {
+	ArrayVMHeapObject(weak_ptr<VMClass> typeClz, size_t size) :ReferenceVMHeapObject(typeClz) {
+		elements.reserve(size);
 	}
 	weak_ptr<VMHeapObject> componentType;
 
@@ -113,24 +138,40 @@ struct ArrayVMHeapObject : public ReferenceVMHeapObject {
 	~ArrayVMHeapObject() {
 		elements.clear();
 	}
+
+	void putArray(size_t index, weak_ptr<VMHeapObject> value) override;
+	weak_ptr<VMHeapObject> getArray(size_t index) const override;
 };
+
+struct NullVMHeapObject : public ReferenceVMHeapObject {
+	NullVMHeapObject() :ReferenceVMHeapObject(std::weak_ptr<VMClass>()) {
+	}
+};
+
 
 struct VMHeapPool {
 public:
-	virtual weak_ptr<VMHeapObject> createVMHeapObject(const wstring& signature) = 0;
+	template<typename T>
+	weak_ptr<VMHeapObject> createVMHeapObject(weak_ptr<VMClass> clz, T& param);
+	virtual weak_ptr<VMHeapObject> getNullVMHeapObject() const = 0;
 
 	// 这里应该还GC相关函数，目前先不管。
 
 	virtual ~VMHeapPool() { spdlog::info("VMHeapPool gone"); };
 
+protected:
+	virtual void storeObject(shared_ptr< VMHeapObject> obj) = 0;
 };
+
 
 struct FixSizeVMHeapPool : public VMHeapPool {
 
-	weak_ptr<VMHeapObject> createVMHeapObject(const wstring& signature) override;
+	weak_ptr<VMHeapObject> getNullVMHeapObject() const override;
 
 	FixSizeVMHeapPool(size_t maxHeapSize):maxsize(maxHeapSize){
 
+		// 第一个元素就是NullVMHeapObject， 全体用这个。
+		objects.push_back(make_shared< NullVMHeapObject>());
 	}
 
 	~FixSizeVMHeapPool() {
@@ -140,6 +181,9 @@ struct FixSizeVMHeapPool : public VMHeapPool {
 private:
 	long long maxsize;
 	vector<shared_ptr< VMHeapObject>> objects;
+
+protected:
+	void storeObject(shared_ptr< VMHeapObject> obj) override;
 };
 
 class VMHeapPoolFactory {

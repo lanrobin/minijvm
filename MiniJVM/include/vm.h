@@ -44,7 +44,6 @@ public:
 	weak_ptr<ClassLoader> boostrapClassLoader() const { return bootstrapClassLoader; };
 	weak_ptr< VMHeapPool> getHeapPool() const { return heap; }
 	weak_ptr<Configurations> getConf() const { return conf; }
-	weak_ptr< VMHeapObject> createVMHeapObject(const wstring& signature) { return heap->createVMHeapObject(signature); }
 public:
 	// static
 	static weak_ptr<VM> getVM();

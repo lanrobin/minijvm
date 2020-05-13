@@ -109,6 +109,7 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 	weak_ptr<ClassLoader> classLoader;
 
 	const wstring& className() const { return name; };
+	const wstring& getClassSignature() const { return signature; }
 
 	VMClass(const wstring& name, weak_ptr<ClassLoader> classLoader);
 
@@ -135,6 +136,7 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 protected:
 	wstring name;
 	wstring packageName;
+	wstring signature;
 	u2 accessFlags;
 
 	ClassType classType;
@@ -217,6 +219,9 @@ struct VMArrayClass : public VMReferenceClass
 		: VMReferenceClass(name, cl), componentType(innerType)
 	{
 		classType = VMClass::ClassType::ClassTypeArrayClass;
+
+		// 数组的签名就是类名本身。
+		signature = name;
 	};
 	const shared_ptr<VMClass> componentType;
 };

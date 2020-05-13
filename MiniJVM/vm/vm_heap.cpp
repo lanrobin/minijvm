@@ -1,10 +1,96 @@
 #include "vm_heap.h"
 #include "vm_class.h"
+#include "string_utils.h"
+#include "vm.h"
 
-weak_ptr<VMHeapObject> FixSizeVMHeapPool::createVMHeapObject(const wstring &signature)
+template<typename T>
+weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& param)
+{
+	if (clz.expired()) {
+		throw runtime_error("Template class doesnot exist any more, Could not create instance for it.");
+	}
+	shared_ptr<VMClass> c = clz.lock();
+	shared_ptr< VMHeapObject> obj = nullptr;
+	wstring s = c->getClassSignature();
+	if (s.length < 1) {
+		throw runtime_error("Unable to create heap object of empty signature.");
+	}
+	else if (s.length == 1) {
+		if (VMPrimitiveClass::isPrimitiveTypeSignature(s)) {
+			if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
+				obj = make_shared<IntegerVMHeapObject>(param, clz);
+			}
+			else if (s == L"F") {
+				obj = make_shared<FloatVMHeapObject>(param, clz);
+			}
+			else if (s == L"D") {
+				obj = make_shared<DoubleVMHeapObject>(param, clz);
+			}
+			else if (s == L"J") {
+				obj = make_shared<LongVMHeapObject>(param, clz);
+			}
+			else if (s == L"V") {
+				obj = make_shared<VoidVMHeapObject>(param, clz);
+			}
+			else {
+				assert(false);
+			}
+		}
+		else {
+			throw runtime_error("Unsupported primitive type:" + w2s(s));
+		}
+	}
+	else if (s[0] == L'L') {
+		// 普通的类
+		obj = make_shared< ClassVMHeapObject>(clz);
+	}
+	else if (s[0] == L"[") {
+		//数组
+		obj = make_shared<ArrayVMHeapObject>(clz, param);
+	}
+	else {
+		throw runtime_error("Unable to create heap object of signature:" + w2s(s));
+	}
+	storeObject(obj);
+	return obj;
+}
+
+weak_ptr<VMHeapObject> FixSizeVMHeapPool::getNullVMHeapObject() const {
+
+	// 第一个元素就是null.
+	return objects[0];
+}
+
+void FixSizeVMHeapPool::storeObject(shared_ptr< VMHeapObject> obj) {
+	if (obj == nullptr) {
+		spdlog::warn("Try to store nullptr into heap area.");
+		return;
+	}
+	objects.push_back(obj);
+}
+
+weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature) const {
+	throw runtime_error("Not implemented yet.");
+};
+weak_ptr< VMHeapObject> ClassVMHeapObject::getStaticField(const wstring& signature) const {
+	throw runtime_error("Not implemented yet.");
+};
+
+void ClassVMHeapObject::putField(const wstring& signature, weak_ptr<VMHeapObject> value)
 {
 	throw runtime_error("Not implemented yet.");
-}
+};
+void ClassVMHeapObject::putStaticField(const wstring& signature, weak_ptr<VMHeapObject> value)
+{
+	throw runtime_error("Not implemented yet.");
+};
+
+void ArrayVMHeapObject::putArray(size_t index, weak_ptr<VMHeapObject> value) {
+	throw runtime_error("Not implemented yet.");
+};
+weak_ptr<VMHeapObject> ArrayVMHeapObject::getArray(size_t index) const {
+	throw runtime_error("Not implemented yet.");
+};
 
 shared_ptr<VMHeapPool> VMHeapPoolFactory::createVMHeapPool(weak_ptr<Configurations> conf) {
 	auto cf = conf.lock();

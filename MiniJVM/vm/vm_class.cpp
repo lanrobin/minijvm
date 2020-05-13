@@ -10,9 +10,9 @@
 //#undef RESOLVE_ON_CLASS_LOAD
 #define RESOLVE_ON_CLASS_LOAD
 
-VMClass::VMClass(const wstring &signature, weak_ptr<ClassLoader> cl)
+VMClass::VMClass(const wstring &name, weak_ptr<ClassLoader> cl)
 {
-	name = signature;
+	this->name = name;
 	auto packageEnd = name.find_last_of(L"/");
 	if (packageEnd != wstring::npos)
 	{
@@ -162,7 +162,8 @@ void VMReferenceClass::classLoaded(weak_ptr<VMReferenceClass> other)
 
 bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 {
-
+	// signature是 L类名; 的形式。
+	signature = L"L" + name + L";";
 	accessFlags = cf->access_flags;
 
 	auto superClassName = cf->getClassName(cf->super_class);
@@ -211,8 +212,8 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 			// 先查检对应的类是不是存在并且可以访问。
 			field->resolveSymbol();
 			staticFieldLayout[key] = field;
-			// 创建对应存储的空间。
-			staticFields[key] = VM::getVM().lock()->createVMHeapObject(field->signature);
+			// 创建对应存储的空间。不用创建，初始化的才需要创建，否则在找的时候返回Null对象就行了。
+			//staticFields[key] = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject(field->signature, 0);
 		}
 		else
 		{
