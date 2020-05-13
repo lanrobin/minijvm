@@ -69,27 +69,50 @@ void FixSizeVMHeapPool::storeObject(shared_ptr< VMHeapObject> obj) {
 	objects.push_back(obj);
 }
 
-weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature) const {
-	throw runtime_error("Not implemented yet.");
+weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature, const wstring& name) const {
+	if (isInterface) {
+		throw runtime_error("No field operation for Java interface.");
+	}
+	// 直接找自己的，如果没有就返回空,数据验证在put那里验证。
+	auto key = makeLookupKey(signature, name);
+	auto f = fields.find(key);
+	if (f != fields.end()) {
+		return f->second;
+	}
+	return std::weak_ptr<VMHeapObject>();
 };
-weak_ptr< VMHeapObject> ClassVMHeapObject::getStaticField(const wstring& signature) const {
-	throw runtime_error("Not implemented yet.");
+weak_ptr< VMHeapObject> ClassVMHeapObject::getStaticField(const wstring& signature, const wstring& name) const {
+	auto clz = typeClass.lock();
+	return clz->findStaticField(signature, name);
 };
 
-void ClassVMHeapObject::putField(const wstring& signature, weak_ptr<VMHeapObject> value)
+void ClassVMHeapObject::putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
-	throw runtime_error("Not implemented yet.");
+	// 如果field已经存在，直接写。
+	/*
+	其实如果不存在，要去验证一下是不是有这个字段，如果没有不让写，这里就先简单处理，其实Java编译器已经帮我们处理过了。
+	*/
+	auto key = makeLookupKey(signature, name);
+	fields[key] = value;
 };
-void ClassVMHeapObject::putStaticField(const wstring& signature, weak_ptr<VMHeapObject> value)
+void ClassVMHeapObject::putStaticField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
-	throw runtime_error("Not implemented yet.");
+	typeClass.lock()->putStaticField(signature, name, value);
 };
 
 void ArrayVMHeapObject::putArray(size_t index, weak_ptr<VMHeapObject> value) {
-	throw runtime_error("Not implemented yet.");
+	if (index < 0 || index >= maxsize) {
+		throw runtime_error("Should throw IndexOutOfBoundException.");
+	}
+	elements[index] = value;
 };
+
+
 weak_ptr<VMHeapObject> ArrayVMHeapObject::getArray(size_t index) const {
-	throw runtime_error("Not implemented yet.");
+	if (index < 0 || index >= maxsize) {
+		throw runtime_error("Should throw IndexOutOfBoundException.");
+	}
+	return elements[index];
 };
 
 shared_ptr<VMHeapPool> VMHeapPoolFactory::createVMHeapPool(weak_ptr<Configurations> conf) {

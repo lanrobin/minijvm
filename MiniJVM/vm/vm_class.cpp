@@ -121,6 +121,15 @@ weak_ptr<VMHeapObject> VMReferenceClass::findStaticField(const wstring &methodSi
 	return value->second;
 }
 
+weak_ptr< VMClassField> VMReferenceClass::findFieldLayout(const wstring& methodSignature, const wstring& name) const {
+	auto key = VMClassField::makeLookupKey(methodSignature, name);
+	auto fl = allFieldLayout.find(key);
+	if (fl != allFieldLayout.end()) {
+		return fl->second;
+	}
+	return std::weak_ptr<VMClassField>();
+};
+
 void VMReferenceClass::resolveSymbol()
 {
 
@@ -219,6 +228,12 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 		{
 			instanceFieldLayout[key] = field;
 		}
+
+		if (field->isFinal() && field->signature == L"Ljava/lang/String;") {
+			throw runtime_error("String static field need special care.");
+		}
+
+		allFieldLayout[key] = field;
 	}
 
 	state = hasCInitMethod ? InitializeState::NotInitialized : InitializeState::NotInitialized;
@@ -413,6 +428,13 @@ void VMClassResolvable::resolveSymbol()
 			throw runtime_error("Unknown symbol type:" + w2s(name));
 		}
 	}
+}
+
+bool VMOrdinaryClass::putStaticField(const wstring& signature, const wstring& name, weak_ptr< VMHeapObject> value) {
+	// 这里本来应该要验证是不可写，是不是存在的，但是Java编译器已经验证过了，所以这里暂时偷懒不管了。
+	auto key = VMClassResolvable::makeLookupKey(signature, name);
+	staticFields[key] = value;
+	return true;
 }
 
 const unordered_map<wchar_t, int> VMPrimitiveClass::PRIMITIVE_TYPES =

@@ -30,11 +30,11 @@ ReferenceType (class types, array types, interface types) https://docs.oracle.co
 */
 struct VMHeapObject : std::enable_shared_from_this<VMHeapObject> {
 
-	virtual weak_ptr< VMHeapObject> getField(const wstring& signature) const { throw runtime_error("This type of VMHeapObject can not performance getField"); };
-	virtual weak_ptr< VMHeapObject> getStaticField(const wstring& signature) const { throw runtime_error("This type of VMHeapObject can not performance getStaticField"); };
+	virtual weak_ptr< VMHeapObject> getField(const wstring& signature, const wstring& name) const { throw runtime_error("This type of VMHeapObject can not performance getField"); };
+	virtual weak_ptr< VMHeapObject> getStaticField(const wstring& signature, const wstring& name) const { throw runtime_error("This type of VMHeapObject can not performance getStaticField"); };
 
-	virtual void putField(const wstring& signature, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type Reference object."); };
-	virtual void putStaticField(const wstring& signature, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type Reference object."); };
+	virtual void putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type Reference object."); };
+	virtual void putStaticField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type Reference object."); };
 
 	virtual void putArray(size_t index, weak_ptr<VMHeapObject> value) { throw runtime_error("This type of VMHeapObject imcompatible type int."); };
 	virtual weak_ptr< VMHeapObject> getArray(size_t index) const { throw runtime_error("This type of VMHeapObject imcompatible type long long."); };
@@ -54,6 +54,16 @@ struct VMHeapObject : std::enable_shared_from_this<VMHeapObject> {
 	virtual ~VMHeapObject() {
 		spdlog::info("Delete VMHeapObject:{}", w2s(typeClass.lock()->className()));
 	};
+
+protected:
+	shared_ptr< VMHeapObject> getSharedPtr() {
+		return shared_from_this();
+	}
+
+	wstring& makeLookupKey(const wstring& sig, const wstring & name) const
+	{
+		return VMClassResolvable::makeLookupKey(sig, name);
+	}
 };
 
 
@@ -109,32 +119,32 @@ struct ClassVMHeapObject : public ReferenceVMHeapObject {
 		isInterface = typeClz.lock()->isInterface();
 	}
 
-	// 这里存放这个类型的实体字段。
-	unordered_map<wstring, shared_ptr<VMHeapObject>> fields;
-
 
 	~ClassVMHeapObject() {
 		fields.clear();
 	}
 
-	weak_ptr< VMHeapObject> getField(const wstring& signature) const override;
-	weak_ptr< VMHeapObject> getStaticField(const wstring& signature) const override;
+	weak_ptr< VMHeapObject> getField(const wstring& signature, const wstring& name) const override;
+	weak_ptr< VMHeapObject> getStaticField(const wstring& signature, const wstring& name) const override;
 
-	void putField(const wstring& signature, weak_ptr<VMHeapObject> value) override;
-	void putStaticField(const wstring& signature, weak_ptr<VMHeapObject> value) override;
+	void putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value) override;
+	void putStaticField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value) override;
+protected:
+	// 这里存放这个类型的实体字段。
+	unordered_map<wstring, weak_ptr<VMHeapObject>> fields;
 
 private:
 	bool isInterface = false;
 };
 
 struct ArrayVMHeapObject : public ReferenceVMHeapObject {
-	ArrayVMHeapObject(weak_ptr<VMClass> typeClz, size_t size) :ReferenceVMHeapObject(typeClz) {
+	ArrayVMHeapObject(weak_ptr<VMClass> typeClz, size_t size) :ReferenceVMHeapObject(typeClz), maxsize(size) {
 		elements.reserve(size);
 	}
 	weak_ptr<VMHeapObject> componentType;
 
-	vector<shared_ptr< VMHeapObject>> elements;
-
+	vector<weak_ptr< VMHeapObject>> elements;
+	size_t maxsize;
 	~ArrayVMHeapObject() {
 		elements.clear();
 	}
