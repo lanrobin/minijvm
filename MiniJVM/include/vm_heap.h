@@ -2,16 +2,16 @@
 #define __JVM_VM_HEAP_H__
 #include "base_type.h"
 /*
-Õâ¸öÀàÓÃÀ´±íÊ¾Java¶ÑÖĞ·ÖÅäµÄÒ»¸ö¶ÔÏó£¬¿ÉÒÔ±»GC¶¯Ì¬»ØÊÕµÄ¡£
-Ò»¹²ÓĞÒÔÏÂ¼¸ÖÖÀàĞÍ£º
+è¿™ä¸ªç±»ç”¨æ¥è¡¨ç¤ºJavaå †ä¸­åˆ†é…çš„ä¸€ä¸ªå¯¹è±¡ï¼Œå¯ä»¥è¢«GCåŠ¨æ€å›æ”¶çš„ã€‚
+ä¸€å…±æœ‰ä»¥ä¸‹å‡ ç§ç±»å‹ï¼š
 
-ÀàĞÍÒ»£º
+ç±»å‹ä¸€ï¼š
 PrimitiveType( boolean, byte, char, short, int, float, long, double)
-ÆäÖĞ boolean, byte, char, short, int Í³Ò»³ÉÒ»¸öÕûĞÍ, boolean specÖĞÃ»ËµÃ÷¾ßÌå¿í¶È
-ÎÒÃÇµÄÊµÏÖÓÃintÀ´×ö¡£
-float, long, double×Ô¼ºÒ»ÖÖÀàĞÍ¡£
+å…¶ä¸­ boolean, byte, char, short, int ç»Ÿä¸€æˆä¸€ä¸ªæ•´å‹, boolean specä¸­æ²¡è¯´æ˜å…·ä½“å®½åº¦
+æˆ‘ä»¬çš„å®ç°ç”¨intæ¥åšã€‚
+float, long, doubleè‡ªå·±ä¸€ç§ç±»å‹ã€‚
 
-ÀàĞÍ¶ş£º
+ç±»å‹äºŒï¼š
 ReferenceType (class types, array types, interface types) https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-2.html#jvms-2.4
 */
 struct VMHeapObject {

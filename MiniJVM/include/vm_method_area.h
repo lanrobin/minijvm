@@ -6,73 +6,75 @@
 #include "configurations.h"
 #include "pthread.h"
 
-struct VMClassConstantPool {
+struct VMClassConstantPool
+{
 	wstring className;
 	shared_ptr<VMClass> ownerClass;
 	vector<shared_ptr<VMConstantItem>> constants;
-	VMClassConstantPool(shared_ptr<VMClass> ownerClazz, const vector<shared_ptr<VMConstantItem>>& cs):
-		ownerClass(ownerClazz), constants(cs){
+	VMClassConstantPool(shared_ptr<VMClass> ownerClazz, const vector<shared_ptr<VMConstantItem>> &cs) : ownerClass(ownerClazz), constants(cs)
+	{
 		className = ownerClass->className();
 	}
 };
 
 /*
- ¸ù¾İJVMSµÄÃèÊö£¬·½·¨Çø¿ÉÒÔ·ÖÎª¹Ì¶¨´óĞ¡µÄºÍ¿ÉÀ©Õ¹µÄ´óĞ¡µÄ£¬ÎªÁË¼òµ¥ÊµÏÖ£¬ÎÒÏÈÊµÏÖ¿ÉÀ©Õ¹µÄ
+ æ ¹æ®JVMSçš„æè¿°ï¼Œæ–¹æ³•åŒºå¯ä»¥åˆ†ä¸ºå›ºå®šå¤§å°çš„å’Œå¯æ‰©å±•çš„å¤§å°çš„ï¼Œä¸ºäº†ç®€å•å®ç°ï¼Œæˆ‘å…ˆå®ç°å¯æ‰©å±•çš„
 */
-class VMMethodArea {
+class VMMethodArea
+{
 public:
-	virtual bool put(const wstring& className, shared_ptr<VMClass> clz) = 0;
-	virtual shared_ptr<VMClass> get(const wstring& className) = 0;
-	virtual shared_ptr<VMClass> remove(const wstring& className) = 0;
-	virtual bool classExists(const wstring& className) = 0;
+	virtual bool put(const wstring &className, shared_ptr<VMClass> clz) = 0;
+	virtual shared_ptr<VMClass> get(const wstring &className) = 0;
+	virtual shared_ptr<VMClass> remove(const wstring &className) = 0;
+	virtual bool classExists(const wstring &className) = 0;
 
 	/*
-	ÒòÎªJVM¹æ¶¨£¬ËùÒÔµÄ×Ö·û´®±ØĞëÍ³Ò»¹ÜÀí£¬ËùÒÔÔÚClassFileÀïµÄUTF8 constant¶¼·ÅÔÚÕâÀïÃæ¡£
+	å› ä¸ºJVMè§„å®šï¼Œæ‰€ä»¥çš„å­—ç¬¦ä¸²å¿…é¡»ç»Ÿä¸€ç®¡ç†ï¼Œæ‰€ä»¥åœ¨ClassFileé‡Œçš„UTF8 constantéƒ½æ”¾åœ¨è¿™é‡Œé¢ã€‚
 	*/
-	virtual size_t putConstantString(const wstring & t) = 0;
+	virtual size_t putConstantString(const wstring &t) = 0;
 	virtual wstring getConstantString(size_t index) = 0;
 
 	virtual shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) = 0;
-	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) = 0;
-	virtual ~VMMethodArea() {};
+	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring &className) = 0;
+	virtual ~VMMethodArea(){};
+
 protected:
 	shared_ptr<VMClassConstantPool> createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz);
 };
 
-
-class VMExtensibleMethodArea : public VMMethodArea {
+class VMExtensibleMethodArea : public VMMethodArea
+{
 public:
-	bool put(const wstring& className, shared_ptr<VMClass> clz) override;
-	shared_ptr<VMClass> get(const wstring& className) override;
-	shared_ptr<VMClass> remove(const wstring& className) override;
-	bool classExists(const wstring& className) override;
+	bool put(const wstring &className, shared_ptr<VMClass> clz) override;
+	shared_ptr<VMClass> get(const wstring &className) override;
+	shared_ptr<VMClass> remove(const wstring &className) override;
+	bool classExists(const wstring &className) override;
 
-
-	size_t putConstantString(const wstring& t) override;
-	wstring getConstantString(size_t index)override;
+	size_t putConstantString(const wstring &t) override;
+	wstring getConstantString(size_t index) override;
 
 	shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) override;
-	shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring& className) override;
+	shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring &className) override;
 	~VMExtensibleMethodArea();
 	VMExtensibleMethodArea();
 
 private:
 	unordered_map<wstring, shared_ptr<VMClass>> classes;
 
-
 	unordered_map<wstring, shared_ptr<VMClassConstantPool>> classContantsPoolsMap;
 
 	/*
-	ÎÒÃÇ°ÑstringÍ¬Ê±´æ·ÅÔÚÁ½¸ö½á¹¹ÌåÀï£¬ÓÃÀ´ÊµÏÖ¿ìËÙ²éÕÒ£¬ÕâÑù»áÀË·ÑÄÚ´æ£¬µ«ÊÇÔö¼ÓËÙ¶È¡£
+	æˆ‘ä»¬æŠŠstringåŒæ—¶å­˜æ”¾åœ¨ä¸¤ä¸ªç»“æ„ä½“é‡Œï¼Œç”¨æ¥å®ç°å¿«é€ŸæŸ¥æ‰¾ï¼Œè¿™æ ·ä¼šæµªè´¹å†…å­˜ï¼Œä½†æ˜¯å¢åŠ é€Ÿåº¦ã€‚
 	*/
 	unordered_map<wstring, size_t> stringsMap;
 	vector<wstring> stringsVector;
 
-	/* classµÄ¸ü¸ÄĞèÒªËøµÄ¡£*/
+	/* classçš„æ›´æ”¹éœ€è¦é”çš„ã€‚*/
 	pthread_rwlock_t classRWLock;
 };
 
-class VMMethodAreaFactory {
+class VMMethodAreaFactory
+{
 public:
 	static shared_ptr<VMMethodArea> createMethodArea(shared_ptr<Configurations> conf);
 };

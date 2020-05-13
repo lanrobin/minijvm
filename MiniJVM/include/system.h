@@ -3,7 +3,7 @@
 #include <string>
 
 /*
-�����������װ��ϵͳ��صĵ��á�
+这个类用来封装与系统相关的调用。
 */
 struct System {
 };

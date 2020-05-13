@@ -3,13 +3,13 @@
 
 #include "base_type.h"
 #include <bitset>
-/* ³£Á¿³ØÀàĞÍ£¬·ÖÎªÁ½´óÀà£¬
-* 1¡¢Ö±½Ó×Ö·û´®ÀàĞÍ
-* 2¡¢Êı×ÖÏà¹ØµÄ¡£
+/* å¸¸é‡æ± ç±»å‹ï¼Œåˆ†ä¸ºä¸¤å¤§ç±»ï¼Œ
+* 1ã€ç›´æ¥å­—ç¬¦ä¸²ç±»å‹
+* 2ã€æ•°å­—ç›¸å…³çš„ã€‚
 */
 struct VMConstantItem {
 	enum class VMConstantItemType : u1{
-		// Õâ¸öÊÇÎªÁËÕ¼ÓÃµÚ0¸öÓÃµÄ£¬ÒòÎªÎÒÃÇ0±íÊ¾ÎŞĞ§µÄÖµ¡£
+		// è¿™ä¸ªæ˜¯ä¸ºäº†å ç”¨ç¬¬0ä¸ªç”¨çš„ï¼Œå› ä¸ºæˆ‘ä»¬0è¡¨ç¤ºæ— æ•ˆçš„å€¼ã€‚
 		TypeDummy = 0,
 		TypeUtf8 = 1,
 		TypeInteger = 3,
@@ -37,14 +37,14 @@ struct VMConstantItem {
 };
 
 /*
-Õ¼ÓÃµÚÒ»¸öºÍlong/doubleµÄÏÂÒ»¸ö¡£
+å ç”¨ç¬¬ä¸€ä¸ªå’Œlong/doubleçš„ä¸‹ä¸€ä¸ªã€‚
 */
 struct VMConstantDummy: public VMConstantItem {
 	VMConstantDummy() : VMConstantItem(VMConstantItemType::TypeDummy) {}
 };
 
 /*
-ÕâÊÇ×Ö·ûÍ¨ÓÃµÄ³£Á¿¡£ÎªTypeClassInfo, TypeUtf8, TypeString, TypeMethodType, TypeModule, TypePackageÊ¹ÓÃ¡£
+è¿™æ˜¯å­—ç¬¦é€šç”¨çš„å¸¸é‡ã€‚ä¸ºTypeClassInfo, TypeUtf8, TypeString, TypeMethodType, TypeModule, TypePackageä½¿ç”¨ã€‚
 */
 struct VMConstantStringLiteral : public VMConstantItem {
 	VMConstantStringLiteral(size_t index, VMConstantItemType type) : VMConstantItem(type), literalStringIndex(index) {};
@@ -52,7 +52,7 @@ struct VMConstantStringLiteral : public VMConstantItem {
 };
 
 /*
-Õâ¸öÀàÎª TypeFieldRef, TypeMethodRef, TypeInterfaceMothedRef, TypeNameAndTypeµÄÍ¨ÓÃ½á¹¹Ìå
+è¿™ä¸ªç±»ä¸º TypeFieldRef, TypeMethodRef, TypeInterfaceMothedRef, TypeNameAndTypeçš„é€šç”¨ç»“æ„ä½“
 */
 struct VMConstantFieldAndMethodRef : public VMConstantItem {
 
@@ -86,7 +86,7 @@ struct VMConstantMethodHandle : public VMConstantFieldAndMethodRef {
 
 
 /*
-TypeDynamic ºÍ TypeInvokeDynamic
+TypeDynamic å’Œ TypeInvokeDynamic
 */
 struct VMConstantDynamicFieldAndMethod : public VMConstantFieldAndMethodRef {
 
@@ -117,8 +117,8 @@ struct VMConstantFloat: public VMConstantItem {
 };
 
 /**
-ÕâÑù×ª²»ÖªµÀÊÇ²»ÊÇ·ûºÏIEEE754ºÍÒªÇó£¬µ«ÊÇÎªÁË¼òµ¥£¬ÏÈÕâÃ´¸É¡£
-TypeLongºÍTypeDouble¶¼ÓÃÕâ¸ö¡£
+è¿™æ ·è½¬ä¸çŸ¥é“æ˜¯ä¸æ˜¯ç¬¦åˆIEEE754å’Œè¦æ±‚ï¼Œä½†æ˜¯ä¸ºäº†ç®€å•ï¼Œå…ˆè¿™ä¹ˆå¹²ã€‚
+TypeLongå’ŒTypeDoubleéƒ½ç”¨è¿™ä¸ªã€‚
 */
 struct VMConstantLongAndDouble : public VMConstantItem {
 	VMConstantLongAndDouble(u4 high, u4 low, VMConstantItemType type) : VMConstantItem(type) {

@@ -6,7 +6,7 @@ Configurations::Configurations(const wstring& configFilePath, int argc, char** a
 	spdlog::info("Configurations");
 	bootStrapClassPath = L"D:/jvm/modules/java.base/classes";
 	appClassPath = L"D:/github/minijvm/MiniJVM/testclasses";
-	// ÏÈĞ´ËÀÁË¡£²âÊÔ£¬Ö®ºó»á´Ó²ÎÊı½âÎö³öÀ´¡£
+	// å…ˆå†™æ­»äº†ã€‚æµ‹è¯•ï¼Œä¹‹åä¼šä»å‚æ•°è§£æå‡ºæ¥ã€‚
 	targetClass = L"icu.mianshi.main.HelloWorld";
 }
 

@@ -11,64 +11,77 @@
 
 ClassLoader::ClassLoader(weak_ptr<ClassLoader> p) : parent(p) {}
 
-
-bool ClassLoader::classLoaded(const wstring& className) {
+bool ClassLoader::classLoaded(const wstring &className)
+{
 	//check if class has been loaded.
 	auto ma = VM::getVM().lock()->getMethodArea();
 	return ma.lock()->classExists(className);
 }
 
-weak_ptr<VMClass> ClassLoader::getStoredClass(const wstring& className) const{
+weak_ptr<VMClass> ClassLoader::getStoredClass(const wstring &className) const
+{
 	auto ma = VM::getVM().lock()->getMethodArea();
 	return ma.lock()->get(className);
 }
 
-
-weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
+weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf)
+{
 	auto cf = make_shared<ClassFile>(buf);
-	if (cf != nullptr) {
+	if (cf != nullptr)
+	{
 		auto className = cf->getCanonicalClassName();
-		if (classLoaded(className)) {
+		if (classLoaded(className))
+		{
 			spdlog::info("Class:{} had been loaded.", w2s(className));
 			return getStoredClass(className);
 		}
 
-		if (!cf->isJavaClassFile()) {
+		if (!cf->isJavaClassFile())
+		{
 			throw runtime_error("Is not supported class file:" + w2s(buf->getMappingFile()));
 		}
-		if (!cf->isSupportedClassFile()) {
+		if (!cf->isSupportedClassFile())
+		{
 			throw runtime_error("Unsupported class file version:" + std::to_string(cf->major_version) + "." + std::to_string(cf->minor_version));
 		}
 
-		// ÕâÀïÊÇĞèÒªÕæÕı´æ´¢class£¬ËùÒÔÓÃshared_ptr.
+		// è¿™é‡Œæ˜¯éœ€è¦çœŸæ­£å­˜å‚¨classï¼Œæ‰€ä»¥ç”¨shared_ptr.
 		shared_ptr<VMLoadableClass> clz = nullptr;
-		
-		if (cf->isInterface()) {
+
+		if (cf->isInterface())
+		{
 			clz = make_shared<VMInterfaceClass>(className, getSharedPtr());
 		}
-		else {
+		else
+		{
 			clz = make_shared<VMOrdinaryClass>(className, getSharedPtr());
 		}
 		auto ma = VM::getVM().lock()->getMethodArea().lock();
 
-		if (ma->put(className, clz)) {
+		if (ma->put(className, clz))
+		{
 
-			if (clz->loadClassInfo(cf)) {
-				// °Ñ³£Á¿·Åµ½³£Á¿³ØÖĞ
+			if (clz->loadClassInfo(cf))
+			{
+				// æŠŠå¸¸é‡æ”¾åˆ°å¸¸é‡æ± ä¸­
 				ma->putClassConstantPool(cf, clz);
-				for (auto waiter = clz->loadWaitingList.begin(); waiter != clz->loadWaitingList.end(); waiter++) {
-					if (!(*waiter).expired()) {
+				for (auto waiter = clz->loadWaitingList.begin(); waiter != clz->loadWaitingList.end(); waiter++)
+				{
+					if (!(*waiter).expired())
+					{
 						(*waiter).lock()->classLoaded(clz);
 					}
 				}
 				clz->loadWaitingList.clear();
 			}
-			else {
+			else
+			{
 				ma->remove(className);
 				throw runtime_error("Unable to load class:" + w2s(className));
 			}
 		}
-		else {
+		else
+		{
 			throw runtime_error("Unable to put class:" + w2s(className));
 		}
 		return clz;
@@ -78,60 +91,67 @@ weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf) {
 	return std::weak_ptr<VMClass>();
 }
 
-weak_ptr<VMClass> ClassLoader::defineClass(const wstring & sym) {
-	if (sym.length() == 0) {
+weak_ptr<VMClass> ClassLoader::defineClass(const wstring &sym)
+{
+	if (sym.length() == 0)
+	{
 		throw runtime_error("Error in resolverArray, left sym is empty.");
 	}
 	auto ma = VM::getVM().lock()->getMethodArea().lock();
 
 	weak_ptr<VMClass> componentType = ma->get(sym);
 
-	// Èç¹ûÀàÒÑ¾­´æÔÚ£¬ÔòÖ±½Ó·µ»Ø¡£
-	if (!componentType.expired()) {
+	// å¦‚æœç±»å·²ç»å­˜åœ¨ï¼Œåˆ™ç›´æ¥è¿”å›ã€‚
+	if (!componentType.expired())
+	{
 		return componentType;
 	}
 
-	if (sym[0] == L'[') {
-		// Èç¹û»¹ÊÇÊı×é£¬Ôòµİ¹é
+	if (sym[0] == L'[')
+	{
+		// å¦‚æœè¿˜æ˜¯æ•°ç»„ï¼Œåˆ™é€’å½’
 		wstring subName = sym.substr(1, sym.length() - 1);
 		auto subComponentType = defineClass(subName);
 		auto newArrayClass = make_shared<VMArrayClass>(subName, subComponentType, getSharedPtr());
 		newArrayClass->super = loadClass(L"java/lang/Object");
-		// ĞÂ´´½¨ÁËÒ»¸öÀà£¬ĞèÒª·Åµ½Àà³£Á¿³ØÀï¡£
+		// æ–°åˆ›å»ºäº†ä¸€ä¸ªç±»ï¼Œéœ€è¦æ”¾åˆ°ç±»å¸¸é‡æ± é‡Œã€‚
 		ma->put(sym, newArrayClass);
 		componentType = newArrayClass;
 	}
-	else if (sym[0] == L'L') {
-		// Èç¹ûÊÇÕı³£µÄÒıÓÃÀàĞÍ¡£
+	else if (sym[0] == L'L')
+	{
+		// å¦‚æœæ˜¯æ­£å¸¸çš„å¼•ç”¨ç±»å‹ã€‚
 		wstring className = sym.substr(1, sym.length() - 2);
 		componentType = loadClass(className);
 	}
-	else {
-		// µ½ÁËÕâÀïÓ¦¸ÃÖ»Ê£ÏÂÒ»¸ö×Ö·ûÁË¡£
+	else
+	{
+		// åˆ°äº†è¿™é‡Œåº”è¯¥åªå‰©ä¸‹ä¸€ä¸ªå­—ç¬¦äº†ã€‚
 		assert(sym.length() == 1);
-		if (VMPrimitiveClass::AllPrimitiveClasses.find(sym) == VMPrimitiveClass::AllPrimitiveClasses.end()) {
+		if (VMPrimitiveClass::AllPrimitiveClasses.find(sym) == VMPrimitiveClass::AllPrimitiveClasses.end())
+		{
 			throw runtime_error("Unsupported type:" + w2s(sym));
 		}
 		componentType = VMPrimitiveClass::AllPrimitiveClasses.find(sym)->second;
 	}
 	return componentType;
 }
-BootstrapClassLoader::BootstrapClassLoader(const wstring& cp, weak_ptr<ClassLoader> p):
-	ClassLoader(p), bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader") {
-
+BootstrapClassLoader::BootstrapClassLoader(const wstring &cp, weak_ptr<ClassLoader> p) : ClassLoader(p), bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader")
+{
 }
 
-BootstrapClassLoader::BootstrapClassLoader(weak_ptr<ClassLoader> p) :
-	ClassLoader(p), classLoaderName(L"bootstrapClassLoader") {
-
+BootstrapClassLoader::BootstrapClassLoader(weak_ptr<ClassLoader> p) : ClassLoader(p), classLoaderName(L"bootstrapClassLoader")
+{
 }
 
-weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
+weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
+{
 	wstring canonicalClassPath(className);
 	// replace . with /
 	replaceAll(canonicalClassPath, L".", L"/");
 
-	if (classLoaded(canonicalClassPath)) {
+	if (classLoaded(canonicalClassPath))
+	{
 		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
 		return getStoredClass(canonicalClassPath);
 	}
@@ -140,7 +160,8 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
 
 	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
 
-	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz)) {
+	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
+	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
 		return loadClass(buffer);
 	}
@@ -148,21 +169,23 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring& className) {
 	return std::weak_ptr<VMClass>();
 }
 
-weak_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf) {
+weak_ptr<VMClass> BootstrapClassLoader::loadClass(shared_ptr<Buffer> buf)
+{
 	return defineClass(buf);
 }
 
-AppClassLoader::AppClassLoader(const wstring& appClassPath, weak_ptr<ClassLoader> p):
-	BootstrapClassLoader(p),
-	appClassRootPath(appClassPath),
-	classLoaderName(L"AppClassLoader"){
-
+AppClassLoader::AppClassLoader(const wstring &appClassPath, weak_ptr<ClassLoader> p) : BootstrapClassLoader(p),
+																					   appClassRootPath(appClassPath),
+																					   classLoaderName(L"AppClassLoader")
+{
 }
 
-weak_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
+weak_ptr<VMClass> AppClassLoader::loadClass(const wstring &className)
+{
 
 	auto parentReadClass = parent.lock()->loadClass(className);
-	if (!parentReadClass.expired()) {
+	if (!parentReadClass.expired())
+	{
 		spdlog::info("Class:{} read from parent classloader", w2s(className));
 		return parentReadClass;
 	}
@@ -171,7 +194,8 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
 	// replace . with /
 	replaceAll(canonicalClassPath, L".", L"/");
 
-	if (classLoaded(canonicalClassPath)) {
+	if (classLoaded(canonicalClassPath))
+	{
 		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
 		return getStoredClass(canonicalClassPath);
 	}
@@ -180,7 +204,8 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
 
 	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
 
-	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz)) {
+	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
+	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
 		return loadClass(buffer);
 	}
@@ -188,9 +213,11 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring& className) {
 	return std::weak_ptr<VMClass>();
 }
 
-weak_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf) {
+weak_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf)
+{
 	auto parentReadClass = parent.lock()->loadClass(buf);
-	if (!parentReadClass.expired()) {
+	if (!parentReadClass.expired())
+	{
 		spdlog::info("Class:{} read from parent classloader", w2s(buf->getMappingFile()));
 		return parentReadClass;
 	}

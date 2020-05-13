@@ -13,7 +13,7 @@ public:
 	virtual weak_ptr<VMClass> loadClass(shared_ptr<Buffer> buf) = 0;
 
 	weak_ptr<VMClass> defineClass(shared_ptr<Buffer> buf);
-	// Õâ¸öÓÃÀ´¶¨ÒåÊı×éÀà¡£
+	// è¿™ä¸ªç”¨æ¥å®šä¹‰æ•°ç»„ç±»ã€‚
 	weak_ptr<VMClass> defineClass(const wstring& className);
 
 	virtual wstring getClassLoaderName() const = 0;

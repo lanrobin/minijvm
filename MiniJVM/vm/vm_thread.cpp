@@ -5,49 +5,56 @@
 #include <chrono>
 #include <thread>
 
+void VMJavaThread::startExecute()
+{
 
-void VMJavaThread::startExecute() {
-	
 	auto appClassLoader = VM::getVM().lock()->getAppClassLoader().lock();
 
 	shared_ptr<VMClass> mainClass = appClassLoader->loadClass(className).lock();
 	startJavaMethod = mainClass->findMethod(methodSignature, methodName);
-	if (startJavaMethod.expired()) {
+	if (startJavaMethod.expired())
+	{
 		throw runtime_error("No start method found:" + w2s(methodName));
 	}
 	auto method = startJavaMethod.lock();
-	if (method->isStatic() != needStaticMethod) {
+	if (method->isStatic() != needStaticMethod)
+	{
 		throw runtime_error("Method staticness is incorrect.");
 	}
 
 	spdlog::info("startExecute:{} with signature:{}", w2s(method->name), w2s(method->signature));
 	int count = 0;
-	while (count < 15) {
+	while (count < 15)
+	{
 		spdlog::info("running:{}", count);
 		std::this_thread::sleep_for(2s);
 		count++;
 	}
 }
 
-VMGCThread::VMGCThread() {
+VMGCThread::VMGCThread()
+{
 	cond = PTHREAD_COND_INITIALIZER;
 	mutex = PTHREAD_MUTEX_INITIALIZER;
 	auto err = pthread_create(&nativeThread, NULL, &VMGCThread::gc, this);
 	spdlog::info("VMGCThread::VMGCThread, create gc thread returns:{}", err);
 }
 
-void VMGCThread::startExecute() {
-	// ¿ªÊ¼¡£
+void VMGCThread::startExecute()
+{
+	// å¼€å§‹ã€‚
 	pthread_cond_signal(&cond);
 	spdlog::info("Fire gc.");
 }
 
-void* VMGCThread::gc(void* ptr) {
+void *VMGCThread::gc(void *ptr)
+{
 	spdlog::info("GC started but wait for chance.");
-	auto thiz = reinterpret_cast<VMGCThread*>(ptr);
-	static struct timespec timeout = { 0, 0 };
+	auto thiz = reinterpret_cast<VMGCThread *>(ptr);
+	static struct timespec timeout = {0, 0};
 	int exitCount = 0;
-	while (exitCount < 10) {
+	while (exitCount < 10)
+	{
 		timeout.tv_sec = time(NULL) + 4;
 		pthread_mutex_lock(&thiz->mutex);
 		spdlog::info("GC waiting");
@@ -62,7 +69,8 @@ void* VMGCThread::gc(void* ptr) {
 	return nullptr;
 }
 
-VMGCThread::~VMGCThread() {
+VMGCThread::~VMGCThread()
+{
 	pthread_exit(&nativeThread);
 	pthread_attr_destroy(&threadAttri);
 	pthread_cond_destroy(&cond);

@@ -8,26 +8,29 @@
 #include <string>
 #include <sstream>
 
-CompressedFileReader::CompressedFileReader(const string& filePath): zip(nullptr), isValidZipFile(false)
+CompressedFileReader::CompressedFileReader(const string &filePath) : zip(nullptr), isValidZipFile(false)
 {
 	init(filePath.c_str());
 }
 
-CompressedFileReader::CompressedFileReader(const wstring& filePath):zip(nullptr), isValidZipFile(false)
+CompressedFileReader::CompressedFileReader(const wstring &filePath) : zip(nullptr), isValidZipFile(false)
 {
 	string path = w2s(filePath);
 	init(path.c_str());
 }
 
-void CompressedFileReader::init(const char* file) {
+void CompressedFileReader::init(const char *file)
+{
 	zip = zip_open(file, 0, 'r');
 	int i, n = zip_total_entries(zip);
-	for (i = 0; i < n; ++i) {
+	for (i = 0; i < n; ++i)
+	{
 		zip_entry_openbyindex(zip, i);
 		{
-			const char* name = zip_entry_name(zip);
+			const char *name = zip_entry_name(zip);
 			int isdir = zip_entry_isdir(zip);
-			if (isdir == 0) {
+			if (isdir == 0)
+			{
 				entries.push_back(c2w(name));
 			}
 		}
@@ -35,25 +38,30 @@ void CompressedFileReader::init(const char* file) {
 	}
 }
 
-bool CompressedFileReader::isValidCompressedFile() const { 
-	return false; 
+bool CompressedFileReader::isValidCompressedFile() const
+{
+	return false;
 }
-vector<wstring> CompressedFileReader::listItems() const{
+vector<wstring> CompressedFileReader::listItems() const
+{
 	return entries;
 }
-shared_ptr<Buffer> CompressedFileReader::getItemContent(wstring& itemName) {
-	char* buf = NULL;
+shared_ptr<Buffer> CompressedFileReader::getItemContent(wstring &itemName)
+{
+	char *buf = NULL;
 	size_t buf_size = 0;
 	ssize_t readSize = 0;
-	// Õâ¸öÓ¦¸ÃĞèÒªÍ¬²½£¬·ñÔòzip²»ÖªµÀ¶ÁµÄÊÇÄÄ¸ö£¿
-	if (zip) {
+	// è¿™ä¸ªåº”è¯¥éœ€è¦åŒæ­¥ï¼Œå¦åˆ™zipä¸çŸ¥é“è¯»çš„æ˜¯å“ªä¸ªï¼Ÿ
+	if (zip)
+	{
 		string str = w2s(itemName);
 		zip_entry_open(zip, str.c_str());
 		readSize = zip_entry_read(zip, (void **)&buf, &buf_size);
 		zip_entry_close(zip);
 	}
 	auto buffer = make_shared<Buffer>(buf, 0, readSize);
-	if (buf != NULL) {
+	if (buf != NULL)
+	{
 		free(buf);
 	}
 	return buffer;
@@ -61,7 +69,8 @@ shared_ptr<Buffer> CompressedFileReader::getItemContent(wstring& itemName) {
 
 CompressedFileReader::~CompressedFileReader()
 {
-	if (zip != NULL) {
+	if (zip != NULL)
+	{
 		zip_close(zip);
 	}
 	zip = NULL;

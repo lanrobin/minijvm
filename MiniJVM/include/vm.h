@@ -8,9 +8,10 @@
 #include "vm_thread.h"
 
 /*
-ÄÚ´æ¹ÜÀíÊÇÖ»±£´æÒ»·İshared_ptr,ÒòÎªËü»áÒ»Ö±´æÔÚ£¬ËùÒÔÓÃweak_ptr¸ø±ğÈËÓÃ¡£
+å†…å­˜ç®¡ç†æ˜¯åªä¿å­˜ä¸€ä»½shared_ptr,å› ä¸ºå®ƒä¼šä¸€ç›´å­˜åœ¨ï¼Œæ‰€ä»¥ç”¨weak_ptrç»™åˆ«äººç”¨ã€‚
 */
-class VM : public std::enable_shared_from_this<VM> {
+class VM : public std::enable_shared_from_this<VM>
+{
 private:
 	shared_ptr<VMMethodArea> methodArea;
 	shared_ptr<Configurations> conf;
@@ -18,14 +19,15 @@ private:
 	shared_ptr<ClassLoader> appClassLoader;
 	bool initilized = false;
 	/*
-	Ö÷Ïß³Ì
+	ä¸»çº¿ç¨‹
 	*/
 	shared_ptr<VMJavaThread> mainThread;
 
-	/*GCÏß³Ì£¬Ä¿Ç°ÏÈÊµÏÖÒ»¸öGCÏß³Ì¡£*/
+	/*GCçº¿ç¨‹ï¼Œç›®å‰å…ˆå®ç°ä¸€ä¸ªGCçº¿ç¨‹ã€‚*/
 	shared_ptr<VMGCThread> gcThread;
 
 	vector<shared_ptr<VMThread>> allThreads;
+
 public:
 	VM();
 	void initVM(shared_ptr<Configurations> conf);
@@ -36,10 +38,10 @@ public:
 	weak_ptr<ClassLoader> getAppClassLoader() const { return appClassLoader; };
 	weak_ptr<ClassLoader> boostrapClassLoader() const { return bootstrapClassLoader; };
 
-	weak_ptr< Configurations> getConf() const { return conf; }
+	weak_ptr<Configurations> getConf() const { return conf; }
 
 public:
-	// static 
+	// static
 	static weak_ptr<VM> getVM();
 };
 #endif //__JVM_VM_H__

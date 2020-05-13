@@ -5,19 +5,22 @@
 #include "zip/zip.h"
 #include "buffer.h"
 
-class CompressedFileReader {
+class CompressedFileReader
+{
 public:
-	CompressedFileReader(const string& filePath);
-	CompressedFileReader(const wstring& filePath);
+	CompressedFileReader(const string &filePath);
+	CompressedFileReader(const wstring &filePath);
 	bool isValidCompressedFile() const;
 	vector<wstring> listItems() const;
-	shared_ptr<Buffer> getItemContent(wstring& itemName);
+	shared_ptr<Buffer> getItemContent(wstring &itemName);
 
 	~CompressedFileReader();
+
 private:
-	void init(const char* file);
+	void init(const char *file);
+
 private:
-	struct zip_t* zip;
+	struct zip_t *zip;
 	vector<wstring> entries;
 	wstring fileName;
 	bool isValidZipFile;

@@ -11,7 +11,7 @@ private:
 	u1* buffer;
 	size_t buffer_size;
 	size_t read_pos;
-	// Õâ¸öÓĞ¿ÉÄÜÃ»ÓĞ¡£
+	// è¿™ä¸ªæœ‰å¯èƒ½æ²¡æœ‰ã€‚
 	wstring mappingFromFile;
 public:
 	Buffer(istream& is, const wstring & fromFile = std::wstring());
