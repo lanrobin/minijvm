@@ -40,7 +40,7 @@ public: // methods
 		return makeLookupKey(signature, name);
 	}
 
-	VMClassResolvable(weak_ptr<VMClass> owner) : ownerClass(owner) {};
+	VMClassResolvable(weak_ptr<VMClass> owner) : ownerClass(owner) {}
 	virtual ~VMClassResolvable() {}
 	virtual vector<wstring> splitSignature() = 0;
 
@@ -69,7 +69,7 @@ struct VMClassMethod : public VMClassResolvable
 	bool isFinal() const { return ((accessFlags & METHOD_ACC_FINAL) == METHOD_ACC_FINAL);}
 	bool isDeprected() const { return deprecated; }
 
-	bool isPublicOrProtected() const override{ return hasAnyAccessFlags(METHOD_ACC_PROTECTED | METHOD_ACC_PUBLIC); };
+	bool isPublicOrProtected() const override{ return hasAnyAccessFlags(METHOD_ACC_PROTECTED | METHOD_ACC_PUBLIC); }
 	//const shared_ptr<VMClass> clazz;
 	vector<u1> codes;
 	u2 maxStack;
@@ -90,7 +90,7 @@ struct VMClassField : public VMClassResolvable
 {
 	bool isStatic() const { return ((accessFlags & FIELD_ACC_STATIC) == FIELD_ACC_STATIC); }
 	bool isFinal() const { return ((accessFlags & FIELD_ACC_FINAL) == FIELD_ACC_FINAL); }
-	bool isPublicOrProtected() const override { return hasAnyAccessFlags(FIELD_ACC_PROTECTED | FIELD_ACC_PUBLIC); };
+	bool isPublicOrProtected() const override { return hasAnyAccessFlags(FIELD_ACC_PROTECTED | FIELD_ACC_PUBLIC); }
 	vector<wstring> splitSignature() override;
 	VMClassField(shared_ptr<ClassFile> cf, shared_ptr<Field_Info> fi, weak_ptr<VMClass> owner);
 };
@@ -119,13 +119,13 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 
 	weak_ptr<ClassLoader> classLoader;
 
-	const wstring& className() const { return name; };
+	const wstring& className() const { return name; }
 	const wstring& getClassSignature() const { return signature; }
 
 	VMClass(const wstring& name, weak_ptr<ClassLoader> classLoader);
 
-	weak_ptr<ClassLoader> getClassLoader() const { return classLoader; };
-	virtual ~VMClass() { spdlog::info("Class:{}, type:{} gone", w2s(name), classType); };
+	weak_ptr<ClassLoader> getClassLoader() const { return classLoader; }
+	virtual ~VMClass() { spdlog::info("Class:{}, type:{} gone", w2s(name), classType); }
 
 	virtual weak_ptr<VMClassMethod> findMethod(const wstring& signature, const wstring& name) const = 0;
 	virtual weak_ptr<VMHeapObject> findStaticField(const wstring& signature, const wstring& name) const = 0;
@@ -175,7 +175,7 @@ bool operator!=(const VMClass &lhs, const VMClass &rhs) = delete;
 struct VMReferenceClass : public VMClass
 {
 
-	VMReferenceClass(const wstring &name, weak_ptr<ClassLoader> cl) : VMClass(name, cl){};
+	VMReferenceClass(const wstring &name, weak_ptr<ClassLoader> cl) : VMClass(name, cl){}
 
 
 
@@ -210,7 +210,7 @@ protected:
 struct VMLoadableClass : public VMReferenceClass
 {
 
-	VMLoadableClass(const wstring &name, weak_ptr<ClassLoader> cl) : VMReferenceClass(name, cl){};
+	VMLoadableClass(const wstring &name, weak_ptr<ClassLoader> cl) : VMReferenceClass(name, cl){}
 
 	bool loadClassInfo(shared_ptr<ClassFile> cf);
 };
@@ -252,9 +252,9 @@ struct VMPrimitiveClass : public VMClass
 		classType = VMClass::ClassType::ClassPrimitiveTypeClass;
 	};
 
-	weak_ptr<VMClassMethod> findMethod(const wstring &methodSignature, const wstring &name) const override { throw runtime_error("VMPrimitiveClass has no method."); };
-	weak_ptr<VMHeapObject> findStaticField(const wstring &methodSignature, const wstring &name) const override { throw runtime_error("VMPrimitiveClass has no static fields."); };
-	weak_ptr< VMClassField> findFieldLayout(const wstring& methodSignature, const wstring& name) const override { throw runtime_error("VMPrimitiveClass has no static fieldLayouts."); };;
+	weak_ptr<VMClassMethod> findMethod(const wstring &methodSignature, const wstring &name) const override { throw runtime_error("VMPrimitiveClass has no method."); }
+	weak_ptr<VMHeapObject> findStaticField(const wstring &methodSignature, const wstring &name) const override { throw runtime_error("VMPrimitiveClass has no static fields."); }
+	weak_ptr< VMClassField> findFieldLayout(const wstring& methodSignature, const wstring& name) const override { throw runtime_error("VMPrimitiveClass has no static fieldLayouts."); }
 	void resolveSymbol() override { throw runtime_error("VMPrimitiveClass no need to resolveSymbol."); };
 	// 所有的都是public.
 	bool isPublic() const override { return true; }

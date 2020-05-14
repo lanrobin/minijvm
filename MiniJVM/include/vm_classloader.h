@@ -35,9 +35,9 @@ public:
 	BootstrapClassLoader(weak_ptr<ClassLoader> parent);
 	weak_ptr<VMClass> loadClass(const wstring& className) override;
 	weak_ptr<VMClass> loadClass(shared_ptr<Buffer> buf) override;
-	wstring getClassLoaderName() const override { return classLoaderName; };
+	wstring getClassLoaderName() const override { return classLoaderName; }
 protected:
-	virtual wstring getClassRootPath() const { return bootstrapClassPath; };
+	virtual wstring getClassRootPath() const { return bootstrapClassPath; }
 
 private:
 	wstring bootstrapClassPath;
@@ -50,9 +50,9 @@ public:
 	weak_ptr<VMClass> loadClass(const wstring& className) override;
 	weak_ptr<VMClass> loadClass(shared_ptr<Buffer> buf) override;
 
-	wstring getClassRootPath() const override { return appClassRootPath; };
+	wstring getClassRootPath() const override { return appClassRootPath; }
 
-	wstring getClassLoaderName() const override { return classLoaderName; };
+	wstring getClassLoaderName() const override { return classLoaderName; }
 private:
 	wstring appClassRootPath;
 	wstring classLoaderName;

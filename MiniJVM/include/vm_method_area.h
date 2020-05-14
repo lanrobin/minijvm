@@ -36,7 +36,7 @@ public:
 
 	virtual shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) = 0;
 	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring &className) = 0;
-	virtual ~VMMethodArea(){};
+	virtual ~VMMethodArea(){}
 
 protected:
 	shared_ptr<VMClassConstantPool> createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz);

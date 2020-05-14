@@ -128,7 +128,7 @@ weak_ptr< VMClassField> VMReferenceClass::findFieldLayout(const wstring& methodS
 		return fl->second;
 	}
 	return std::weak_ptr<VMClassField>();
-};
+}
 
 void VMReferenceClass::resolveSymbol()
 {
@@ -315,7 +315,7 @@ vector<wstring> VMClassMethod::splitSignature()
 	replaceAll(sig, L"(", L"");
 	replaceAll(sig, L")", L"");
 	vector<wstring> elements;
-	int i = 0;
+	size_t i = 0;
 	int previous = 0;
 	bool inReference = false;
 	bool inArray = false;

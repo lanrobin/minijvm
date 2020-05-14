@@ -34,12 +34,12 @@ public:
 	{
 		pthread_attr_init(&threadAttri);
 		nativeThread = pt;
-	};
+	}
 	VMThread()
 	{
 		pthread_attr_init(&threadAttri);
-	};
-	virtual ~VMThread() { spdlog::info("VMThread gone"); };
+	}
+	virtual ~VMThread() { spdlog::info("VMThread gone"); }
 };
 
 struct VMJavaThread : public VMThread

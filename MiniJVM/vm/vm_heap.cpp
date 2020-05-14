@@ -80,11 +80,11 @@ weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature, co
 		return f->second;
 	}
 	return std::weak_ptr<VMHeapObject>();
-};
+}
 weak_ptr< VMHeapObject> ClassVMHeapObject::getStaticField(const wstring& signature, const wstring& name) const {
 	auto clz = typeClass.lock();
 	return clz->findStaticField(signature, name);
-};
+}
 
 void ClassVMHeapObject::putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
@@ -94,18 +94,18 @@ void ClassVMHeapObject::putField(const wstring& signature, const wstring& name, 
 	*/
 	auto key = makeLookupKey(signature, name);
 	fields[key] = value;
-};
+}
 void ClassVMHeapObject::putStaticField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
 	typeClass.lock()->putStaticField(signature, name, value);
-};
+}
 
 void ArrayVMHeapObject::putArray(size_t index, weak_ptr<VMHeapObject> value) {
 	if (index < 0 || index >= maxsize) {
 		throw runtime_error("Should throw IndexOutOfBoundException.");
 	}
 	elements[index] = value;
-};
+}
 
 
 weak_ptr<VMHeapObject> ArrayVMHeapObject::getArray(size_t index) const {
@@ -113,7 +113,7 @@ weak_ptr<VMHeapObject> ArrayVMHeapObject::getArray(size_t index) const {
 		throw runtime_error("Should throw IndexOutOfBoundException.");
 	}
 	return elements[index];
-};
+}
 
 shared_ptr<VMHeapPool> VMHeapPoolFactory::createVMHeapPool(weak_ptr<Configurations> conf) {
 	auto cf = conf.lock();

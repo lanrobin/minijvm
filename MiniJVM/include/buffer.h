@@ -9,8 +9,8 @@ using std::istream;
 struct Buffer {
 private:
 	u1* buffer;
-	size_t buffer_size;
 	size_t read_pos;
+	size_t buffer_size;
 	// 这个有可能没有。
 	wstring mappingFromFile;
 public:

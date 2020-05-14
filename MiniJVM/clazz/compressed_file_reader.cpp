@@ -65,7 +65,7 @@ shared_ptr<Buffer> CompressedFileReader::getItemContent(wstring &itemName)
 		free(buf);
 	}
 	return buffer;
-};
+}
 
 CompressedFileReader::~CompressedFileReader()
 {
@@ -74,4 +74,4 @@ CompressedFileReader::~CompressedFileReader()
 		zip_close(zip);
 	}
 	zip = NULL;
-};
+}
