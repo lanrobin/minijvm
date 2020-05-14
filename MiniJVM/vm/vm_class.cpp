@@ -228,10 +228,10 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 		{
 			instanceFieldLayout[key] = field;
 		}
-
+		/*
 		if (field->isFinal() && field->signature == L"Ljava/lang/String;") {
 			throw runtime_error("String static field need special care.");
-		}
+		}*/
 
 		allFieldLayout[key] = field;
 	}
@@ -333,7 +333,7 @@ vector<wstring> VMClassMethod::splitSignature()
 		}
 		else if (inArray)
 		{
-			if (VMPrimitiveClass::isPrimitiveTypeSignature(sig))
+			if (VMPrimitiveClass::isPrimitiveTypeSignature(sig[i]))
 			{
 				elements.push_back(sig.substr(previous, i - previous + 1));
 				inArray = false;
@@ -473,9 +473,14 @@ weak_ptr<VMPrimitiveClass> VMPrimitiveClass::getPrimitiveVMClass(const wstring& 
 	}
 	return result;
 }
-bool VMPrimitiveClass::isPrimitiveTypeSignature(const wstring& signature) {
+bool VMPrimitiveClass::isPrimitiveTypeSignature(const wstring& signature){
 	if (signature.length() != 1) {
 		return false;
 	}
 	return PRIMITIVE_TYPES.find(signature[0]) != PRIMITIVE_TYPES.end();
+}
+
+bool VMPrimitiveClass::isPrimitiveTypeSignature(wchar_t c){
+	wstring sig(1, c);
+	return isPrimitiveTypeSignature(sig);
 }

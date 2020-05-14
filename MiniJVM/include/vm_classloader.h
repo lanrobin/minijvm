@@ -27,6 +27,7 @@ protected:
 
 	bool classLoaded(const wstring& className);
 	weak_ptr<VMClass> getStoredClass(const wstring& className) const;
+	shared_ptr<VMClass> defineArrayClass(const wstring& className);
 };
 
 class BootstrapClassLoader : public ClassLoader{

@@ -99,30 +99,36 @@ weak_ptr<VMClass> ClassLoader::defineClass(const wstring &sym)
 	}
 	auto ma = VM::getVM().lock()->getMethodArea().lock();
 
-	weak_ptr<VMClass> componentType = ma->get(sym);
+	weak_ptr<VMClass> newClass = ma->get(sym);
 
 	// 如果类已经存在，则直接返回。
-	if (!componentType.expired())
+	if (!newClass.expired())
 	{
-		return componentType;
+		return newClass;
 	}
 
 	if (sym[0] == L'[')
 	{
-		// 如果还是数组，则递归
+#if 0 
+		/* 这代码有一个严重的问题，新创建的arrayclass还没有存放到ma里就失效了，所以需要新定义一个defineArrayClass来解决。 */
 		wstring subName = sym.substr(1, sym.length() - 1);
-		auto subComponentType = defineClass(subName);
-		auto newArrayClass = make_shared<VMArrayClass>(subName, subComponentType, getSharedPtr());
+		/* 这里有一个bug,必须要先把subComponentType变成share_ptr放到MA里，
+		否则递归调用的时候会让这个产生的类被释放。 */
+		auto subComponentType = defineClass(subName).lock();
+		auto cl = getSharedPtr();
+		auto newArrayClass = make_shared<VMArrayClass>(sym, subComponentType, cl);
 		newArrayClass->super = loadClass(L"java/lang/Object");
 		// 新创建了一个类，需要放到类常量池里。
 		ma->put(sym, newArrayClass);
-		componentType = newArrayClass;
+		newClass = newArrayClass;
+#endif
+		newClass = defineArrayClass(sym);
 	}
 	else if (sym[0] == L'L')
 	{
 		// 如果是正常的引用类型。
 		wstring className = sym.substr(1, sym.length() - 2);
-		componentType = loadClass(className);
+		newClass = loadClass(className);
 	}
 	else
 	{
@@ -132,9 +138,33 @@ weak_ptr<VMClass> ClassLoader::defineClass(const wstring &sym)
 		{
 			throw runtime_error("Unsupported type:" + w2s(sym));
 		}
-		componentType = VMPrimitiveClass::getPrimitiveVMClass(sym);
+		newClass = VMPrimitiveClass::getPrimitiveVMClass(sym);
 	}
-	return componentType;
+	return newClass;
+}
+
+shared_ptr<VMClass> ClassLoader::defineArrayClass(const wstring& sym)
+{
+	if (sym.length() < 2 || sym[0] != L'[') {
+		throw runtime_error("Not an array signature:" + w2s(sym));
+	}
+	wstring subName = sym.substr(1, sym.length() - 1);
+	shared_ptr<VMClass> subComponent = nullptr;
+	if (subName[0] == L'[')
+	{
+		// 如果还是数组，就递归创建。
+		subComponent = defineArrayClass(subName);
+	}
+	else {
+		// 如果不是数组类，那么这个类肯定能找到，而且已经有引用了。所以lock一定能成功。
+		subComponent = defineClass(subName).lock();
+	}
+	auto ma = VM::getVM().lock()->getMethodArea().lock();
+	auto newArrayClass = make_shared<VMArrayClass>(sym, subComponent, getSharedPtr());
+	newArrayClass->super = loadClass(L"java/lang/Object");
+	// 新创建了一个类，需要放到类常量池里。
+	ma->put(sym, newArrayClass);
+	return newArrayClass;
 }
 BootstrapClassLoader::BootstrapClassLoader(const wstring &cp, weak_ptr<ClassLoader> p) : ClassLoader(p), bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader")
 {

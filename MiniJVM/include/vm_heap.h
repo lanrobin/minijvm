@@ -48,11 +48,11 @@ struct VMHeapObject : std::enable_shared_from_this<VMHeapObject> {
 	const weak_ptr<VMClass> typeClass;
 
 	VMHeapObject(weak_ptr<VMClass> typeClz) : typeClass(typeClz) {
-		spdlog::info("New VMHeapObject:{}", w2s(typeClass.lock()->className()));
+		spdlog::info("New VMHeapObject.");
 	}
 
 	virtual ~VMHeapObject() {
-		spdlog::info("Delete VMHeapObject:{}", w2s(typeClass.lock()->className()));
+		spdlog::info("Delete VMHeapObject");
 	};
 
 protected:

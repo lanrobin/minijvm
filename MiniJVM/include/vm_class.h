@@ -263,6 +263,7 @@ struct VMPrimitiveClass : public VMClass
 	bool equals(weak_ptr<VMClass> other) const { return !other.expired() && this == other.lock().get(); }
 	static weak_ptr<VMPrimitiveClass> getPrimitiveVMClass(const wstring& signature);
 	static bool isPrimitiveTypeSignature(const wstring& signature);
+	static bool isPrimitiveTypeSignature(wchar_t c);
 private:
 	static unordered_map<wstring, shared_ptr<VMPrimitiveClass>> AllPrimitiveClasses;
 	static const unordered_map<wchar_t, int> PRIMITIVE_TYPES;

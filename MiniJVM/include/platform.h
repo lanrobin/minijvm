@@ -4,6 +4,8 @@
 #define JVM_DEBUG
 
 #ifdef _WIN32
+#pragma once
+#define _CRT_SECURE_NO_WARNINGS
 #include <Windows.h>
 #if REG_DWORD == REG_DWORD_LITTLE_ENDIAN
 #define __JVM_LITTLE_ENDIAN__
