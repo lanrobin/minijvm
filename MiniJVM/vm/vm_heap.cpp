@@ -12,10 +12,10 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& 
 	shared_ptr<VMClass> c = clz.lock();
 	shared_ptr< VMHeapObject> obj = nullptr;
 	wstring s = c->getClassSignature();
-	if (s.length < 1) {
+	if (s.length() < 1) {
 		throw runtime_error("Unable to create heap object of empty signature.");
 	}
-	else if (s.length == 1) {
+	else if (s.length() == 1) {
 		if (VMPrimitiveClass::isPrimitiveTypeSignature(s)) {
 			if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
 				obj = make_shared<IntegerVMHeapObject>(param, clz);
@@ -44,7 +44,7 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& 
 		// 普通的类
 		obj = make_shared< ClassVMHeapObject>(clz);
 	}
-	else if (s[0] == L"[") {
+	else if (s[0] == L'[') {
 		//数组
 		obj = make_shared<ArrayVMHeapObject>(clz, param);
 	}

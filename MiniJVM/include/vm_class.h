@@ -35,7 +35,7 @@ public: // fields;
 
 public: // methods
 	virtual void resolveSymbol();
-	wstring & lookupKey()
+	wstring lookupKey()
 	{
 		return makeLookupKey(signature, name);
 	}
@@ -47,7 +47,7 @@ public: // methods
 	virtual bool isPublicOrProtected() const = 0;
 
 public:
-	static wstring & makeLookupKey(const wstring& sig, const wstring & name)
+	static wstring  makeLookupKey(const wstring& sig, const wstring & name)
 	{
 		return sig + L"@" + name;
 	}

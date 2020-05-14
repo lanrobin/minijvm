@@ -60,7 +60,7 @@ protected:
 		return shared_from_this();
 	}
 
-	wstring& makeLookupKey(const wstring& sig, const wstring & name) const
+	wstring makeLookupKey(const wstring& sig, const wstring & name) const
 	{
 		return VMClassResolvable::makeLookupKey(sig, name);
 	}
