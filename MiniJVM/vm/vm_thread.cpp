@@ -3,8 +3,40 @@
 #include "string_utils.h"
 #include "vm.h"
 #include "vm_engine.h"
+#include "vm_heap.h"
 #include <chrono>
 #include <thread>
+
+
+VMThreadStackFrame::VMThreadStackFrame(weak_ptr<VMClassMethod> md, vector<weak_ptr<VMHeapObject>> args)
+{
+	method = md;
+	auto m = method.lock();
+	localSize = m->maxLocals;
+	stackSize = m->maxStack;
+	spdlog::info("create VMThreadStackFrame for method:{}", w2s(m->signature));
+	locals.reserve(localSize);
+	stack.reserve(stackSize);
+
+	// 把参数都压到locals里去。
+	for (auto a = args.begin(); a != args.end(); a++) {
+		auto arg = (*a).lock();
+		locals.push_back(arg);
+		auto typeClass = arg->typeClass.lock();
+		if (typeClass->equals(VMPrimitiveClass::getPrimitiveVMClass(L"D"))
+			|| typeClass->equals(VMPrimitiveClass::getPrimitiveVMClass(L"J")))
+		{
+			// 如果是long或是double,那么一个arg需要占用两个slots.
+			locals.push_back(std::weak_ptr<NullVMHeapObject>());
+		}
+	}
+}
+
+VMThreadStackFrame::~VMThreadStackFrame() {
+	locals.clear();
+	stack.clear();
+	spdlog::info("destroy VMThreadStackFrame for method:{}", w2s(method.lock()->signature));
+}
 
 void VMJavaThread::startExecute()
 {
@@ -29,7 +61,7 @@ void VMJavaThread::startExecute()
 	else {
 		method = startJavaMethod.lock();
 	}
-
+	vector<weak_ptr<VMHeapObject>> args;
 	auto stackFrame = make_shared<VMThreadStackFrame>(startJavaMethod, args);
 	spdlog::info("startExecute:{} with signature:{}", w2s(method->name), w2s(method->signature));
 	VMEngine::execute(getWeakThisPtr(), stackFrame);

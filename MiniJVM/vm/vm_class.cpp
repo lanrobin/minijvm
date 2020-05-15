@@ -311,7 +311,8 @@ VMClassMethod::VMClassMethod(shared_ptr<ClassFile> cf, shared_ptr<Method_Info> m
 
 vector<wstring> VMClassMethod::splitSignature()
 {
-	if (splittedSignatures.size() == 0) {
+	if (splittedSignatures.size() == 0)
+	{
 		wstring sig(signature);
 		replaceAll(sig, L"(", L"");
 		replaceAll(sig, L")", L"");

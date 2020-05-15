@@ -171,8 +171,8 @@ public:
 /*
 只能通过equals比较。
 */
-bool operator==(const VMClass &lhs, const VMClass &rhs) = delete;
-bool operator!=(const VMClass &lhs, const VMClass &rhs) = delete;
+//bool operator==(const VMClass &lhs, const VMClass &rhs) = delete;
+//bool operator!=(const VMClass &lhs, const VMClass &rhs) = delete;
 
 struct VMReferenceClass : public VMClass
 {

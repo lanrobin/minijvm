@@ -8,7 +8,7 @@
 #include "vm_class.h"
 #include "log.h"
 
-using namespace std;
+//using namespace std;
 
 struct ReferenceVMHeapObject;
 struct VMPrimitiveClass;
@@ -67,7 +67,7 @@ private:
 	wstring methodName;							// 要运行的方法名称。
 	wstring methodSignature;					// 要运行的方法签名。
 	bool needStaticMethod;						// 是不是要运行static的方法。只有在main函数的时候才为true.
-	vector<wstring> args;						// 给方法的参数，一般只有在main函数的时候才要求，否则都为空。
+	vector<wstring> wstrArgs;						// 给方法的参数，一般只有在main函数的时候才要求，否则都为空。
 	shared_ptr<ReferenceVMHeapObject> instance; // 如果不是调用static方法需要一个对象。
 												// static field.
 private:
@@ -87,7 +87,7 @@ public:
 	}
 	void setRunningMethodArgs(vector<wstring> &params)
 	{
-		args.insert(args.begin(), params.begin(), params.end());
+		wstrArgs.insert(wstrArgs.begin(), params.begin(), params.end());
 	}
 	void setRunningMethod(weak_ptr<VMClassMethod> runningMethod) {
 		startJavaMethod = runningMethod;

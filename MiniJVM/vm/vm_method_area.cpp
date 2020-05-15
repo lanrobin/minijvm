@@ -6,36 +6,6 @@
 #include "vm_thread.h"
 #include "vm_heap.h"
 
-VMThreadStackFrame::VMThreadStackFrame(weak_ptr<VMClassMethod> md, vector<weak_ptr<VMHeapObject>> args) :
-	method(md)
-{
-	auto m = method.lock();
-	localSize = m->maxLocals;
-	stackSize = m->maxStack;
-	spdlog::info("create VMThreadStackFrame for method:{}", w2s(m->signature));
-	locals.reserve(localSize);
-	stack.reserve(stackSize);
-
-	// 把参数都压到locals里去。
-	for (auto a = args.begin(); a != args.end(); a++) {
-		auto arg = (*a).lock();
-		locals.push_back(arg);
-		auto typeClass = arg->typeClass.lock();
-		if (typeClass->equals(VMPrimitiveClass::getPrimitiveVMClass(L"D"))
-			|| typeClass->equals(VMPrimitiveClass::getPrimitiveVMClass(L"J")))
-		{
-			// 如果是long或是double,那么一个arg需要占用两个slots.
-			locals.push_back(std::weak_ptr< NullVMHeapObject>());
-		}
-	}
-}
-
-VMThreadStackFrame::~VMThreadStackFrame() {
-	locals.clear();
-	stack.clear();
-	spdlog::info("destroy VMThreadStackFrame for method:{}", w2s(method.lock()->signature));
-}
-
 shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz)
 {
 	auto cp = cf->constant_pool;

@@ -7,7 +7,7 @@
 #include "vm_engine.h"
 #include <chrono>
 
-/*Õâ¸öº¯Êı¾ÍÊÇÖ÷ÒªµÄÖ´ĞĞº¯Êı¡£*/
+/* è¿™ä¸ªå‡½æ•°å°±æ˜¯ä¸»è¦çš„æ‰§è¡Œå‡½æ•°ã€‚ */
 void VMEngine::execute(weak_ptr< VMThread> thread, weak_ptr<VMThreadStackFrame> frame) 
 {
 	int count = 0;

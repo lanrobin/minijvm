@@ -40,8 +40,8 @@ public:
 	int run();
 	weak_ptr<VMMethodArea> getMethodArea() const { return methodArea; }
 
-	weak_ptr<ClassLoader> getAppClassLoader() const { return appClassLoader; };
-	weak_ptr<ClassLoader> boostrapClassLoader() const { return bootstrapClassLoader; };
+	weak_ptr<ClassLoader> getAppClassLoader() const { return appClassLoader; }
+	weak_ptr<ClassLoader> boostrapClassLoader() const { return bootstrapClassLoader; }
 	weak_ptr< VMHeapPool> getHeapPool() const { return heap; }
 	weak_ptr<Configurations> getConf() const { return conf; }
 public:
