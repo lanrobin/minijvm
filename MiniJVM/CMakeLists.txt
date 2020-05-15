@@ -64,7 +64,7 @@ set(ThirdParty "./thirdparties/zip/zip.c")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 
-add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} "util/configurations.cpp")
+add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty})
 
 IF(WIN32)
     
