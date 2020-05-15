@@ -11,18 +11,29 @@
 using namespace std;
 
 struct ReferenceVMHeapObject;
+struct VMPrimitiveClass;
+struct NullVMHeapObject;
 
 // 虚拟机的线程栈，一般有两种实现，一种是固定的另一种是可扩展的。
 struct VMThreadStackFrame
 {
+	VMThreadStackFrame(weak_ptr<VMClassMethod> md, vector<weak_ptr<VMHeapObject>> args);
+	~VMThreadStackFrame();
+	size_t stackTop;
+	size_t localSize;
+	size_t stackSize;
+
 	// 局部变量表。
-	vector<u4> localVirableSlots;
+	vector<weak_ptr<VMHeapObject>> locals;
+
+	// 操作栈。
+	vector<weak_ptr<VMHeapObject>> stack;
 
 	// 当前栈桢所属的方法。
-	shared_ptr<VMClassMethod> method;
+	weak_ptr<VMClassMethod> method;
 };
 
-struct VMThread
+struct VMThread: public std::enable_shared_from_this<VMThread>
 {
 public:
 	pthread_t nativeThread;
@@ -30,6 +41,9 @@ public:
 
 public:
 	virtual void startExecute() = 0;
+
+	weak_ptr<VMThread> getWeakThisPtr() { return shared_from_this(); };
+
 	VMThread(pthread_t pt)
 	{
 		pthread_attr_init(&threadAttri);
@@ -46,7 +60,7 @@ struct VMJavaThread : public VMThread
 {
 private:
 	// 表示这个线程的program connter, 如果是native方法调用的时候就是-1, 表示undefined.
-	long pc;
+	long long pc;
 	vector<shared_ptr<VMThreadStackFrame>> stackFrames;
 	weak_ptr<VMClassMethod> startJavaMethod;
 	wstring className;							// 要运行的类的名称.
@@ -74,6 +88,9 @@ public:
 	void setRunningMethodArgs(vector<wstring> &params)
 	{
 		args.insert(args.begin(), params.begin(), params.end());
+	}
+	void setRunningMethod(weak_ptr<VMClassMethod> runningMethod) {
+		startJavaMethod = runningMethod;
 	}
 };
 

@@ -74,6 +74,8 @@ struct VMClassMethod : public VMClassResolvable
 	vector<u1> codes;
 	u2 maxStack;
 	u2 maxLocals;
+	/*这里面存放着函数的参数和返回值的拆分签名，最后一个是返回值的签名。*/
+	vector<wstring> splittedSignatures;
 	vector<shared_ptr<VMMethodExceptionTable>> exceptionTable;
 	vector<wstring> throwExceptions;
 	VMClassMethod(shared_ptr<ClassFile> cf, shared_ptr<Method_Info> mi, weak_ptr<VMClass> owner);

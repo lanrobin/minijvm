@@ -1,5 +1,7 @@
 #ifndef __JVM_VM_ENGINE_H__
 #define __JVM_VM_ENGINE_H__
+
+#include "base_type.h"
 enum Opcode : u1 {
 	Constant_0x00_nop = 0,
 	Constant_0x01_aconst_null = 1,
@@ -206,5 +208,15 @@ enum Opcode : u1 {
 	Reserved_0xca_breakpoint = 202,
 	Reserved_0xfe_impdep1 = 254,
 	Reserved_0xff_impdep2 = 255,
+};
+struct VMClassMethod;
+struct VMThread;
+struct VMThreadStackFrame;
+struct VMHeapObject;
+
+class VMEngine {
+public:
+	void static execute(weak_ptr<VMThread> thread, weak_ptr<VMThreadStackFrame> frame);
+	void static execute(weak_ptr<VMThread> thread, weak_ptr<VMClassMethod> method, vector<weak_ptr<VMHeapObject>> args);
 };
 #endif //__JVM_VM_ENGINE_H__

@@ -2,34 +2,38 @@
 #include "log.h"
 #include "string_utils.h"
 #include "vm.h"
+#include "vm_engine.h"
 #include <chrono>
 #include <thread>
 
 void VMJavaThread::startExecute()
 {
+	shared_ptr<VMClassMethod> method = nullptr;
+	if (startJavaMethod.expired()) {
 
-	auto appClassLoader = VM::getVM().lock()->getAppClassLoader().lock();
+		// 如果是main函数,那就得自己找出来。
+		auto appClassLoader = VM::getVM().lock()->getAppClassLoader().lock();
 
-	shared_ptr<VMClass> mainClass = appClassLoader->loadClass(className).lock();
-	startJavaMethod = mainClass->findMethod(methodSignature, methodName);
-	if (startJavaMethod.expired())
-	{
-		throw runtime_error("No start method found:" + w2s(methodName));
+		shared_ptr<VMClass> mainClass = appClassLoader->loadClass(className).lock();
+		startJavaMethod = mainClass->findMethod(methodSignature, methodName);
+		if (startJavaMethod.expired())
+		{
+			throw runtime_error("No start method found:" + w2s(methodName));
+		}
+		auto method = startJavaMethod.lock();
+		if (method->isStatic() != needStaticMethod)
+		{
+			throw runtime_error("Method staticness is incorrect.");
+		}
 	}
-	auto method = startJavaMethod.lock();
-	if (method->isStatic() != needStaticMethod)
-	{
-		throw runtime_error("Method staticness is incorrect.");
+	else {
+		method = startJavaMethod.lock();
 	}
 
+	auto stackFrame = make_shared<VMThreadStackFrame>(startJavaMethod, args);
 	spdlog::info("startExecute:{} with signature:{}", w2s(method->name), w2s(method->signature));
-	int count = 0;
-	while (count < 15)
-	{
-		spdlog::info("running:{}", count);
-		std::this_thread::sleep_for(2s);
-		count++;
-	}
+	VMEngine::execute(getWeakThisPtr(), stackFrame);
+	spdlog::info("endExecute:{} with signature:{}", w2s(method->name), w2s(method->signature));
 }
 
 VMGCThread::VMGCThread()

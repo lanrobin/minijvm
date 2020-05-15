@@ -219,7 +219,7 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 		if (field->isStatic())
 		{
 			// 先查检对应的类是不是存在并且可以访问。
-			field->resolveSymbol();
+			//field->resolveSymbol(); 先不检查，运行时再检查。
 			staticFieldLayout[key] = field;
 			// 创建对应存储的空间。不用创建，初始化的才需要创建，否则在找的时候返回Null对象就行了。
 			//staticFields[key] = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject(field->signature, 0);
@@ -239,7 +239,7 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 	state = hasCInitMethod ? InitializeState::NotInitialized : InitializeState::NotInitialized;
 #ifdef RESOLVE_ON_CLASS_LOAD
 	// 自己先resolve.
-	resolveSymbol();
+	//resolveSymbol();
 #endif
 	return true;
 }
@@ -311,60 +311,61 @@ VMClassMethod::VMClassMethod(shared_ptr<ClassFile> cf, shared_ptr<Method_Info> m
 
 vector<wstring> VMClassMethod::splitSignature()
 {
-	wstring sig(signature);
-	replaceAll(sig, L"(", L"");
-	replaceAll(sig, L")", L"");
-	vector<wstring> elements;
-	size_t i = 0;
-	int previous = 0;
-	bool inReference = false;
-	bool inArray = false;
-	while (i < sig.length())
-	{
-		if (inReference)
+	if (splittedSignatures.size() == 0) {
+		wstring sig(signature);
+		replaceAll(sig, L"(", L"");
+		replaceAll(sig, L")", L"");
+		size_t i = 0;
+		int previous = 0;
+		bool inReference = false;
+		bool inArray = false;
+		while (i < sig.length())
 		{
-			if (sig[i] == L';')
+			if (inReference)
 			{
-				elements.push_back(sig.substr(previous, i - previous + 1));
-				inArray = false;
-				inReference = false;
-				previous = i;
+				if (sig[i] == L';')
+				{
+					splittedSignatures.push_back(sig.substr(previous, i - previous + 1));
+					inArray = false;
+					inReference = false;
+					previous = i;
+				}
 			}
-		}
-		else if (inArray)
-		{
-			if (VMPrimitiveClass::isPrimitiveTypeSignature(sig[i]))
+			else if (inArray)
 			{
-				elements.push_back(sig.substr(previous, i - previous + 1));
-				inArray = false;
-				inReference = false;
+				if (VMPrimitiveClass::isPrimitiveTypeSignature(sig[i]))
+				{
+					splittedSignatures.push_back(sig.substr(previous, i - previous + 1));
+					inArray = false;
+					inReference = false;
+				}
+				else if (sig[i] == L'L')
+				{
+					inReference = true;
+				}
+			}
+			else if (sig[i] == L'[')
+			{
+				previous = i;
+				inArray = true;
 			}
 			else if (sig[i] == L'L')
 			{
 				inReference = true;
+				if (!inArray)
+				{
+					previous = i;
+				}
 			}
-		}
-		else if (sig[i] == L'[')
-		{
-			previous = i;
-			inArray = true;
-		}
-		else if (sig[i] == L'L')
-		{
-			inReference = true;
-			if (!inArray)
+			else
 			{
+				splittedSignatures.push_back(sig.substr(i, 1));
 				previous = i;
 			}
+			i++;
 		}
-		else
-		{
-			elements.push_back(sig.substr(i, 1));
-			previous = i;
-		}
-		i++;
 	}
-	return elements;
+	return splittedSignatures;
 }
 
 void VMClassMethod::resolveSymbol()
