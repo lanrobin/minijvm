@@ -6,10 +6,12 @@
 #include "vm_thread.h"
 #include "vm_engine.h"
 #include <chrono>
+#include <thread>
 
 /* 这个函数就是主要的执行函数。 */
 void VMEngine::execute(weak_ptr< VMThread> thread, weak_ptr<VMThreadStackFrame> frame) 
 {
+	using namespace std::chrono_literals;
 	int count = 0;
 	while (count < 15)
 	{

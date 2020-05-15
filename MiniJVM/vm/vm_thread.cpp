@@ -85,6 +85,7 @@ void VMGCThread::startExecute()
 
 void *VMGCThread::gc(void *ptr)
 {
+	using namespace std::chrono_literals;
 	spdlog::info("GC started but wait for chance.");
 	auto thiz = reinterpret_cast<VMGCThread *>(ptr);
 	static struct timespec timeout = {0, 0};
@@ -95,7 +96,7 @@ void *VMGCThread::gc(void *ptr)
 		pthread_mutex_lock(&thiz->mutex);
 		spdlog::info("GC waiting");
 		pthread_cond_timedwait(&thiz->cond, &thiz->mutex, &timeout);
-		//std::this_thread::sleep_for(4s);
+		std::this_thread::sleep_for(4s);
 		spdlog::info("GC active:{}", exitCount);
 		pthread_mutex_unlock(&thiz->mutex);
 		exitCount++;
