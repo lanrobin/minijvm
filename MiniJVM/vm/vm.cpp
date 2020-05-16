@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <cassert>
+#include <memory>
 #include "base_type.h"
 #include "log.h"
 #include "platform.h"
@@ -11,6 +12,7 @@
 #include "vm_method_area.h"
 #include "vm_classloader.h"
 #include "string_utils.h"
+#include "vm_heap.h"
 
 VM::VM() : conf(nullptr)
 {
@@ -81,4 +83,17 @@ void VM::initVM(shared_ptr<Configurations> cfs)
 	{
 		spdlog::warn("VM has already been initialized.");
 	}
+}
+
+weak_ptr<NullVMHeapObject> VMHelper::getNullVMHeapObject() {
+	return VM::getVM().lock()->getHeapPool().lock()->getNullVMHeapObject();
+}
+
+weak_ptr<IntegerVMHeapObject> VMHelper::getIntegerVMHeapObject(int v) {
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject(L"I", v);
+	return std::dynamic_pointer_cast<IntegerVMHeapObject>(obj.lock());
+}
+
+weak_ptr<VMClass> VMHelper::loadClass(const wstring& sig) {
+	return VM::getVM().lock()->getAppClassLoader().lock()->loadClass(sig);
 }

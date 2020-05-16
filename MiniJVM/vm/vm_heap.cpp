@@ -2,14 +2,10 @@
 #include "vm_class.h"
 #include "string_utils.h"
 #include "vm.h"
-
+/*
 template<typename T>
-weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& param)
+weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s, T param)
 {
-	if (clz.expired()) {
-		throw runtime_error("Template class doesnot exist any more, Could not create instance for it.");
-	}
-	shared_ptr<VMClass> c = clz.lock();
 	shared_ptr< VMHeapObject> obj = nullptr;
 	wstring s = c->getClassSignature();
 	if (s.length() < 1) {
@@ -17,20 +13,23 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& 
 	}
 	else if (s.length() == 1) {
 		if (VMPrimitiveClass::isPrimitiveTypeSignature(s)) {
+			
 			if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
+				auto clz = VMPrimitiveClass::getPrimitiveVMClass(sig);
+				assert(!clz.expired());
 				obj = make_shared<IntegerVMHeapObject>(param, clz);
 			}
 			else if (s == L"F") {
-				obj = make_shared<FloatVMHeapObject>(param, clz);
+				obj = make_shared<FloatVMHeapObject>(param);
 			}
 			else if (s == L"D") {
-				obj = make_shared<DoubleVMHeapObject>(param, clz);
+				obj = make_shared<DoubleVMHeapObject>(param);
 			}
 			else if (s == L"J") {
-				obj = make_shared<LongVMHeapObject>(param, clz);
+				obj = make_shared<LongVMHeapObject>(param);
 			}
 			else if (s == L"V") {
-				obj = make_shared<VoidVMHeapObject>(param, clz);
+				obj = make_shared<VoidVMHeapObject>(param);
 			}
 			else {
 				assert(false);
@@ -41,11 +40,13 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& 
 		}
 	}
 	else if (s[0] == L'L') {
-		// ÆÕÍ¨µÄÀà
+		// æ™®é€šçš„ç±»
+		auto clz = VMHelper::loadClass(sig);
 		obj = make_shared< ClassVMHeapObject>(clz);
 	}
 	else if (s[0] == L'[') {
-		//Êı×é
+		//æ•°ç»„
+		auto clz = VMHelper::loadClass(sig);
 		obj = make_shared<ArrayVMHeapObject>(clz, param);
 	}
 	else {
@@ -53,12 +54,12 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(weak_ptr<VMClass> clz, T& 
 	}
 	storeObject(obj);
 	return obj;
-}
+}*/
 
-weak_ptr<VMHeapObject> FixSizeVMHeapPool::getNullVMHeapObject() const {
+weak_ptr<NullVMHeapObject> FixSizeVMHeapPool::getNullVMHeapObject() const {
 
-	// µÚÒ»¸öÔªËØ¾ÍÊÇnull.
-	return objects[0];
+	// ç¬¬ä¸€ä¸ªå…ƒç´ å°±æ˜¯null.
+	return std::dynamic_pointer_cast<NullVMHeapObject>(objects[0]);
 }
 
 void FixSizeVMHeapPool::storeObject(shared_ptr< VMHeapObject> obj) {
@@ -73,7 +74,7 @@ weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature, co
 	if (isInterface) {
 		throw runtime_error("No field operation for Java interface.");
 	}
-	// Ö±½ÓÕÒ×Ô¼ºµÄ£¬Èç¹ûÃ»ÓĞ¾Í·µ»Ø¿Õ,Êı¾İÑéÖ¤ÔÚputÄÇÀïÑéÖ¤¡£
+	// ç›´æ¥æ‰¾è‡ªå·±çš„ï¼Œå¦‚æœæ²¡æœ‰å°±è¿”å›ç©º,æ•°æ®éªŒè¯åœ¨puté‚£é‡ŒéªŒè¯ã€‚
 	auto key = makeLookupKey(signature, name);
 	auto f = fields.find(key);
 	if (f != fields.end()) {
@@ -88,9 +89,9 @@ weak_ptr< VMHeapObject> ClassVMHeapObject::getStaticField(const wstring& signatu
 
 void ClassVMHeapObject::putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
-	// Èç¹ûfieldÒÑ¾­´æÔÚ£¬Ö±½ÓĞ´¡£
+	// å¦‚æœfieldå·²ç»å­˜åœ¨ï¼Œç›´æ¥å†™ã€‚
 	/*
-	ÆäÊµÈç¹û²»´æÔÚ£¬ÒªÈ¥ÑéÖ¤Ò»ÏÂÊÇ²»ÊÇÓĞÕâ¸ö×Ö¶Î£¬Èç¹ûÃ»ÓĞ²»ÈÃĞ´£¬ÕâÀï¾ÍÏÈ¼òµ¥´¦Àí£¬ÆäÊµJava±àÒëÆ÷ÒÑ¾­°ïÎÒÃÇ´¦Àí¹ıÁË¡£
+	å…¶å®å¦‚æœä¸å­˜åœ¨ï¼Œè¦å»éªŒè¯ä¸€ä¸‹æ˜¯ä¸æ˜¯æœ‰è¿™ä¸ªå­—æ®µï¼Œå¦‚æœæ²¡æœ‰ä¸è®©å†™ï¼Œè¿™é‡Œå°±å…ˆç®€å•å¤„ç†ï¼Œå…¶å®Javaç¼–è¯‘å™¨å·²ç»å¸®æˆ‘ä»¬å¤„ç†è¿‡äº†ã€‚
 	*/
 	auto key = makeLookupKey(signature, name);
 	fields[key] = value;

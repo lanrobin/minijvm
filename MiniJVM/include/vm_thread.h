@@ -31,6 +31,13 @@ struct VMThreadStackFrame
 
 	// 当前栈桢所属的方法。
 	weak_ptr<VMClassMethod> method;
+
+	void pushStack(weak_ptr<VMHeapObject> obj);
+	weak_ptr<VMHeapObject> peakStack();
+	weak_ptr<VMHeapObject> popStack();
+
+	void putLocal(int index, weak_ptr<VMHeapObject> obj);
+	weak_ptr<VMHeapObject> getLocal(int index);
 };
 
 struct VMThread: public std::enable_shared_from_this<VMThread>
@@ -59,8 +66,6 @@ public:
 struct VMJavaThread : public VMThread
 {
 private:
-	// 表示这个线程的program connter, 如果是native方法调用的时候就是-1, 表示undefined.
-	long long pc;
 	vector<shared_ptr<VMThreadStackFrame>> stackFrames;
 	weak_ptr<VMClassMethod> startJavaMethod;
 	wstring className;							// 要运行的类的名称.
@@ -72,6 +77,10 @@ private:
 												// static field.
 private:
 	static const long PC_UNDEFINED = -1L;
+
+public:
+	// 表示这个线程的program connter, 如果是native方法调用的时候就是-1, 表示undefined.
+	long long pc;
 
 public:
 	VMJavaThread(pthread_t pt) : VMThread(pt), pc(PC_UNDEFINED), needStaticMethod(false)
@@ -92,6 +101,23 @@ public:
 	void setRunningMethod(weak_ptr<VMClassMethod> runningMethod) {
 		startJavaMethod = runningMethod;
 	}
+
+	void pushStackFrame(shared_ptr<VMThreadStackFrame> f) { stackFrames.push_back(f); }
+
+	weak_ptr< VMThreadStackFrame> popStackFrame() {
+		assert(stackFrames.size() > 0);
+		auto f = stackFrames.back();
+		stackFrames.pop_back();
+		return f;
+	}
+
+	weak_ptr< VMThreadStackFrame> peakStackFrame() {
+		assert(stackFrames.size() > 0);
+		auto f = stackFrames.back();
+		return f;
+	}
+
+	weak_ptr<VMJavaThread> getWeakThisPtr() { return std::dynamic_pointer_cast<VMJavaThread>(shared_from_this()); };
 };
 
 struct VMGCThread : public VMThread

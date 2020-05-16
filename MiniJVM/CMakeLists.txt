@@ -40,6 +40,9 @@ IF(WIN32)
 
     #https://stackoverflow.com/questions/10671916/how-to-copy-dll-files-into-the-same-folder-as-the-executable-using-cmake
 
+    add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
 ELSE()
     SET(PTHREAD_LIB_INCLUDE "")
     add_compile_options(-pthread)

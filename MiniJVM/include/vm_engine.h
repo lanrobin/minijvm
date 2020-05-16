@@ -210,13 +210,15 @@ enum Opcode : u1 {
 	Reserved_0xff_impdep2 = 255,
 };
 struct VMClassMethod;
-struct VMThread;
+struct VMJavaThread;
 struct VMThreadStackFrame;
 struct VMHeapObject;
 
 class VMEngine {
+private:
+	static int moveSteps[256];
 public:
-	void static execute(weak_ptr<VMThread> thread, weak_ptr<VMThreadStackFrame> frame);
-	void static execute(weak_ptr<VMThread> thread, weak_ptr<VMClassMethod> method, vector<weak_ptr<VMHeapObject>> args);
+	void static execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFrame> frame);
+	void static execute(weak_ptr<VMJavaThread> thread, weak_ptr<VMClassMethod> method, vector<weak_ptr<VMHeapObject>> args);
 };
 #endif //__JVM_VM_ENGINE_H__

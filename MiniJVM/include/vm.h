@@ -48,4 +48,14 @@ public:
 	// static
 	static weak_ptr<VM> getVM();
 };
+
+/*
+这个类是为了写代码方便用的。
+*/
+class VMHelper {
+public:
+	static weak_ptr<NullVMHeapObject> getNullVMHeapObject();
+	static weak_ptr<IntegerVMHeapObject> getIntegerVMHeapObject(int v);
+	static weak_ptr<VMClass> loadClass(const wstring& sig);
+};
 #endif //__JVM_VM_H__

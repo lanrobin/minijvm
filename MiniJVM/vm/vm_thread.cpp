@@ -38,6 +38,31 @@ VMThreadStackFrame::~VMThreadStackFrame() {
 	spdlog::info("destroy VMThreadStackFrame for method:{}", w2s(method.lock()->signature));
 }
 
+
+void VMThreadStackFrame::pushStack(weak_ptr<VMHeapObject> obj) {
+	assert(stack.size() < stackSize && !obj.expired());
+	stack.push_back(obj);
+}
+weak_ptr<VMHeapObject> VMThreadStackFrame::peakStack() {
+	assert(stack.size() > 0);
+	return stack.back();
+
+}
+weak_ptr<VMHeapObject> VMThreadStackFrame::popStack() {
+	auto s = peakStack();
+	stack.pop_back();
+	return s;
+}
+
+void VMThreadStackFrame::putLocal(int index, weak_ptr<VMHeapObject> obj) {
+	assert(index < localSize);
+	locals[index] = obj;
+}
+weak_ptr<VMHeapObject> VMThreadStackFrame::getLocal(int index) {
+	assert(index < localSize);
+	return locals[index];
+}
+
 void VMJavaThread::startExecute()
 {
 	shared_ptr<VMClassMethod> method = nullptr;
@@ -52,7 +77,7 @@ void VMJavaThread::startExecute()
 		{
 			throw runtime_error("No start method found:" + w2s(methodName));
 		}
-		auto method = startJavaMethod.lock();
+		method = startJavaMethod.lock();
 		if (method->isStatic() != needStaticMethod)
 		{
 			throw runtime_error("Method staticness is incorrect.");

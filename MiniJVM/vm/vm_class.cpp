@@ -317,7 +317,7 @@ vector<wstring> VMClassMethod::splitSignature()
 		replaceAll(sig, L"(", L"");
 		replaceAll(sig, L")", L"");
 		size_t i = 0;
-		int previous = 0;
+		size_t previous = 0;
 		bool inReference = false;
 		bool inArray = false;
 		while (i < sig.length())

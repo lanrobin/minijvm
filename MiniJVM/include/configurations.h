@@ -28,7 +28,7 @@ public:
 
 	long long maxHeapSize() const {
 
-		// 先设置为2G
+		// 鍏堣缃负2G
 		return 2 * 1024 * 1024 * 1024LL;
 	}
 
