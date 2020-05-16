@@ -239,6 +239,7 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 	vector<weak_ptr<VMHeapObject>> &stack = f->stack;
 	auto lastPC = t->pc;
 	long long &pc = t->pc;
+	auto clz = m->ownerClass.lock();
 	pc = 0;
 	while (pc < codes.size())
 	{
@@ -270,7 +271,13 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			f->pushStack(VMHelper::getIntegerVMHeapObject(codes[pc] - 0x3));
 			break;
 		}
-
+		case Constant_0x11_sipush:
+		{
+			printcode("Sipush int to stack", codes[pc]);
+			int value = codes[pc + 1] << 8 | codes[pc + 2];
+			f->pushStack(VMHelper::getIntegerVMHeapObject(value));
+			break;
+		}
 		case Store_0x36_istore:
 		{
 			printcode("Store int to local", codes[pc]);
@@ -291,6 +298,13 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			f->putLocal(index, obj);
 			break;
 		}
+		case Reference_0xb2_getstatic:
+		{
+			u2 fieldIndex = codes[pc + 1] << 8 | codes[pc + 2];
+			auto methodRef = VMHelper::getFieldOrMethod(clz->className(), fieldIndex);
+			auto targetClass = VMHelper::loadClass(std::get<0>(methodRef)).lock();
+			break;
+		}
 		default:
 		{
 			printcode("Unhandled code:{}", codes[pc]);
@@ -298,7 +312,7 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 		}
 		}
 		pc += moveForwardSteps;
-		std::this_thread::sleep_for(2s);
+		//std::this_thread::sleep_for(2s);
 	}
 	spdlog::info("running:finished.");
 }

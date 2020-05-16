@@ -90,10 +90,42 @@ weak_ptr<NullVMHeapObject> VMHelper::getNullVMHeapObject() {
 }
 
 weak_ptr<IntegerVMHeapObject> VMHelper::getIntegerVMHeapObject(int v) {
-	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject(L"I", v);
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<int>(L"I", v);
 	return std::dynamic_pointer_cast<IntegerVMHeapObject>(obj.lock());
+}
+
+weak_ptr<DoubleVMHeapObject> VMHelper::getDoubleVMHeapObject(double v) {
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<double>(L"D", v);
+	return std::dynamic_pointer_cast<DoubleVMHeapObject>(obj.lock());
+}
+weak_ptr<LongVMHeapObject> VMHelper::getLongVMHeapObject(long long v) {
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<long long>(L"J", v);
+	return std::dynamic_pointer_cast<LongVMHeapObject>(obj.lock());
+}
+ weak_ptr<FloatVMHeapObject> VMHelper::getFloatVMHeapObject(float v) {
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<float>(L"F", v);
+	return std::dynamic_pointer_cast<FloatVMHeapObject>(obj.lock());
+}
+ weak_ptr<ClassVMHeapObject> VMHelper::getStringVMHeapObject(const wstring& v) {
+	 auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<wstring>(L"Ljava/lang/String", v);
+	 return std::dynamic_pointer_cast<ClassVMHeapObject>(obj.lock());
 }
 
 weak_ptr<VMClass> VMHelper::loadClass(const wstring& sig) {
 	return VM::getVM().lock()->getAppClassLoader().lock()->loadClass(sig);
+}
+
+std::tuple<wstring, wstring, wstring> VMHelper::getFieldOrMethod(const wstring& className, u2 index) {
+	return VM::getVM().lock()->getMethodArea().lock()->getFieldOrMethod(className, index);
+}
+
+weak_ptr< VMConstantItem> VMHelper::getVMConstantItem(const wstring& className, u2 index) {
+	auto cp = VM::getVM().lock()->getMethodArea().lock()->getClassConstantPool(className);
+	return cp->getVMConstantItem(index);
+}
+
+wstring VMHelper::getConstantString(size_t index)
+{
+	auto str = VM::getVM().lock()->getMethodArea().lock()->getConstantString(index);
+	return str;
 }

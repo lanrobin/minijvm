@@ -56,6 +56,13 @@ class VMHelper {
 public:
 	static weak_ptr<NullVMHeapObject> getNullVMHeapObject();
 	static weak_ptr<IntegerVMHeapObject> getIntegerVMHeapObject(int v);
+	static weak_ptr<DoubleVMHeapObject> getDoubleVMHeapObject(double v);
+	static weak_ptr<LongVMHeapObject> getLongVMHeapObject(long long v);
+	static weak_ptr<FloatVMHeapObject> getFloatVMHeapObject(float v);
+	static weak_ptr<ClassVMHeapObject> getStringVMHeapObject(const wstring & value);
 	static weak_ptr<VMClass> loadClass(const wstring& sig);
+	static std::tuple<wstring, wstring, wstring> getFieldOrMethod(const wstring& className, u2 index);
+	static weak_ptr< VMConstantItem> getVMConstantItem(const wstring& className, u2 index);
+	static wstring getConstantString(size_t index);
 };
 #endif //__JVM_VM_H__

@@ -5,12 +5,14 @@
 #include "log.h"
 #include "string_utils.h"
 #include "clazz_reader.h"
+#include "pthread.h"
 
 #include <unordered_map>
 
 struct ClassLoader;
 struct VMHeapObject;
 struct VMClass;
+struct VMJavaThread;
 
 using std::unordered_map;
 
@@ -95,6 +97,11 @@ struct VMClassField : public VMClassResolvable
 	bool isPublicOrProtected() const override { return hasAnyAccessFlags(FIELD_ACC_PROTECTED | FIELD_ACC_PUBLIC); }
 	vector<wstring> splitSignature() override;
 	VMClassField(shared_ptr<ClassFile> cf, shared_ptr<Field_Info> fi, weak_ptr<VMClass> owner);
+	/*
+	如果这个字段是static final并且是primitive或是String,需要有一个初始化的constantAttribute来初始化它。
+	0表示无效。
+	*/
+	u2 initializeAttribute = 0;
 };
 
 struct VMClass : public std::enable_shared_from_this<VMClass>
@@ -127,7 +134,7 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 	VMClass(const wstring& name, weak_ptr<ClassLoader> classLoader);
 
 	weak_ptr<ClassLoader> getClassLoader() const { return classLoader; }
-	virtual ~VMClass() { spdlog::info("Class:{}, type:{} gone", w2s(name), classType); }
+	virtual ~VMClass();
 
 	virtual weak_ptr<VMClassMethod> findMethod(const wstring& signature, const wstring& name) const = 0;
 	virtual weak_ptr<VMHeapObject> findStaticField(const wstring& signature, const wstring& name) const = 0;
@@ -147,7 +154,21 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 	bool isProtected() const { return !isPublic() && !isPrivate(); }
 	bool isPrivate() const { return ((accessFlags & NESTED_CLASS_ACC_PRIVATE) == NESTED_CLASS_ACC_PRIVATE); }
 	bool initialized() const { return state == InitializeState::Initialized; }
+	/*
+	只有LoadableClass真正需要初始化，所以会重载这个函数。
+	这个函数做三件事：
+	1. 先递归调用父类和实现的接口来做 2和3
+	2. 给static 字段创建相应的对象。
+	3. 调用<cinit>函数。
+	*/
+	void initialize(weak_ptr<VMJavaThread> thread);
 
+	virtual void initializeStaticField();
+
+private:
+	/*因为JVM规定class在initialized的时候*/
+	pthread_mutex_t initializeMutex;
+	pthread_mutexattr_t initializeMutexAttr;
 protected:
 	wstring name;
 	wstring packageName;
@@ -215,6 +236,7 @@ struct VMLoadableClass : public VMReferenceClass
 	VMLoadableClass(const wstring &name, weak_ptr<ClassLoader> cl) : VMReferenceClass(name, cl){}
 
 	bool loadClassInfo(shared_ptr<ClassFile> cf);
+	virtual void initializeStaticField() override;
 };
 
 struct VMOrdinaryClass : public VMLoadableClass

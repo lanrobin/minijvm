@@ -15,6 +15,11 @@ struct VMClassConstantPool
 	{
 		className = ownerClass->className();
 	}
+
+	weak_ptr<VMConstantItem> getVMConstantItem(u2 index) const{
+		assert(index > 0 && index < constants.size());
+		return constants[index];
+	}
 };
 
 /*
@@ -37,6 +42,8 @@ public:
 	virtual shared_ptr<VMClassConstantPool> putClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz) = 0;
 	virtual shared_ptr<VMClassConstantPool> getClassConstantPool(const wstring &className) = 0;
 	virtual ~VMMethodArea(){}
+
+	std::tuple<wstring, wstring, wstring> getFieldOrMethod(const wstring& className, u2 index);
 
 protected:
 	shared_ptr<VMClassConstantPool> createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz);

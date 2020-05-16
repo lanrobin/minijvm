@@ -6,6 +6,13 @@
 #include "vm_thread.h"
 #include "vm_heap.h"
 
+std::tuple<wstring, wstring, wstring> VMMethodArea::getFieldOrMethod(const wstring &className, u2 index)
+{
+	auto cp = this->getClassConstantPool(className);
+	auto item = std::dynamic_pointer_cast<VMConstantFieldAndMethodRef>(cp->constants[index]);
+	return std::make_tuple(getConstantString(item->classNameIndex), getConstantString(item->signatureIndex), getConstantString(item->nameIndex));
+}
+
 shared_ptr<VMClassConstantPool> VMMethodArea::createVMClassConstantPool(shared_ptr<ClassFile> cf, shared_ptr<VMClass> clz)
 {
 	auto cp = cf->constant_pool;
@@ -313,7 +320,7 @@ size_t VMExtensibleMethodArea::putConstantString(const wstring &t)
 	if (exists == stringsMap.end())
 	{
 		stringsVector.push_back(t);
-		stringsMap[t] = stringsVector.size();
+		stringsMap[t] = stringsVector.size() - 1;
 	}
 	return stringsMap[t];
 }

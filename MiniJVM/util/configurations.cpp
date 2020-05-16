@@ -4,7 +4,7 @@
 
 Configurations::Configurations(const wstring& configFilePath, int argc, char** argv) {
 	spdlog::info("Configurations");
-	bootStrapClassPath = L"D:/jvm/modules/java.base/classes";
+	bootStrapClassPath = L"D:/jvm/modules/java.base";
 	appClassPath = L"D:/github/minijvm/MiniJVM/testclasses";
 	// 先写死了。测试，之后会从参数解析出来。
 	targetClass = L"icu.mianshi.main.HelloWorld";

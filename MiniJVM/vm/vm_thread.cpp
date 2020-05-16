@@ -19,16 +19,23 @@ VMThreadStackFrame::VMThreadStackFrame(weak_ptr<VMClassMethod> md, vector<weak_p
 	stack.reserve(stackSize);
 
 	// 把参数都压到locals里去。
+	int index = 0;
 	for (auto a = args.begin(); a != args.end(); a++) {
 		auto arg = (*a).lock();
 		locals.push_back(arg);
+		index++;
 		auto typeClass = arg->typeClass.lock();
 		if (typeClass->equals(VMPrimitiveClass::getPrimitiveVMClass(L"D"))
 			|| typeClass->equals(VMPrimitiveClass::getPrimitiveVMClass(L"J")))
 		{
 			// 如果是long或是double,那么一个arg需要占用两个slots.
 			locals.push_back(std::weak_ptr<NullVMHeapObject>());
+			index++;
 		}
+	}
+	// 先把所有的位置填上，这相才能在指定的位置插入值。
+	for (; index < localSize; index++) {
+		locals.push_back(std::weak_ptr<NullVMHeapObject>());
 	}
 }
 
@@ -56,7 +63,7 @@ weak_ptr<VMHeapObject> VMThreadStackFrame::popStack() {
 
 void VMThreadStackFrame::putLocal(int index, weak_ptr<VMHeapObject> obj) {
 	assert(index < localSize);
-	locals[index] = obj;
+	locals.insert(locals.begin() + index - 1, obj);
 }
 weak_ptr<VMHeapObject> VMThreadStackFrame::getLocal(int index) {
 	assert(index < localSize);

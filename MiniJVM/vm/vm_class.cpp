@@ -5,6 +5,7 @@
 #include "vm.h"
 #include "log.h"
 #include "string_utils.h"
+#include "vm_engine.h"
 
 // 这个是debug的选项，就是在类加载的时候把它的字段和方法对应的方法也resolve了，应该没有必要，可以在执行的时候再resolve.
 //#undef RESOLVE_ON_CLASS_LOAD
@@ -19,7 +20,20 @@ VMClass::VMClass(const wstring &name, weak_ptr<ClassLoader> cl)
 		packageName = name.substr(0, packageEnd);
 	}
 	classLoader = cl;
+
+	pthread_mutexattr_init(&initializeMutexAttr);
+
+	pthread_mutexattr_settype(&initializeMutexAttr, PTHREAD_MUTEX_RECURSIVE);
+
+	pthread_mutex_init(&initializeMutex, &initializeMutexAttr);
+
 	spdlog::info("create class:{} and package:{}", w2s(name), w2s(packageName));
+}
+
+VMClass::~VMClass() {
+	pthread_mutexattr_destroy(&initializeMutexAttr);
+	pthread_mutex_destroy(&initializeMutex);
+	spdlog::info("Class:{}, type:{} gone", w2s(name), classType);
 }
 
 wstring VMClass::getNextDimensionSignature(const wstring &signature)
@@ -95,6 +109,43 @@ bool VMClass::hasAccessibilityTo(weak_ptr<VMClass> other) const
 vector<wstring> VMClass::splitSignatureToElement(const wstring &signature)
 {
 	throw runtime_error("not implemented yet.");
+}
+
+void VMClass::initialize(weak_ptr<VMJavaThread> thread) {
+	// 先拿到锁，防止其它线程同时初始化这个类。
+	pthread_mutex_lock(&initializeMutex);
+	if (state != InitializeState::NotInitialized) {
+		pthread_mutex_unlock(&initializeMutex);
+		return;
+	}
+	state == InitializeState::Initializing;
+
+	// 先初始化父类。
+	if (!super.expired()) {
+		super.lock()->initialize(thread);
+	}
+
+	// 初始化接口。
+	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
+		if (!(*i).expired()) {
+			(*i).lock()->initialize(thread);
+		}
+	}
+	initializeStaticField();
+
+	// 再调用cinit方法。
+	auto cinit = findMethod(L"()V", L"<cinit>");
+	if (!cinit.expired()) {
+		vector<weak_ptr<VMHeapObject>> args;
+		VMEngine::execute(thread, cinit, args);
+	}
+	state = InitializeState::Initialized;
+	pthread_mutex_unlock(&initializeMutex);
+}
+
+void VMClass::initializeStaticField() {
+	
+	spdlog::info("No initialize static field required for class:{}", w2s(name));
 }
 
 weak_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring &methodSignature, const wstring &name) const
@@ -195,17 +246,10 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 		//thisInterface->resolveSymbol();
 		this->interfaces.push_back(thisInterface);
 	}
-	bool hasCInitMethod = false;
 	auto methods = cf->methods;
 	for (auto m = methods.begin(); m != methods.end(); m++)
 	{
 		auto cm = make_shared<VMClassMethod>(cf, *m, getSharedPtr());
-
-		// 如果这个类有 <cinit>方法，则需要被初始化，如果没有则不用管。
-		if (cm->signature == L"<cinit>")
-		{
-			hasCInitMethod = true;
-		}
 		//cm->resolveSymbol();
 		this->methods[cm->lookupKey()] = cm;
 	}
@@ -236,7 +280,7 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 		allFieldLayout[key] = field;
 	}
 
-	state = hasCInitMethod ? InitializeState::NotInitialized : InitializeState::NotInitialized;
+	state = InitializeState::NotInitialized;
 #ifdef RESOLVE_ON_CLASS_LOAD
 	// 自己先resolve.
 	//resolveSymbol();
@@ -244,6 +288,46 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 	return true;
 }
 
+void VMLoadableClass::initializeStaticField()
+{
+	spdlog::info("initialize static field for class:{}", w2s(name));
+	
+	/*
+	这里有两种情况：
+	1. 所有的 final primitive和String类都要在这里初始化；
+	2. 其它的类型的初始化在<cinit>函数里进行，所以这里不用管了。
+	*/
+	for (auto f = staticFieldLayout.begin(); f != staticFieldLayout.end(); f++) {
+		auto fd = (*f).second;
+		auto s = fd->signature;
+		if (fd->isStatic() && fd->isFinal()) {
+			if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
+				auto attr = std::dynamic_pointer_cast<VMConstantInteger>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
+				staticFields[fd->lookupKey()] = VMHelper::getIntegerVMHeapObject(attr->value);
+			}
+			else if (s == L"D") {
+				auto attr = std::dynamic_pointer_cast<VMConstantLongAndDouble>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
+				staticFields[fd->lookupKey()] = VMHelper::getDoubleVMHeapObject(attr->doubleValue);
+			}
+			else if (s == L"J") {
+				auto attr = std::dynamic_pointer_cast<VMConstantLongAndDouble>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
+				staticFields[fd->lookupKey()] = VMHelper::getLongVMHeapObject(attr->longValue);
+			}
+			else if (s == L"F") {
+				auto attr = std::dynamic_pointer_cast<VMConstantFloat>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
+				staticFields[fd->lookupKey()] = VMHelper::getFloatVMHeapObject(attr->value);
+			}
+			else if (s == L"Ljava/lang/String;") {
+				auto attr = std::dynamic_pointer_cast<VMConstantStringLiteral>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
+				auto value = VMHelper::getConstantString(attr->literalStringIndex);
+				staticFields[fd->lookupKey()] = VMHelper::getStringVMHeapObject(value);
+			}
+			else {
+				spdlog::info("Need not initialize:{}, it will be initiliazied in <cinit>. SKIP....", w2s(fd->lookupKey()));
+			}
+		}
+	}
+}
 VMClassField::VMClassField(shared_ptr<ClassFile> cf, shared_ptr<Field_Info> fi, weak_ptr<VMClass> owner) : VMClassResolvable(owner)
 {
 	accessFlags = fi->access_flags;
@@ -257,6 +341,10 @@ VMClassField::VMClassField(shared_ptr<ClassFile> cf, shared_ptr<Field_Info> fi, 
 		if (attriName == L"Deprecated")
 		{
 			deprecated = true;
+		}
+		else if (attriName == L"ConstantValue") {
+			auto cv = std::dynamic_pointer_cast<ConstantValue_attribute>((*a));
+			initializeAttribute = cv->constantvalue_index;
 		}
 	}
 }
