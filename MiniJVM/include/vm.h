@@ -32,6 +32,8 @@ private:
 	shared_ptr<VMGCThread> gcThread;
 
 	vector<shared_ptr<VMThread>> allThreads;
+	/*Native方法*/
+	unordered_map<wstring, void *> nativeMethods;
 
 public:
 	VM();
@@ -44,6 +46,17 @@ public:
 	weak_ptr<ClassLoader> boostrapClassLoader() const { return bootstrapClassLoader; }
 	weak_ptr< VMHeapPool> getHeapPool() const { return heap; }
 	weak_ptr<Configurations> getConf() const { return conf; }
+	void* getNativeMethod(const wstring& className, const wstring& signature, const wstring& name) const;
+	bool registerNativeMethod(const wstring& className, const wstring& signature, const wstring& name, void * methodAddress);
+
+private:
+	static wstring makeKey(const wstring& className, const wstring& signature, const wstring& name)
+	{
+		return className + L"@" + signature + L"@" + name;
+	}
+
+	/*这个函数注册所有需要的native methods,因为比较长，所以放在独立的文件里。 vm_native_methods.cpp*/
+	int initNativeMethods();
 public:
 	// static
 	static weak_ptr<VM> getVM();
@@ -59,10 +72,13 @@ public:
 	static weak_ptr<DoubleVMHeapObject> getDoubleVMHeapObject(double v);
 	static weak_ptr<LongVMHeapObject> getLongVMHeapObject(long long v);
 	static weak_ptr<FloatVMHeapObject> getFloatVMHeapObject(float v);
-	static weak_ptr<ClassVMHeapObject> getStringVMHeapObject(const wstring & value);
+	static weak_ptr<InstanceVMHeapObject> getStringVMHeapObject(const wstring & value);
+	static weak_ptr<VoidVMHeapObject> getVoidVMHeapObject();
+	static weak_ptr<ClassRefVMHeapObject> getClassRefVMHeapObject(weak_ptr<VMClass> clz);
 	static weak_ptr<VMClass> loadClass(const wstring& sig);
 	static std::tuple<wstring, wstring, wstring> getFieldOrMethod(const wstring& className, u2 index);
 	static weak_ptr< VMConstantItem> getVMConstantItem(const wstring& className, u2 index);
 	static wstring getConstantString(size_t index);
+	static void* getNativeMethod(const wstring& className, const wstring& signature, const wstring& name);
 };
 #endif //__JVM_VM_H__

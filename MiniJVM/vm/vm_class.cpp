@@ -133,11 +133,12 @@ void VMClass::initialize(weak_ptr<VMJavaThread> thread) {
 	}
 	initializeStaticField();
 
-	// 再调用cinit方法。
-	auto cinit = findMethod(L"()V", L"<cinit>");
-	if (!cinit.expired()) {
+	// 再调用clinit方法。
+	auto clinit = findMethod(L"()V", L"<clinit>");
+	if (!clinit.expired()) {
+		spdlog::info("Found <clinit> for class:{} execute it.", w2s(name));
 		vector<weak_ptr<VMHeapObject>> args;
-		VMEngine::execute(thread, cinit, args);
+		VMEngine::execute(thread, clinit, args);
 	}
 	state = InitializeState::Initialized;
 	pthread_mutex_unlock(&initializeMutex);

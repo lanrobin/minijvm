@@ -154,6 +154,8 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 	bool isProtected() const { return !isPublic() && !isPrivate(); }
 	bool isPrivate() const { return ((accessFlags & NESTED_CLASS_ACC_PRIVATE) == NESTED_CLASS_ACC_PRIVATE); }
 	bool initialized() const { return state == InitializeState::Initialized; }
+
+	bool needInitializing() const { return state == InitializeState::Created || state == InitializeState::NotInitialized; }
 	/*
 	只有LoadableClass真正需要初始化，所以会重载这个函数。
 	这个函数做三件事：
@@ -265,6 +267,7 @@ struct VMArrayClass : public VMReferenceClass
 
 		// 数组的签名就是类名本身。
 		signature = name;
+		state = InitializeState::Initialized;
 	};
 	const shared_ptr<VMClass> componentType;
 };
@@ -274,6 +277,7 @@ struct VMPrimitiveClass : public VMClass
 	VMPrimitiveClass(const wstring &name) : VMClass(name, std::weak_ptr<ClassLoader>())
 	{
 		classType = VMClass::ClassType::ClassPrimitiveTypeClass;
+		state = InitializeState::Initialized;
 	};
 
 	weak_ptr<VMClassMethod> findMethod(const wstring &methodSignature, const wstring &name) const override { throw runtime_error("VMPrimitiveClass has no method."); }

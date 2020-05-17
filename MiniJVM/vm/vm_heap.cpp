@@ -27,7 +27,7 @@ weak_ptr<DoubleVMHeapObject> VMHeapPool::createDoubleVMHeapObject(double default
 }
 weak_ptr<VMHeapObject> VMHeapPool::createStringVMHeapObject(const wstring& defaultValue) {
 	auto clz = VMHelper::loadClass(L"Ljava/lang/String;");
-	shared_ptr<VMHeapObject> obj = make_shared<ClassVMHeapObject>(clz);
+	shared_ptr<VMHeapObject> obj = make_shared<InstanceVMHeapObject>(clz);
 	storeObject(obj);
 	return obj;
 
@@ -37,7 +37,7 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s) {
 	if (s[0] == L'L' && s[s.length() - 1] == L';') {
 		// 普通的类
 		auto clz = VMHelper::loadClass(s);
-		obj = make_shared< ClassVMHeapObject>(clz);
+		obj = make_shared< InstanceVMHeapObject>(clz);
 		storeObject(obj);
 	}
 	else {
@@ -58,11 +58,22 @@ weak_ptr<ArrayVMHeapObject> VMHeapPool::createArrayVMHeapObject(const wstring& s
 	}
 	return obj;
 }
+weak_ptr<ClassRefVMHeapObject> VMHeapPool::createClassRefVMHeapObject(weak_ptr<VMClass> clz) {
+	assert(!clz.expired());
+	auto obj = make_shared<ClassRefVMHeapObject>(clz);
+	storeObject(obj);
+	return obj;
+}
 
 weak_ptr<NullVMHeapObject> FixSizeVMHeapPool::getNullVMHeapObject() const {
 
 	// 第一个元素就是null.
 	return std::dynamic_pointer_cast<NullVMHeapObject>(objects[0]);
+}
+
+weak_ptr<VoidVMHeapObject> FixSizeVMHeapPool::getVoidVMHeapObject() const {
+	// 第二个元素就是null.
+	return std::dynamic_pointer_cast<VoidVMHeapObject>(objects[0]);
 }
 
 void FixSizeVMHeapPool::storeObject(shared_ptr< VMHeapObject> obj) {
@@ -73,7 +84,7 @@ void FixSizeVMHeapPool::storeObject(shared_ptr< VMHeapObject> obj) {
 	objects.push_back(obj);
 }
 
-weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature, const wstring& name) const {
+weak_ptr< VMHeapObject> InstanceVMHeapObject::getField(const wstring& signature, const wstring& name) const {
 	if (isInterface) {
 		throw runtime_error("No field operation for Java interface.");
 	}
@@ -85,12 +96,12 @@ weak_ptr< VMHeapObject> ClassVMHeapObject::getField(const wstring& signature, co
 	}
 	return std::weak_ptr<VMHeapObject>();
 }
-weak_ptr< VMHeapObject> ClassVMHeapObject::getStaticField(const wstring& signature, const wstring& name) const {
+weak_ptr< VMHeapObject> InstanceVMHeapObject::getStaticField(const wstring& signature, const wstring& name) const {
 	auto clz = typeClass.lock();
 	return clz->findStaticField(signature, name);
 }
 
-void ClassVMHeapObject::putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
+void InstanceVMHeapObject::putField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
 	// 如果field已经存在，直接写。
 	/*
@@ -99,7 +110,7 @@ void ClassVMHeapObject::putField(const wstring& signature, const wstring& name, 
 	auto key = makeLookupKey(signature, name);
 	fields[key] = value;
 }
-void ClassVMHeapObject::putStaticField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
+void InstanceVMHeapObject::putStaticField(const wstring& signature, const wstring& name, weak_ptr<VMHeapObject> value)
 {
 	typeClass.lock()->putStaticField(signature, name, value);
 }

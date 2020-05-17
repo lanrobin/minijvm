@@ -27,4 +27,12 @@ using u1 = std::uint8_t;
 using u2 = std::uint16_t;
 using u4 = std::uint32_t;
 
+template<typename T>
+T popLast(vector<T>& vec) {
+	assert(vec.size() > 0);
+	T r = vec.back();
+	vec.pop_back();
+	return r;
+}
+
 #endif // !__JAVA_BASE_TYPE__

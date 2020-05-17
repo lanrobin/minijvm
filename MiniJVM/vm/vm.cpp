@@ -16,6 +16,7 @@
 
 VM::VM() : conf(nullptr)
 {
+	
 	spdlog::info("VM created.");
 }
 
@@ -77,12 +78,34 @@ void VM::initVM(shared_ptr<Configurations> cfs)
 		gcThread = make_shared<VMGCThread>();
 		allThreads.push_back(gcThread);
 		gcThread->startExecute();
-		spdlog::info("VM initialized.");
+		int count = initNativeMethods();
+		spdlog::info("VM initialized, registered {} native methods", count);
 	}
 	else
 	{
 		spdlog::warn("VM has already been initialized.");
 	}
+}
+
+void* VM::getNativeMethod(const wstring& className, const wstring& signature, const wstring& name) const{
+	auto key = makeKey(className, signature, name);
+	auto m = nativeMethods.find(key);
+	if (m != nativeMethods.end()) {
+		return m->second;
+	}
+	else {
+		spdlog::warn("No native method registered for {}", w2s(key));
+	}
+	return nullptr;
+}
+bool VM::registerNativeMethod(const wstring& className, const wstring& signature, const wstring& name, void* methodAddress) {
+	assert(methodAddress != nullptr);
+	auto key = makeKey(className, signature, name);
+	if (nativeMethods.find(key) != nativeMethods.end()) {
+		spdlog::warn("REREGISTERED for {}", w2s(key));
+	}
+	nativeMethods[key] = methodAddress;
+	return true;
 }
 
 weak_ptr<NullVMHeapObject> VMHelper::getNullVMHeapObject() {
@@ -106,9 +129,16 @@ weak_ptr<LongVMHeapObject> VMHelper::getLongVMHeapObject(long long v) {
 	auto obj = VM::getVM().lock()->getHeapPool().lock()->createFloatVMHeapObject(v);
 	return obj;
 }
- weak_ptr<ClassVMHeapObject> VMHelper::getStringVMHeapObject(const wstring& v) {
+ weak_ptr<InstanceVMHeapObject> VMHelper::getStringVMHeapObject(const wstring& v) {
 	 auto obj = VM::getVM().lock()->getHeapPool().lock()->createStringVMHeapObject(v);
-	 return std::dynamic_pointer_cast<ClassVMHeapObject>(obj.lock());
+	 return std::dynamic_pointer_cast<InstanceVMHeapObject>(obj.lock());
+}
+
+ weak_ptr<VoidVMHeapObject> VMHelper::getVoidVMHeapObject() {
+	 return VM::getVM().lock()->getHeapPool().lock()->getVoidVMHeapObject();
+ }
+ weak_ptr<ClassRefVMHeapObject> VMHelper::getClassRefVMHeapObject(weak_ptr<VMClass> clz) {
+	 return VM::getVM().lock()->getHeapPool().lock()->createClassRefVMHeapObject(clz);
 }
 
 weak_ptr<VMClass> VMHelper::loadClass(const wstring& sig) {
@@ -128,4 +158,8 @@ wstring VMHelper::getConstantString(size_t index)
 {
 	auto str = VM::getVM().lock()->getMethodArea().lock()->getConstantString(index);
 	return str;
+}
+
+void* VMHelper::getNativeMethod(const wstring& className, const wstring& signature, const wstring& name) {
+	return VM::getVM().lock()->getNativeMethod(className, signature, name);
 }

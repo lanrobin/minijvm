@@ -220,5 +220,9 @@ private:
 public:
 	void static execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFrame> frame);
 	void static execute(weak_ptr<VMJavaThread> thread, weak_ptr<VMClassMethod> method, vector<weak_ptr<VMHeapObject>> args);
+
+private:
+	/*这个函数在vm_engine_private.cpp里实现，免得一个文件太大。*/
+	static weak_ptr<VMHeapObject> invokeNativeMethod(void* func, vector<weak_ptr<VMHeapObject>>& args);
 };
 #endif //__JVM_VM_ENGINE_H__

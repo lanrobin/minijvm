@@ -75,13 +75,10 @@ private:
 	vector<wstring> wstrArgs;						// 给方法的参数，一般只有在main函数的时候才要求，否则都为空。
 	shared_ptr<ReferenceVMHeapObject> instance; // 如果不是调用static方法需要一个对象。
 												// static field.
-private:
-	static const long PC_UNDEFINED = -1L;
-
 public:
 	// 表示这个线程的program connter, 如果是native方法调用的时候就是-1, 表示undefined.
 	long long pc;
-
+	static const long PC_UNDEFINED = -1L;
 public:
 	VMJavaThread(pthread_t pt) : VMThread(pt), pc(PC_UNDEFINED), needStaticMethod(false)
 	{

@@ -114,13 +114,13 @@ struct ReferenceVMHeapObject : public VMHeapObject {
 	}
 };
 
-struct ClassVMHeapObject : public ReferenceVMHeapObject {
-	ClassVMHeapObject(weak_ptr<VMClass> typeClz) :ReferenceVMHeapObject(typeClz) {
+struct InstanceVMHeapObject : public ReferenceVMHeapObject {
+	InstanceVMHeapObject(weak_ptr<VMClass> typeClz) :ReferenceVMHeapObject(typeClz) {
 		isInterface = typeClz.lock()->isInterface();
 	}
 
 
-	~ClassVMHeapObject() {
+	~InstanceVMHeapObject() {
 		fields.clear();
 	}
 
@@ -158,6 +158,11 @@ struct NullVMHeapObject : public ReferenceVMHeapObject {
 	}
 };
 
+/*这个类仅仅用来表示一个类的heapObject的引用，仅用于native函数的返回值。*/
+struct ClassRefVMHeapObject : public VMHeapObject {
+	ClassRefVMHeapObject(weak_ptr<VMClass> typeClz) :VMHeapObject(typeClz) {
+	}
+};
 
 struct VMHeapPool {
 public:
@@ -169,7 +174,8 @@ public:
 	weak_ptr<VMHeapObject> createStringVMHeapObject(const wstring& defaultValue);
 	weak_ptr<VMHeapObject> createVMHeapObject(const wstring& typeSignature);
 	weak_ptr<ArrayVMHeapObject> createArrayVMHeapObject(const wstring& arraySignature, size_t demension);
-
+	weak_ptr<ClassRefVMHeapObject> createClassRefVMHeapObject(weak_ptr<VMClass> clz);
+	virtual weak_ptr<VoidVMHeapObject> getVoidVMHeapObject() const = 0;
 	virtual weak_ptr<NullVMHeapObject> getNullVMHeapObject() const = 0;
 
 	// 这里应该还GC相关函数，目前先不管。
@@ -184,11 +190,14 @@ protected:
 struct FixSizeVMHeapPool : public VMHeapPool {
 
 	weak_ptr<NullVMHeapObject> getNullVMHeapObject() const override;
+	weak_ptr<VoidVMHeapObject> getVoidVMHeapObject() const override;
 
 	FixSizeVMHeapPool(size_t maxHeapSize):maxsize(maxHeapSize){
 
 		// 第一个元素就是NullVMHeapObject， 全体用这个。
 		objects.push_back(make_shared< NullVMHeapObject>());
+		// 第二个元素就是NullVMHeapObject， 全体用这个。
+		objects.push_back(make_shared< VoidVMHeapObject>());
 	}
 
 	~FixSizeVMHeapPool() {

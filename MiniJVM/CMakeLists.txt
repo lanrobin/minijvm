@@ -55,9 +55,11 @@ include_directories("include" ${PTHREAD_LIB_INCLUDE})
 
 set(Clazz_File "./clazz/clazz_reader.cpp" "./clazz/compressed_file_reader.cpp" )
 
-set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp" "vm/vm_classloader.cpp" "vm/vm_heap.cpp" "vm/vm_engine.cpp")
+set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.cpp" "vm/vm_class.cpp" "vm/vm_classloader.cpp" "vm/vm_heap.cpp" "vm/vm_engine.cpp" "vm/vm_native_methods.cpp" "vm/vm_engine_private.cpp")
 
 Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp"  "util/configurations.cpp")
+
+Set(Java_Natives "natives/java_lang_System.cpp" "natives/java_lang_Object.cpp")
 
 set(ThirdParty "./thirdparties/zip/zip.c")
 
@@ -67,7 +69,7 @@ set(ThirdParty "./thirdparties/zip/zip.c")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 
-add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty})
+add_executable(${PROJECT_NAME} ${Main_File} ${Clazz_File} ${Utils} ${ThirdParty} ${Java_Natives})
 
 IF(WIN32)
     

@@ -12,7 +12,8 @@
 #include "log.h"
 #include "string_utils.h"
 
-#define DEBUG_READ_CLASS_FILE
+//#define DEBUG_READ_CLASS_FILE
+#undef DEBUG_READ_CLASS_FILE
 
 /**
 这个文件主要是解析class文件，参照  https://docs.oracle.com/javase/specs/jvms/se14/html/jvms-4.html
@@ -329,7 +330,9 @@ struct Attribute_Info
     // make it virtual.
     virtual ~Attribute_Info()
     {
+#ifdef DEBUG_READ_CLASS_FILE
         spdlog::info("Attribute_Info:{} gone", w2s(name));
+#endif
     }
 
 private:
