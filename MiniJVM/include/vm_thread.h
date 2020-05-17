@@ -80,7 +80,7 @@ public:
 	long long pc;
 	static const long PC_UNDEFINED = -1L;
 public:
-	VMJavaThread(pthread_t pt) : VMThread(pt), pc(PC_UNDEFINED), needStaticMethod(false)
+	VMJavaThread(pthread_t pt) : VMThread(pt), needStaticMethod(false), pc(PC_UNDEFINED)
 	{
 	}
 	void startExecute() override;

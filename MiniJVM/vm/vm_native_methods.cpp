@@ -2,11 +2,11 @@
 #include "native/java_lang_System.h"
 #include "native/java_lang_Object.h"
 /*
-ÕâÀï»áÓÐÁ½ÖÖ×¢²á·½Ê½£º
-Ò»ÖÖÊÇÍ¨¹ý clinitµ÷ÓÃregisterNativesÀ´×¢²á£¬Í¨¹ý R2À´ÊµÏÖ¡£
-±ðÒ»ÖÖÊÇÖ±½Ó×¢²á¡£Í¨¹ýRUNÀ´×¢²á¡£
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½á·½Ê½ï¿½ï¿½
+Ò»ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ clinitï¿½ï¿½ï¿½ï¿½registerNativesï¿½ï¿½×¢ï¿½á£¬Í¨ï¿½ï¿½ R2ï¿½ï¿½Êµï¿½Ö¡ï¿½
+ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½×¢ï¿½á¡£Í¨ï¿½ï¿½RUNï¿½ï¿½×¢ï¿½á¡£
 */
-#define R2(className, prefix) registerNativeMethod(className, L"()V", L"registerNatives", &##prefix##_registerNatives); count ++
+#define R2(className, prefix) registerNativeMethod(className, L"()V", L"registerNatives", (void *)&##prefix##_registerNatives); count ++
 #define RUN(prefix) count += prefix##_runRegisterNatives(); 
 
 int VM::initNativeMethods() {
