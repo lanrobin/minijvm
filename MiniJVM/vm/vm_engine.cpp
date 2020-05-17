@@ -303,6 +303,16 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			u2 fieldIndex = codes[pc + 1] << 8 | codes[pc + 2];
 			auto methodRef = VMHelper::getFieldOrMethod(clz->className(), fieldIndex);
 			auto targetClass = VMHelper::loadClass(std::get<0>(methodRef)).lock();
+			assert(targetClass != nullptr);
+			auto fieldSignature = std::get<1>(methodRef);
+			auto fieldName = std::get<2>(methodRef);
+			// 如果类还没有初始化，就先初始化。
+			if (!targetClass->initialized()) {
+				targetClass->initialize(thread);
+			}
+
+			auto field = targetClass->findStaticField(fieldSignature, fieldName);
+			f->pushStack(field);
 			break;
 		}
 		default:

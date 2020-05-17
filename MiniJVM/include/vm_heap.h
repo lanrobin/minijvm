@@ -161,59 +161,14 @@ struct NullVMHeapObject : public ReferenceVMHeapObject {
 
 struct VMHeapPool {
 public:
-
-	// 模板函数一般直接定义在header文件里，免得出现 LNK 2019问题。
-	template<typename T>
-	weak_ptr<VMHeapObject> createVMHeapObject(const wstring& s, T param)
-	{
-		shared_ptr< VMHeapObject> obj = nullptr;
-		if (s.length() < 1) {
-			throw runtime_error("Unable to create heap object of empty signature.");
-		}
-		else if (s.length() == 1) {
-			if (VMPrimitiveClass::isPrimitiveTypeSignature(s)) {
-
-				if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
-					auto clz = VMPrimitiveClass::getPrimitiveVMClass(s);
-					assert(!clz.expired());
-					obj = make_shared<IntegerVMHeapObject>(param, clz);
-				}
-				else if (s == L"F") {
-					obj = make_shared<FloatVMHeapObject>(param);
-				}
-				else if (s == L"D") {
-					obj = make_shared<DoubleVMHeapObject>(param);
-				}
-				else if (s == L"J") {
-					obj = make_shared<LongVMHeapObject>(param);
-				}
-				else if (s == L"V") {
-					obj = make_shared<VoidVMHeapObject>();
-				}
-				else {
-					assert(false);
-				}
-			}
-			else {
-				throw runtime_error("Unsupported primitive type:" + w2s(s));
-			}
-		}
-		else if (s[0] == L'L') {
-			// 普通的类
-			auto clz = VMHelper::loadClass(s);
-			obj = make_shared< ClassVMHeapObject>(clz);
-		}
-		else if (s[0] == L'[') {
-			//数组
-			auto clz = VMHelper::loadClass(s);
-			obj = make_shared<ArrayVMHeapObject>(clz, param);
-		}
-		else {
-			throw runtime_error("Unable to create heap object of signature:" + w2s(s));
-		}
-		storeObject(obj);
-		return obj;
-	}
+	
+	weak_ptr<IntegerVMHeapObject> createIntegerVMHeapObject(int defaultValue);
+	weak_ptr<FloatVMHeapObject> createFloatVMHeapObject(float defaultValue);
+	weak_ptr<LongVMHeapObject> createLongVMHeapObject(long long defaultValue);
+	weak_ptr<DoubleVMHeapObject> createDoubleVMHeapObject(double defaultValue);
+	weak_ptr<VMHeapObject> createStringVMHeapObject(const wstring& defaultValue);
+	weak_ptr<VMHeapObject> createVMHeapObject(const wstring& typeSignature);
+	weak_ptr<ArrayVMHeapObject> createArrayVMHeapObject(const wstring& arraySignature, size_t demension);
 
 	virtual weak_ptr<NullVMHeapObject> getNullVMHeapObject() const = 0;
 

@@ -90,24 +90,24 @@ weak_ptr<NullVMHeapObject> VMHelper::getNullVMHeapObject() {
 }
 
 weak_ptr<IntegerVMHeapObject> VMHelper::getIntegerVMHeapObject(int v) {
-	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<int>(L"I", v);
-	return std::dynamic_pointer_cast<IntegerVMHeapObject>(obj.lock());
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createIntegerVMHeapObject(v);
+	return obj;
 }
 
 weak_ptr<DoubleVMHeapObject> VMHelper::getDoubleVMHeapObject(double v) {
-	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<double>(L"D", v);
-	return std::dynamic_pointer_cast<DoubleVMHeapObject>(obj.lock());
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createDoubleVMHeapObject(v);
+	return obj;
 }
 weak_ptr<LongVMHeapObject> VMHelper::getLongVMHeapObject(long long v) {
-	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<long long>(L"J", v);
-	return std::dynamic_pointer_cast<LongVMHeapObject>(obj.lock());
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createLongVMHeapObject(v);
+	return obj;
 }
  weak_ptr<FloatVMHeapObject> VMHelper::getFloatVMHeapObject(float v) {
-	auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<float>(L"F", v);
-	return std::dynamic_pointer_cast<FloatVMHeapObject>(obj.lock());
+	auto obj = VM::getVM().lock()->getHeapPool().lock()->createFloatVMHeapObject(v);
+	return obj;
 }
  weak_ptr<ClassVMHeapObject> VMHelper::getStringVMHeapObject(const wstring& v) {
-	 auto obj = VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject<wstring>(L"Ljava/lang/String", v);
+	 auto obj = VM::getVM().lock()->getHeapPool().lock()->createStringVMHeapObject(v);
 	 return std::dynamic_pointer_cast<ClassVMHeapObject>(obj.lock());
 }
 

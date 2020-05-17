@@ -2,59 +2,62 @@
 #include "vm_class.h"
 #include "string_utils.h"
 #include "vm.h"
-/*
-template<typename T>
-weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s, T param)
-{
-	shared_ptr< VMHeapObject> obj = nullptr;
-	wstring s = c->getClassSignature();
-	if (s.length() < 1) {
-		throw runtime_error("Unable to create heap object of empty signature.");
-	}
-	else if (s.length() == 1) {
-		if (VMPrimitiveClass::isPrimitiveTypeSignature(s)) {
-			
-			if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
-				auto clz = VMPrimitiveClass::getPrimitiveVMClass(sig);
-				assert(!clz.expired());
-				obj = make_shared<IntegerVMHeapObject>(param, clz);
-			}
-			else if (s == L"F") {
-				obj = make_shared<FloatVMHeapObject>(param);
-			}
-			else if (s == L"D") {
-				obj = make_shared<DoubleVMHeapObject>(param);
-			}
-			else if (s == L"J") {
-				obj = make_shared<LongVMHeapObject>(param);
-			}
-			else if (s == L"V") {
-				obj = make_shared<VoidVMHeapObject>(param);
-			}
-			else {
-				assert(false);
-			}
-		}
-		else {
-			throw runtime_error("Unsupported primitive type:" + w2s(s));
-		}
-	}
-	else if (s[0] == L'L') {
-		// 普通的类
-		auto clz = VMHelper::loadClass(sig);
-		obj = make_shared< ClassVMHeapObject>(clz);
-	}
-	else if (s[0] == L'[') {
-		//数组
-		auto clz = VMHelper::loadClass(sig);
-		obj = make_shared<ArrayVMHeapObject>(clz, param);
-	}
-	else {
-		throw runtime_error("Unable to create heap object of signature:" + w2s(s));
-	}
+weak_ptr<IntegerVMHeapObject> VMHeapPool::createIntegerVMHeapObject(int defaultValue) {
+	shared_ptr<IntegerVMHeapObject> obj = nullptr;
+	auto clz = VMPrimitiveClass::getPrimitiveVMClass(L"I");
+	assert(!clz.expired());
+	obj = make_shared<IntegerVMHeapObject>(defaultValue, clz);
 	storeObject(obj);
 	return obj;
-}*/
+}
+weak_ptr<FloatVMHeapObject> VMHeapPool::createFloatVMHeapObject(float defaultValue) {
+	shared_ptr<FloatVMHeapObject> obj = make_shared<FloatVMHeapObject>(defaultValue);
+	storeObject(obj);
+	return obj;
+}
+weak_ptr<LongVMHeapObject> VMHeapPool::createLongVMHeapObject(long long defaultValue) {
+	shared_ptr<LongVMHeapObject> obj = make_shared<LongVMHeapObject>(defaultValue);
+	storeObject(obj);
+	return obj;
+}
+weak_ptr<DoubleVMHeapObject> VMHeapPool::createDoubleVMHeapObject(double defaultValue) {
+	shared_ptr<DoubleVMHeapObject> obj = make_shared<DoubleVMHeapObject>(defaultValue);
+	storeObject(obj);
+	return obj;
+}
+weak_ptr<VMHeapObject> VMHeapPool::createStringVMHeapObject(const wstring& defaultValue) {
+	auto clz = VMHelper::loadClass(L"Ljava/lang/String;");
+	shared_ptr<VMHeapObject> obj = make_shared<ClassVMHeapObject>(clz);
+	storeObject(obj);
+	return obj;
+
+}
+weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s) {
+	shared_ptr<VMHeapObject> obj = nullptr;
+	if (s[0] == L'L' && s[s.length() - 1] == L';') {
+		// 普通的类
+		auto clz = VMHelper::loadClass(s);
+		obj = make_shared< ClassVMHeapObject>(clz);
+		storeObject(obj);
+	}
+	else {
+		throw runtime_error("Incorrect object. signature:" + w2s(s));
+	}
+	return obj;
+}
+weak_ptr<ArrayVMHeapObject> VMHeapPool::createArrayVMHeapObject(const wstring& s, size_t demension) {
+	shared_ptr<ArrayVMHeapObject> obj = nullptr;
+	if (s[0] == L'[') {
+		//数组
+		auto clz = VMHelper::loadClass(s);
+		obj = make_shared<ArrayVMHeapObject>(clz, demension);
+		storeObject(obj);
+	}
+	else {
+		throw runtime_error("Unable to create array object of signature:" + w2s(s));
+	}
+	return obj;
+}
 
 weak_ptr<NullVMHeapObject> FixSizeVMHeapPool::getNullVMHeapObject() const {
 

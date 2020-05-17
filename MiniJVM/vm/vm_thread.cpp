@@ -47,7 +47,7 @@ VMThreadStackFrame::~VMThreadStackFrame() {
 
 
 void VMThreadStackFrame::pushStack(weak_ptr<VMHeapObject> obj) {
-	assert(stack.size() < stackSize && !obj.expired());
+	assert(stack.size() <= stackSize && !obj.expired());
 	stack.push_back(obj);
 }
 weak_ptr<VMHeapObject> VMThreadStackFrame::peakStack() {
