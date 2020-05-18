@@ -9,10 +9,10 @@
 #include <chrono>
 #include <thread>
 
-// ÎªÁËÈÃ´úÂë¿´×Å¼òµ¥Ò»µã£¬ÓÃÕâºêÀ´Ìæ»»Ò»ÏÂ¡£
+// ä¸ºäº†è®©ä»£ç çœ‹ç€ç®€å•ä¸€ç‚¹ï¼Œç”¨è¿™å®æ¥æ›¿æ¢ä¸€ä¸‹ã€‚
 #define T weak_ptr<VMHeapObject>
 
-/*Õâ¸öº¯ÊıÔÚvm_engine_private.cppÀïÊµÏÖ£¬ÃâµÃÒ»¸öÎÄ¼şÌ«´ó¡£*/
+/*è¿™ä¸ªå‡½æ•°åœ¨vm_engine_private.cppé‡Œå®ç°ï¼Œå…å¾—ä¸€ä¸ªæ–‡ä»¶å¤ªå¤§ã€‚*/
 weak_ptr<VMHeapObject> VMEngine::invokeNativeMethod(void* func, vector<weak_ptr<VMHeapObject>>& args)
 {
 	if (args.size() == 0) {

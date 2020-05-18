@@ -9,7 +9,7 @@
 
 #include <unordered_map>
 
-struct ClassLoader;
+class ClassLoader;
 struct VMHeapObject;
 struct VMClass;
 struct VMJavaThread;
