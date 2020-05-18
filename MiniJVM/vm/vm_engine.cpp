@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 #define SHOW_CODE
 
 #ifdef SHOW_CODE
-#define printcode(msg, code) spdlog::info(msg##":{0:x}", code)
+#define printcode(msg, code) spdlog::info("{}:{0:x}", msg, code)
 #else
 #define printcode(code)
 #endif
