@@ -236,7 +236,6 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 	t->pushStackFrame(f);
 	auto m = f->method.lock();
 	auto codes = m->codes;
-	vector<weak_ptr<VMHeapObject>> &stack = f->stack;
 	auto lastPC = t->pc;
 	long long &pc = t->pc;
 	auto clz = m->ownerClass.lock();
@@ -298,6 +297,7 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			f->putLocal(index, obj);
 			break;
 		}
+		case Reference_0xb3_putstatic:
 		case Reference_0xb2_getstatic:
 		{
 			u2 fieldIndex = codes[pc + 1] << 8 | codes[pc + 2];
@@ -310,14 +310,17 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			if (targetClass->needInitializing()) {
 				targetClass->initialize(thread);
 			}
-
-			auto field = targetClass->findStaticField(fieldSignature, fieldName);
-			f->pushStack(field);
-			break;
-		}
-		case Reference_0xb3_putstatic:
-		{
-			assert(false);
+			if (codes[pc] == Reference_0xb2_getstatic)
+			{
+				printcode("Get static field to stack", codes[pc]);
+				auto field = targetClass->findStaticField(fieldSignature, fieldName);
+				f->pushStack(field);
+			}
+			else {
+				printcode("Put to static field", codes[pc]);
+				auto value = f->popStack();
+				targetClass->putStaticField(fieldSignature, fieldName, value);
+			}
 			break;
 		}
 		case Reference_0xb8_invokestatic:

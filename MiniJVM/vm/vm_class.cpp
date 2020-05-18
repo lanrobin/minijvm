@@ -118,7 +118,7 @@ void VMClass::initialize(weak_ptr<VMJavaThread> thread) {
 		pthread_mutex_unlock(&initializeMutex);
 		return;
 	}
-	state == InitializeState::Initializing;
+	state = InitializeState::Initializing;
 
 	// 先初始化父类。
 	if (!super.expired()) {

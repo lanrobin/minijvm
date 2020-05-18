@@ -222,7 +222,7 @@ public:
 	void static execute(weak_ptr<VMJavaThread> thread, weak_ptr<VMClassMethod> method, vector<weak_ptr<VMHeapObject>> args);
 
 private:
-	/*Õâ¸öº¯ÊıÔÚvm_engine_private.cppÀïÊµÏÖ£¬ÃâµÃÒ»¸öÎÄ¼şÌ«´ó¡£*/
+	/*è¿™ä¸ªå‡½æ•°åœ¨vm_engine_private.cppé‡Œå®ç°ï¼Œå…å¾—ä¸€ä¸ªæ–‡ä»¶å¤ªå¤§ã€‚*/
 	static weak_ptr<VMHeapObject> invokeNativeMethod(void* func, vector<weak_ptr<VMHeapObject>>& args);
 };
 #endif //__JVM_VM_ENGINE_H__
