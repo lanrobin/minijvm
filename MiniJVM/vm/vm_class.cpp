@@ -155,6 +155,19 @@ weak_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring &methodSignat
 	auto m = methods.find(key);
 	if (m == methods.end())
 	{
+		// 如果自己找不到，就到父类找。
+		auto super = this->super;
+		while (!super.expired()) {
+			auto superMethod = super.lock()->findMethod(methodSignature, name);
+
+			// 只有非私有方法子类才能访问。
+			if (!superMethod.expired() && !superMethod.lock()->isPrivate()) {
+				return superMethod;
+			}
+			else {
+				super = super.lock()->super;
+			}
+		}
 		spdlog::warn("No method found for key:{}", w2s(key));
 		return std::weak_ptr<VMClassMethod>();
 	}

@@ -14,11 +14,11 @@ using namespace std::chrono_literals;
 #define SHOW_CODE
 
 #ifdef SHOW_CODE
-#define printcode(msg, code) spdlog::info("{}:{0:x}", msg, code)
+#define printcode(msg, code) spdlog::info("{}:{}", ##msg, code)
+#define printcodeW(msg, code) spdlog::warn("{}:{}", ##msg, code)
 #else
 #define printcode(code)
 #endif
-
 
 /* 这个函数就是主要的执行函数。 */
 void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFrame> f)
@@ -68,6 +68,52 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			f->pushStack(VMHelper::getIntegerVMHeapObject(value));
 			break;
 		}
+		case Constant_0x12_ldc:
+		case Constant_0x13_ldc_w:
+		{
+			printcode("Sipush int to stack", codes[pc]);
+			u1 index = codes[pc + 1];
+			if (codes[pc] == Constant_0x13_ldc_w)
+			{
+				index = (index << 8) | codes[pc + 2];
+			}
+			auto ci = VMHelper::getVMConstantItem(clz->className(), index).lock();
+			switch (ci->type)
+			{
+			case VMConstantItem::VMConstantItemType::TypeInteger:
+			{
+				f->pushStack(VMHelper::getIntegerVMHeapObject(std::dynamic_pointer_cast<VMConstantInteger>(ci)->value));
+				break;
+			}
+			case VMConstantItem::VMConstantItemType::TypeFloat:
+			{
+				f->pushStack(VMHelper::getFloatVMHeapObject(std::dynamic_pointer_cast<VMConstantFloat>(ci)->value));
+				break;
+			}
+			case VMConstantItem::VMConstantItemType::TypeString:
+			{
+				size_t stringIndex = std::dynamic_pointer_cast<VMConstantStringLiteral>(ci)->literalStringIndex;
+				auto str = VMHelper::getConstantString(stringIndex);
+				f->pushStack(VMHelper::getStringVMHeapObject(str));
+				break;
+			}
+			case VMConstantItem::VMConstantItemType::TypeClass:
+			{
+				size_t stringIndex = std::dynamic_pointer_cast<VMConstantStringLiteral>(ci)->literalStringIndex;
+				auto refClzName = VMHelper::getConstantString(stringIndex);
+				auto refClzInstance = VMHelper::getClassRefVMHeapObject(VMHelper::loadClass(refClzName));
+				f->pushStack(refClzInstance);
+				break;
+			}
+			default:
+			{
+				assert(false);
+				spdlog::error("Unsupported constant type:{} for code:{}", ci->type, codes[pc]);
+				break;
+			}
+			}
+			break;
+		}
 		case Store_0x36_istore:
 		{
 			printcode("Store int to local", codes[pc]);
@@ -88,6 +134,15 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			f->putLocal(index, obj);
 			break;
 		}
+		case Control_0xb1_return:
+		{
+			printcode("Return int to local", codes[pc]);
+			printcodeW("return from method:", w2s(m->lookupKey()));
+			t->pc = lastPC;
+			t->popStackFrame();
+			// 直接返回。
+			return;
+		}
 		case Reference_0xb3_putstatic:
 		case Reference_0xb2_getstatic:
 		{
@@ -98,7 +153,8 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			auto fieldSignature = std::get<1>(fieldRef);
 			auto fieldName = std::get<2>(fieldRef);
 			// 如果类还没有初始化，就先初始化。
-			if (targetClass->needInitializing()) {
+			if (targetClass->needInitializing())
+			{
 				targetClass->initialize(thread);
 			}
 			if (codes[pc] == Reference_0xb2_getstatic)
@@ -107,10 +163,61 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 				auto field = targetClass->findStaticField(fieldSignature, fieldName);
 				f->pushStack(field);
 			}
-			else {
+			else
+			{
 				printcode("Put to static field", codes[pc]);
 				auto value = f->popStack();
 				targetClass->putStaticField(fieldSignature, fieldName, value);
+			}
+			break;
+		}
+		case Reference_0xb6_invokevirtual:
+		{
+			u2 index = codes[pc + 1] << 8 | codes[pc + 2];
+			auto methodRef = VMHelper::getFieldOrMethod(clz->className(), index);
+			auto targetClass = VMHelper::loadClass(std::get<0>(methodRef)).lock();
+			assert(targetClass != nullptr);
+			auto className = std::get<0>(methodRef);
+			auto methodSignature = std::get<1>(methodRef);
+			auto methodName = std::get<2>(methodRef);
+			// 如果类还没有初始化，就先初始化。
+			if (!targetClass->needInitializing())
+			{
+				targetClass->initialize(thread);
+			}
+			auto method = targetClass->findMethod(methodSignature, methodName).lock();
+			assert(!method->isStatic() || !method->isAbstract());
+			auto signatures = method->splitSignature();
+			// 至少要保证栈里有足够的参数。
+			assert(f->stack.size() >= signatures.size());
+			/*这里面有一个是函数的返回值 ，但是这里是实例函数，所以就个this参数，
+			数字正好，所以就先这么算。*/
+			auto argSize = signatures.size();
+			vector<weak_ptr<VMHeapObject>> args;
+			while (argSize > 0)
+			{
+				args.push_back(f->popStack());
+				argSize --;
+			}
+			// 参数需要反转。因为参数是 [arg1, [arg2...]]
+			std::reverse(args.begin(), args.end());
+			if (method->isNative())
+			{
+				// 如果是本地方法。
+				void* func = VMHelper::getNativeMethod(className, methodSignature, methodName);
+				if (func == nullptr)
+				{
+					spdlog::error("NO NATIVE METHOD:{}", w2s(className + L"@" + methodName + methodSignature));
+					assert(false);
+				}
+				auto nativeBackupPc = t->pc;
+				t->pc = VMJavaThread::PC_UNDEFINED;
+				auto result = invokeNativeMethod(func, args);
+				t->pc = nativeBackupPc;
+			}
+			else
+			{
+				VMEngine::execute(t, method, args);
 			}
 			break;
 		}
@@ -124,7 +231,8 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			auto methodSignature = std::get<1>(methodRef);
 			auto methodName = std::get<2>(methodRef);
 			// 如果类还没有初始化，就先初始化。
-			if (!targetClass->needInitializing()) {
+			if (!targetClass->needInitializing())
+			{
 				targetClass->initialize(thread);
 			}
 			auto method = targetClass->findMethod(methodSignature, methodName).lock();
@@ -137,32 +245,38 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			assert(f->stack.size() >= signatures.size() - 1);
 			auto argSize = signatures.size() - 1;
 			vector<weak_ptr<VMHeapObject>> args;
-			while (argSize > 0) {
+			while (argSize > 0)
+			{
 				args.push_back(f->popStack());
+				argSize--;
 			}
 			// 参数需要反转。因为参数是 [arg1, [arg2...]]
 			std::reverse(args.begin(), args.end());
 
-			if (method->isNative()) {
+			if (method->isNative())
+			{
 				// 如果是本地方法。
-				void* f = VMHelper::getNativeMethod(className, methodSignature, methodName);
-				if (f == nullptr) {
+				void *func = VMHelper::getNativeMethod(className, methodSignature, methodName);
+				if (func == nullptr)
+				{
 					spdlog::error("NO NATIVE METHOD:{}", w2s(className + L"@" + methodName + methodSignature));
 					assert(false);
 				}
 				auto nativeBackupPc = t->pc;
 				t->pc = VMJavaThread::PC_UNDEFINED;
-				auto result = invokeNativeMethod(f, args);
+				auto result = invokeNativeMethod(func, args);
 				t->pc = nativeBackupPc;
 			}
-			else {
+			else
+			{
 				VMEngine::execute(t, method, args);
 			}
 			break;
 		}
 		default:
 		{
-			printcode("Unhandled code:{}", codes[pc]);
+			spdlog::error("Unhandled code:{}", codes[pc]);
+			assert(false);
 			break;
 		}
 		}
@@ -177,6 +291,6 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 
 void VMEngine::execute(weak_ptr<VMJavaThread> thread, weak_ptr<VMClassMethod> method, vector<weak_ptr<VMHeapObject>> args)
 {
-	auto frame = make_shared< VMThreadStackFrame>(method, args);
+	auto frame = make_shared<VMThreadStackFrame>(method, args);
 	execute(thread, frame);
 }

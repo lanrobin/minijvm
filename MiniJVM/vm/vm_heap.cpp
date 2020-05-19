@@ -26,7 +26,7 @@ weak_ptr<DoubleVMHeapObject> VMHeapPool::createDoubleVMHeapObject(double default
 	return obj;
 }
 weak_ptr<VMHeapObject> VMHeapPool::createStringVMHeapObject(const wstring& defaultValue) {
-	auto clz = VMHelper::loadClass(L"Ljava/lang/String;");
+	auto clz = VMHelper::loadClass(L"java/lang/String");
 	shared_ptr<VMHeapObject> obj = make_shared<InstanceVMHeapObject>(clz);
 	storeObject(obj);
 	return obj;

@@ -70,6 +70,7 @@ struct VMClassMethod : public VMClassResolvable
 	bool isVarAgurs() const  { return ((accessFlags & METHOD_ACC_VARARGS) == METHOD_ACC_VARARGS); }
 	bool isFinal() const { return ((accessFlags & METHOD_ACC_FINAL) == METHOD_ACC_FINAL);}
 	bool isDeprected() const { return deprecated; }
+	bool isPrivate() const { return ((accessFlags & METHOD_ACC_PRIVATE) == METHOD_ACC_PRIVATE); }
 
 	bool isPublicOrProtected() const override{ return hasAnyAccessFlags(METHOD_ACC_PROTECTED | METHOD_ACC_PUBLIC); }
 	//const shared_ptr<VMClass> clazz;

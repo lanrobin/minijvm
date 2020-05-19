@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <filesystem>
 
+#undef DEBUGCLASSLOADER
+
+
 ClassLoader::ClassLoader(weak_ptr<ClassLoader> p) : parent(p) {}
 
 bool ClassLoader::classLoaded(const wstring &className)
@@ -32,7 +35,9 @@ weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf)
 		auto className = cf->getCanonicalClassName();
 		if (classLoaded(className))
 		{
+#ifdef DEBUGCLASSLOADER
 			spdlog::info("Class:{} had been loaded.", w2s(className));
+#endif 
 			return getStoredClass(className);
 		}
 
@@ -86,6 +91,7 @@ weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf)
 		}
 		return clz;
 	}
+
 	spdlog::error("Cannot load class:{}", w2s(buf->getMappingFile()));
 
 	return std::weak_ptr<VMClass>();
@@ -182,14 +188,16 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
 
 	if (classLoaded(canonicalClassPath))
 	{
+#ifdef DEBUGCLASSLOADER
 		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
+#endif
 		return getStoredClass(canonicalClassPath);
 	}
 
 	std::filesystem::path clazz(getClassRootPath() + L"/" + canonicalClassPath + L".class");
-
+#ifdef DEBUGCLASSLOADER
 	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
-
+#endif
 	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
 	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
@@ -216,24 +224,32 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring &className)
 	auto parentReadClass = parent.lock()->loadClass(className);
 	if (!parentReadClass.expired())
 	{
+#ifdef DEBUGCLASSLOADER
 		spdlog::info("Class:{} read from parent classloader", w2s(className));
+#endif 
 		return parentReadClass;
 	}
 
 	wstring canonicalClassPath(className);
+	// 如果是 Ljava/lang/String;这种形式，去掉头尾。
+	if (canonicalClassPath[0] == L'L' && canonicalClassPath[canonicalClassPath.size() - 1] == L';') {
+		canonicalClassPath = canonicalClassPath.substr(1, canonicalClassPath.size() - 2);
+	}
 	// replace . with /
 	replaceAll(canonicalClassPath, L".", L"/");
 
 	if (classLoaded(canonicalClassPath))
 	{
+#ifdef DEBUGCLASSLOADER
 		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
+#endif 
 		return getStoredClass(canonicalClassPath);
 	}
 
 	std::filesystem::path clazz(getClassRootPath() + L"/" + canonicalClassPath + L".class");
-
+#ifdef DEBUGCLASSLOADER
 	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
-
+#endif 
 	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
 	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
@@ -248,7 +264,9 @@ weak_ptr<VMClass> AppClassLoader::loadClass(shared_ptr<Buffer> buf)
 	auto parentReadClass = parent.lock()->loadClass(buf);
 	if (!parentReadClass.expired())
 	{
+#ifdef DEBUGCLASSLOADER
 		spdlog::info("Class:{} read from parent classloader", w2s(buf->getMappingFile()));
+#endif
 		return parentReadClass;
 	}
 	return defineClass(buf);

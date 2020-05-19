@@ -71,6 +71,9 @@ void VM::initVM(shared_ptr<Configurations> cfs)
 		//其它初始化的代码
 		mainThread = make_shared<VMJavaThread>(pthread_self());
 
+		// 初始化VM内部
+		startUpVM(mainThread);
+
 		// 设置好开始的参数
 		mainThread->setRunningParameters(conf->getTargetClass(), L"main", L"([Ljava/lang/String;)V", true);
 		allThreads.push_back(mainThread);
@@ -108,6 +111,9 @@ bool VM::registerNativeMethod(const wstring& className, const wstring& signature
 	return true;
 }
 
+void VM::startUpVM(shared_ptr<VMJavaThread> executingThread) {
+	spdlog::error("Must startup VM First.");
+}
 weak_ptr<NullVMHeapObject> VMHelper::getNullVMHeapObject() {
 	return VM::getVM().lock()->getHeapPool().lock()->getNullVMHeapObject();
 }

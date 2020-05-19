@@ -35,6 +35,8 @@ private:
 	/*Native方法*/
 	unordered_map<wstring, void *> nativeMethods;
 
+	// 这个函数做一系列的启动工作，准备环境什么的。
+	void startUpVM(shared_ptr<VMJavaThread> executingThread);
 public:
 	VM();
 	void initVM(shared_ptr<Configurations> conf);

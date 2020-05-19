@@ -595,5 +595,5 @@ ClassFile::~ClassFile()
 	constant_pool.clear();
 	methods.clear();
 	attributes.clear();
-	spdlog::info("ClassFile:{} gone", w2s(canonicalName));
+	//spdlog::info("ClassFile:{} gone", w2s(canonicalName));
 }
