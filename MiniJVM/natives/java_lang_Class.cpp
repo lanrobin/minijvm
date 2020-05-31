@@ -5,7 +5,8 @@
 
 #include <chrono>
 
-weak_ptr<VMHeapObject> java_lang_Class_registerNatives() {
+weak_ptr<VMHeapObject> java_lang_Class_registerNatives()
+{
     auto vm = VM::getVM().lock();
     /*
     vm->registerNativeMethod(L"java/lang/System", L"(Ljava/io/PrintStream;)V", L"setOut0", (void*)&java_lang_System_setOut0);

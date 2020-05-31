@@ -30,7 +30,8 @@ VMClass::VMClass(const wstring &name, weak_ptr<ClassLoader> cl)
 	spdlog::info("create class:{} and package:{}", w2s(name), w2s(packageName));
 }
 
-VMClass::~VMClass() {
+VMClass::~VMClass()
+{
 	pthread_mutexattr_destroy(&initializeMutexAttr);
 	pthread_mutex_destroy(&initializeMutex);
 	spdlog::info("Class:{}, type:{} gone", w2s(name), classType);
@@ -111,23 +112,28 @@ vector<wstring> VMClass::splitSignatureToElement(const wstring &signature)
 	throw runtime_error("not implemented yet.");
 }
 
-void VMClass::initialize(weak_ptr<VMJavaThread> thread) {
+void VMClass::initialize(weak_ptr<VMJavaThread> thread)
+{
 	// 先拿到锁，防止其它线程同时初始化这个类。
 	pthread_mutex_lock(&initializeMutex);
-	if (state != InitializeState::NotInitialized) {
+	if (state != InitializeState::NotInitialized)
+	{
 		pthread_mutex_unlock(&initializeMutex);
 		return;
 	}
 	state = InitializeState::Initializing;
 
 	// 先初始化父类。
-	if (!super.expired()) {
+	if (!super.expired())
+	{
 		super.lock()->initialize(thread);
 	}
 
 	// 初始化接口。
-	for (auto i = interfaces.begin(); i != interfaces.end(); i++) {
-		if (!(*i).expired()) {
+	for (auto i = interfaces.begin(); i != interfaces.end(); i++)
+	{
+		if (!(*i).expired())
+		{
 			(*i).lock()->initialize(thread);
 		}
 	}
@@ -135,7 +141,8 @@ void VMClass::initialize(weak_ptr<VMJavaThread> thread) {
 
 	// 再调用clinit方法。
 	auto clinit = findMethod(L"()V", L"<clinit>");
-	if (!clinit.expired()) {
+	if (!clinit.expired())
+	{
 		spdlog::info("Found <clinit> for class:{} execute it.", w2s(name));
 		vector<weak_ptr<VMHeapObject>> args;
 		VMEngine::execute(thread, clinit, args);
@@ -144,8 +151,9 @@ void VMClass::initialize(weak_ptr<VMJavaThread> thread) {
 	pthread_mutex_unlock(&initializeMutex);
 }
 
-void VMClass::initializeStaticField() {
-	
+void VMClass::initializeStaticField()
+{
+
 	spdlog::info("No initialize static field required for class:{}", w2s(name));
 }
 
@@ -154,7 +162,8 @@ bool VMClass::setModule(weak_ptr<VMModule> m)
 	module = m;
 	auto sm = module.lock();
 	// 如果是unname module,需要更新package列表。
-	if (sm != nullptr && sm->isUnnamedModule()) {
+	if (sm != nullptr && sm->isUnnamedModule())
+	{
 		sm->packages.insert(this->packageName);
 	}
 	return true;
@@ -166,17 +175,21 @@ weak_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring &methodSignat
 	if (m == methods.end())
 	{
 		// 如果不是<clinit>或是<init>才会去父类里找。
-		if (!(name == L"<clinit>" || name == L"<init>")) {
+		if (!(name == L"<clinit>" || name == L"<init>"))
+		{
 			// 如果自己找不到，就到父类找。
 			auto super = this->super;
-			while (!super.expired()) {
+			while (!super.expired())
+			{
 				auto superMethod = super.lock()->findMethod(methodSignature, name);
 
 				// 只有非私有方法子类才能访问。
-				if (!superMethod.expired() && !superMethod.lock()->isPrivate()) {
+				if (!superMethod.expired() && !superMethod.lock()->isPrivate())
+				{
 					return superMethod;
 				}
-				else {
+				else
+				{
 					super = super.lock()->super;
 				}
 			}
@@ -199,10 +212,12 @@ weak_ptr<VMHeapObject> VMReferenceClass::findStaticField(const wstring &methodSi
 	return value->second;
 }
 
-weak_ptr< VMClassField> VMReferenceClass::findFieldLayout(const wstring& methodSignature, const wstring& name) const {
+weak_ptr<VMClassField> VMReferenceClass::findFieldLayout(const wstring &methodSignature, const wstring &name) const
+{
 	auto key = VMClassField::makeLookupKey(methodSignature, name);
 	auto fl = allFieldLayout.find(key);
-	if (fl != allFieldLayout.end()) {
+	if (fl != allFieldLayout.end())
+	{
 		return fl->second;
 	}
 	return std::weak_ptr<VMClassField>();
@@ -318,38 +333,46 @@ bool VMLoadableClass::loadClassInfo(shared_ptr<ClassFile> cf)
 void VMLoadableClass::initializeStaticField()
 {
 	spdlog::info("initialize static field for class:{}", w2s(name));
-	
+
 	/*
 	这里有两种情况：
 	1. 所有的 final primitive和String类都要在这里初始化；
 	2. 其它的类型的初始化在<cinit>函数里进行，所以这里不用管了。
 	*/
-	for (auto f = staticFieldLayout.begin(); f != staticFieldLayout.end(); f++) {
+	for (auto f = staticFieldLayout.begin(); f != staticFieldLayout.end(); f++)
+	{
 		auto fd = (*f).second;
 		auto s = fd->signature;
-		if (fd->isStatic() && fd->isFinal()) {
-			if (s == L"B" || s == L"C" || s == L"I" || s == L"S") {
+		if (fd->isStatic() && fd->isFinal())
+		{
+			if (s == L"B" || s == L"C" || s == L"I" || s == L"S")
+			{
 				auto attr = std::dynamic_pointer_cast<VMConstantInteger>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
 				staticFields[fd->lookupKey()] = VMHelper::getIntegerVMHeapObject(attr->value);
 			}
-			else if (s == L"D") {
+			else if (s == L"D")
+			{
 				auto attr = std::dynamic_pointer_cast<VMConstantLongAndDouble>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
 				staticFields[fd->lookupKey()] = VMHelper::getDoubleVMHeapObject(attr->doubleValue);
 			}
-			else if (s == L"J") {
+			else if (s == L"J")
+			{
 				auto attr = std::dynamic_pointer_cast<VMConstantLongAndDouble>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
 				staticFields[fd->lookupKey()] = VMHelper::getLongVMHeapObject(attr->longValue);
 			}
-			else if (s == L"F") {
+			else if (s == L"F")
+			{
 				auto attr = std::dynamic_pointer_cast<VMConstantFloat>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
 				staticFields[fd->lookupKey()] = VMHelper::getFloatVMHeapObject(attr->value);
 			}
-			else if (s == L"Ljava/lang/String;") {
+			else if (s == L"Ljava/lang/String;")
+			{
 				auto attr = std::dynamic_pointer_cast<VMConstantStringLiteral>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
 				auto value = VMHelper::getConstantString(attr->literalStringIndex);
 				staticFields[fd->lookupKey()] = VMHelper::getStringVMHeapObject(value);
 			}
-			else {
+			else
+			{
 				spdlog::info("Need not initialize:{}, it will be initiliazied in <cinit>. SKIP....", w2s(fd->lookupKey()));
 			}
 		}
@@ -369,7 +392,8 @@ VMClassField::VMClassField(shared_ptr<ClassFile> cf, shared_ptr<Field_Info> fi, 
 		{
 			deprecated = true;
 		}
-		else if (attriName == L"ConstantValue") {
+		else if (attriName == L"ConstantValue")
+		{
 			auto cv = std::dynamic_pointer_cast<ConstantValue_attribute>((*a));
 			initializeAttribute = cv->constantvalue_index;
 		}
@@ -511,7 +535,6 @@ void VMMethodExceptionTable::resolveSymbol(weak_ptr<ClassLoader> cl)
 	cl.lock()->loadClass(catchType);
 }
 
-
 void VMClassResolvable::resolveSymbol()
 {
 	auto symbols = splitSignature();
@@ -547,7 +570,8 @@ void VMClassResolvable::resolveSymbol()
 	}
 }
 
-bool VMOrdinaryClass::putStaticField(const wstring& signature, const wstring& name, weak_ptr< VMHeapObject> value) {
+bool VMOrdinaryClass::putStaticField(const wstring &signature, const wstring &name, weak_ptr<VMHeapObject> value)
+{
 	// 这里本来应该要验证是不可写，是不是存在的，但是Java编译器已经验证过了，所以这里暂时偷懒不管了。
 	auto key = VMClassResolvable::makeLookupKey(signature, name);
 	staticFields[key] = value;
@@ -555,16 +579,16 @@ bool VMOrdinaryClass::putStaticField(const wstring& signature, const wstring& na
 }
 
 const unordered_map<wchar_t, int> VMPrimitiveClass::PRIMITIVE_TYPES =
-{
-	{L'B', 0},
-	{L'C', 0},
-	{L'D', 0},
-	{L'F', 0},
-	{L'I', 0},
-	{L'J', 0},
-	{L'S', 0},
-	{L'Z', 0},
-	{L'V', 1} };
+	{
+		{L'B', 0},
+		{L'C', 0},
+		{L'D', 0},
+		{L'F', 0},
+		{L'I', 0},
+		{L'J', 0},
+		{L'S', 0},
+		{L'Z', 0},
+		{L'V', 1}};
 
 unordered_map<wstring, shared_ptr<VMPrimitiveClass>> VMPrimitiveClass::AllPrimitiveClasses =
 	{
@@ -576,33 +600,39 @@ unordered_map<wstring, shared_ptr<VMPrimitiveClass>> VMPrimitiveClass::AllPrimit
 		{L"J", make_shared<VMPrimitiveClass>(L"long", VMHelper::getBootstrapClassLoader())},
 		{L"S", make_shared<VMPrimitiveClass>(L"short", VMHelper::getBootstrapClassLoader())},
 		{L"Z", make_shared<VMPrimitiveClass>(L"boolean", VMHelper::getBootstrapClassLoader())},
-		{L"V", make_shared<VMPrimitiveClass>(L"void", VMHelper::getBootstrapClassLoader())}
-	};
+		{L"V", make_shared<VMPrimitiveClass>(L"void", VMHelper::getBootstrapClassLoader())}};
 
-weak_ptr<VMPrimitiveClass> VMPrimitiveClass::getPrimitiveVMClass(const wstring& signature) {
-	auto result = std::weak_ptr< VMPrimitiveClass>();
-	if (signature.length() != 1) {
+weak_ptr<VMPrimitiveClass> VMPrimitiveClass::getPrimitiveVMClass(const wstring &signature)
+{
+	auto result = std::weak_ptr<VMPrimitiveClass>();
+	if (signature.length() != 1)
+	{
 		return result;
 	}
 	auto clz = AllPrimitiveClasses.find(signature);
-	if (clz != AllPrimitiveClasses.end()) {
+	if (clz != AllPrimitiveClasses.end())
+	{
 		return clz->second;
 	}
 	return result;
 }
-bool VMPrimitiveClass::isPrimitiveTypeSignature(const wstring& signature){
-	if (signature.length() != 1) {
+bool VMPrimitiveClass::isPrimitiveTypeSignature(const wstring &signature)
+{
+	if (signature.length() != 1)
+	{
 		return false;
 	}
 	return PRIMITIVE_TYPES.find(signature[0]) != PRIMITIVE_TYPES.end();
 }
 
-bool VMPrimitiveClass::isPrimitiveTypeSignature(wchar_t c){
+bool VMPrimitiveClass::isPrimitiveTypeSignature(wchar_t c)
+{
 	wstring sig(1, c);
 	return isPrimitiveTypeSignature(sig);
 }
 
-weak_ptr< VMNullObjectClass> VMNullObjectClass::getVMNullObjectClass() {
+weak_ptr<VMNullObjectClass> VMNullObjectClass::getVMNullObjectClass()
+{
 
 	if (VMNullObjectClass::_VMNullObjectClass == nullptr)
 	{

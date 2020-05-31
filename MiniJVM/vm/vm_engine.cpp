@@ -219,14 +219,14 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			while (argSize > 0)
 			{
 				args.push_back(f->popStack());
-				argSize --;
+				argSize--;
 			}
 			// 参数需要反转。因为参数是 [arg1, [arg2...]]
 			std::reverse(args.begin(), args.end());
 			if (method->isNative())
 			{
 				// 如果是本地方法。
-				void* func = VMHelper::getNativeMethod(className, methodSignature, methodName);
+				void *func = VMHelper::getNativeMethod(className, methodSignature, methodName);
 				if (func == nullptr)
 				{
 					spdlog::error("NO NATIVE METHOD:{}", w2s(className + L"@" + methodName + methodSignature));
@@ -280,7 +280,7 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			if (method->isNative())
 			{
 				// 如果是本地方法。
-				void* func = VMHelper::getNativeMethod(className, methodSignature, methodName);
+				void *func = VMHelper::getNativeMethod(className, methodSignature, methodName);
 				if (func == nullptr)
 				{
 					spdlog::error("NO NATIVE METHOD:{}", w2s(className + L"@" + methodName + methodSignature));

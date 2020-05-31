@@ -11,7 +11,6 @@
 
 #undef DEBUGCLASSLOADER
 
-
 ClassLoader::ClassLoader(weak_ptr<ClassLoader> p) : parent(p) {}
 
 bool ClassLoader::classLoaded(const wstring &className)
@@ -37,7 +36,7 @@ weak_ptr<VMClass> ClassLoader::defineClass(shared_ptr<Buffer> buf)
 		{
 #ifdef DEBUGCLASSLOADER
 			spdlog::info("Class:{} had been loaded.", w2s(className));
-#endif 
+#endif
 			return getStoredClass(className);
 		}
 
@@ -149,9 +148,10 @@ weak_ptr<VMClass> ClassLoader::defineClass(const wstring &sym)
 	return newClass;
 }
 
-shared_ptr<VMClass> ClassLoader::defineArrayClass(const wstring& sym)
+shared_ptr<VMClass> ClassLoader::defineArrayClass(const wstring &sym)
 {
-	if (sym.length() < 2 || sym[0] != L'[') {
+	if (sym.length() < 2 || sym[0] != L'[')
+	{
 		throw runtime_error("Not an array signature:" + w2s(sym));
 	}
 	wstring subName = sym.substr(1, sym.length() - 1);
@@ -161,7 +161,8 @@ shared_ptr<VMClass> ClassLoader::defineArrayClass(const wstring& sym)
 		// 如果还是数组，就递归创建。
 		subComponent = defineArrayClass(subName);
 	}
-	else {
+	else
+	{
 		// 如果不是数组类，那么这个类肯定能找到，而且已经有引用了。所以lock一定能成功。
 		subComponent = defineClass(subName).lock();
 	}
@@ -173,18 +174,21 @@ shared_ptr<VMClass> ClassLoader::defineArrayClass(const wstring& sym)
 	return newArrayClass;
 }
 
-weak_ptr<VMModule> ClassLoader::defineModule(const wstring& classRootPath) {
+weak_ptr<VMModule> ClassLoader::defineModule(const wstring &classRootPath)
+{
 	std::filesystem::path mi(classRootPath + L"/module-info.class");
 	auto vm = VM::getVM().lock();
 	if (std::filesystem::is_regular_file(mi) && std::filesystem::exists(mi))
 	{
 		auto buffer = Buffer::fromFile(mi.wstring());
 		auto cf = make_shared<ClassFile>(buffer);
-		if (cf->isModule()) {
+		if (cf->isModule())
+		{
 			auto m = std::dynamic_pointer_cast<Module_attribute>(cf->getAttributeByName(L"Module"));
 			auto name = cf->getModuleName(m->module_name_index);
 			auto existingModule = vm->getModule(name);
-			if (!existingModule.expired()) {
+			if (!existingModule.expired())
+			{
 				return existingModule;
 			}
 			auto newModule = make_shared<VMModule>(name, getSharedPtr());
@@ -215,7 +219,8 @@ weak_ptr<VMModule> ClassLoader::defineModule(const wstring& classRootPath) {
 				newModule->exports[me->name] = me;
 			}
 
-			for (auto o = m->opens.begin(); o != m->opens.end(); o++) {
+			for (auto o = m->opens.begin(); o != m->opens.end(); o++)
+			{
 				auto op = (*o);
 				auto mo = make_shared<VMModuleOpen>();
 				mo->name = cf->getPackageName(op->opens_index);
@@ -252,7 +257,7 @@ weak_ptr<VMModule> ClassLoader::defineModule(const wstring& classRootPath) {
 			}
 			// Load packages.
 			auto mp = std::dynamic_pointer_cast<ModulePackages_attribute>(cf->getAttributeByName(L"ModulePackages"));
-			if(mp != nullptr)
+			if (mp != nullptr)
 			{
 				for (auto pi = mp->package_index.begin(); pi != mp->package_index.end(); pi++)
 				{
@@ -290,7 +295,8 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
 	wstring canonicalClassPath(className);
 
 	// 如果是 Ljava/lang/String;这种形式，去掉头尾。
-	if (canonicalClassPath[0] == L'L' && canonicalClassPath[canonicalClassPath.size() - 1] == L';') {
+	if (canonicalClassPath[0] == L'L' && canonicalClassPath[canonicalClassPath.size() - 1] == L';')
+	{
 		canonicalClassPath = canonicalClassPath.substr(1, canonicalClassPath.size() - 2);
 	}
 	// replace . with /
@@ -339,13 +345,14 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring &className)
 	{
 #ifdef DEBUGCLASSLOADER
 		spdlog::info("Class:{} read from parent classloader", w2s(className));
-#endif 
+#endif
 		return parentReadClass;
 	}
 
 	wstring canonicalClassPath(className);
 	// 如果是 Ljava/lang/String;这种形式，去掉头尾。
-	if (canonicalClassPath[0] == L'L' && canonicalClassPath[canonicalClassPath.size() - 1] == L';') {
+	if (canonicalClassPath[0] == L'L' && canonicalClassPath[canonicalClassPath.size() - 1] == L';')
+	{
 		canonicalClassPath = canonicalClassPath.substr(1, canonicalClassPath.size() - 2);
 	}
 	// replace . with /
@@ -355,14 +362,14 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring &className)
 	{
 #ifdef DEBUGCLASSLOADER
 		spdlog::info("Class:{} had been loaded.", w2s(canonicalClassPath));
-#endif 
+#endif
 		return getStoredClass(canonicalClassPath);
 	}
 
 	std::filesystem::path clazz(getClassRootPath() + L"/" + canonicalClassPath + L".class");
 #ifdef DEBUGCLASSLOADER
 	spdlog::info("Tried to load class {} from BootstrapClassLoader", w2s(clazz.wstring()));
-#endif 
+#endif
 	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
 	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
