@@ -1,7 +1,15 @@
+#include "base_type.h"
 #include "vm_heap.h"
 #include "vm_class.h"
 #include "string_utils.h"
 #include "vm.h"
+
+ArrayVMHeapObject::ArrayVMHeapObject(weak_ptr<VMClass> typeClz, size_t size) :ReferenceVMHeapObject(typeClz), maxsize(size) {
+	elements.reserve(size);
+	auto thisClzName = typeClz.lock()->getClassSignature();
+	assert(thisClzName.length() > 0 && thisClzName[0] == L'[');
+	componentType = VMHelper::loadClass(thisClzName.substr(1, thisClzName.length() - 1));
+}
 weak_ptr<IntegerVMHeapObject> VMHeapPool::createIntegerVMHeapObject(int defaultValue) {
 	shared_ptr<IntegerVMHeapObject> obj = nullptr;
 	auto clz = VMPrimitiveClass::getPrimitiveVMClass(L"I");
@@ -47,15 +55,10 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s) {
 }
 weak_ptr<ArrayVMHeapObject> VMHeapPool::createArrayVMHeapObject(const wstring& s, size_t demension) {
 	shared_ptr<ArrayVMHeapObject> obj = nullptr;
-	if (s[0] == L'[') {
-		//数组
-		auto clz = VMHelper::loadClass(s);
-		obj = make_shared<ArrayVMHeapObject>(clz, demension);
-		storeObject(obj);
-	}
-	else {
-		throw runtime_error("Unable to create array object of signature:" + w2s(s));
-	}
+	auto thizClassName = L"[" + s;
+	auto clz = VMHelper::loadClass(thizClassName);
+	obj = make_shared<ArrayVMHeapObject>(clz, demension);
+	storeObject(obj);
 	return obj;
 }
 weak_ptr<ClassRefVMHeapObject> VMHeapPool::createClassRefVMHeapObject(weak_ptr<VMClass> clz) {

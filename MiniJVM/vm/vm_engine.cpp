@@ -273,6 +273,19 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			}
 			break;
 		}
+		case Reference_0xbd_anewarray:
+		{
+			u2 index = codes[pc + 1] << 8 | codes[pc + 2];
+			int count = std::dynamic_pointer_cast<IntegerVMHeapObject>(f->popStack().lock())->intValue;
+			assert(count >= 0);
+			auto ownerClzName = VMHelper::getRefClassName(clz->className(), index);
+
+			auto targetClz = VMHelper::loadClass(ownerClzName).lock();
+			targetClz->initialize(t);
+			auto arr = VMHelper::createArrayVMHelpObject(targetClz, count);
+			f->pushStack(arr);
+			break;
+		}
 		default:
 		{
 			spdlog::error("Unhandled code:{}", codes[pc]);

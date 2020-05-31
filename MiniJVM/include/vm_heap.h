@@ -138,10 +138,8 @@ private:
 };
 
 struct ArrayVMHeapObject : public ReferenceVMHeapObject {
-	ArrayVMHeapObject(weak_ptr<VMClass> typeClz, size_t size) :ReferenceVMHeapObject(typeClz), maxsize(size) {
-		elements.reserve(size);
-	}
-	weak_ptr<VMHeapObject> componentType;
+	ArrayVMHeapObject(weak_ptr<VMClass> typeClz, size_t size);
+	weak_ptr<VMClass> componentType;
 
 	vector<weak_ptr< VMHeapObject>> elements;
 	size_t maxsize;

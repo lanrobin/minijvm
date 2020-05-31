@@ -49,7 +49,7 @@ public:
 	weak_ptr<ClassLoader> classLoader;
 	wstring mainClassName;
 	wstring version;
-	// Õâ¸öModule°üº¬µÄËùÓĞµÄ°üºÍÀà
+	// è¿™ä¸ªModuleåŒ…å«çš„æ‰€æœ‰çš„åŒ…å’Œç±»
 	//unordered_map<wstring, weak_ptr<VMClass>> packages;
 	unordered_set<wstring> packages;
 	unordered_map<wstring, shared_ptr<VMModuleRequire>> requires;

@@ -40,6 +40,7 @@ private:
 	unordered_map<wstring, shared_ptr<VMModule>> modules;
 	// 这个函数做一系列的启动工作，准备环境什么的。
 	void startUpVM(shared_ptr<VMJavaThread> executingThread);
+	void callInitPhase1(shared_ptr<VMJavaThread> executingThread);
 public:
 	VM();
 	void initVM(shared_ptr<Configurations> conf);
@@ -82,9 +83,11 @@ public:
 	static weak_ptr<InstanceVMHeapObject> getStringVMHeapObject(const wstring & value);
 	static weak_ptr<VoidVMHeapObject> getVoidVMHeapObject();
 	static weak_ptr<ClassRefVMHeapObject> getClassRefVMHeapObject(weak_ptr<VMClass> clz);
+	static weak_ptr<ArrayVMHeapObject> createArrayVMHelpObject(weak_ptr<VMClass> subComponent, size_t size);
 	static weak_ptr<VMClass> loadClass(const wstring& sig);
 	static std::tuple<wstring, wstring, wstring> getFieldOrMethod(const wstring& className, u2 index);
 	static weak_ptr< VMConstantItem> getVMConstantItem(const wstring& className, u2 index);
+	static wstring getRefClassName(const wstring& className, u2 index);
 	static wstring getConstantString(size_t index);
 	static void* getNativeMethod(const wstring& className, const wstring& signature, const wstring& name);
 };

@@ -325,7 +325,7 @@ void VMLoadableClass::initializeStaticField()
 		auto fd = (*f).second;
 		auto s = fd->signature;
 		if (fd->isStatic() && fd->isFinal()) {
-			if (s == L"B" || s == L"C" || s == L"I" || s == L"S" || s == L"Z") {
+			if (s == L"B" || s == L"C" || s == L"I" || s == L"S") {
 				auto attr = std::dynamic_pointer_cast<VMConstantInteger>(VMHelper::getVMConstantItem(name, fd->initializeAttribute).lock());
 				staticFields[fd->lookupKey()] = VMHelper::getIntegerVMHeapObject(attr->value);
 			}

@@ -13,6 +13,7 @@
 #include "vm_classloader.h"
 #include "string_utils.h"
 #include "vm_heap.h"
+#include "vm_engine.h"
 
 VM::VM() : conf(nullptr)
 {
@@ -115,8 +116,39 @@ bool VM::registerNativeMethod(const wstring& className, const wstring& signature
 
 void VM::startUpVM(shared_ptr<VMJavaThread> executingThread) {
 	spdlog::error("Must startup VM First.");
+#define INIT(cn, t) bootstrapClassLoader->loadClass(L"java.lang.String").lock()->initialize(t)
+	INIT(L"java.lang.String", executingThread);
+	INIT(L"java.lang.System", executingThread);
+	INIT(L"java.lang.Class", executingThread);
+	INIT(L"java.lang.ThreadGroup", executingThread);
+	INIT(L"java.lang.Thread", executingThread);
+	INIT(L"java.lang.Module", executingThread);
+	INIT(L"jdk.internal.misc.UnsafeConstants", executingThread);
+	INIT(L"java.lang.reflect.Method", executingThread);
+	INIT(L"java.lang.ref.Finalizer", executingThread);
+
+	callInitPhase1(executingThread);
+
+	INIT(L"java.lang.OutOfMemoryError", executingThread);
+	INIT(L"java.lang.NullPointerException", executingThread);
+	INIT(L"java.lang.ClassCastException", executingThread);
+	INIT(L"java.lang.ArrayStoreException", executingThread);
+	INIT(L"java.lang.ArithemeticException", executingThread);
+	INIT(L"java.lang.StatckOverflowError", executingThread);
+	INIT(L"java.lang.IllegalMonitorStateException", executingThread);
+	INIT(L"java.lang.IllegalArgumentException", executingThread);
+#undef INIT
 }
 
+void VM::callInitPhase1(shared_ptr<VMJavaThread> executingThread)
+{
+	spdlog::info("callInitPhase1.");
+	auto sysClz = bootstrapClassLoader->loadClass(L"java.lang.System").lock();
+	auto method = sysClz->findMethod(L"()V", L"initPhase1").lock();
+	assert(method != nullptr && method->isStatic());
+	vector<weak_ptr<VMHeapObject>> args;
+	VMEngine::execute(executingThread, method, args);
+}
 
 bool VM::putModule(const wstring & moduleName, shared_ptr<VMModule> module)
 {
@@ -169,6 +201,11 @@ weak_ptr<LongVMHeapObject> VMHelper::getLongVMHeapObject(long long v) {
 	 return VM::getVM().lock()->getHeapPool().lock()->createClassRefVMHeapObject(clz);
 }
 
+ weak_ptr<ArrayVMHeapObject> VMHelper::createArrayVMHelpObject(weak_ptr<VMClass> subComponent, size_t size)
+ {
+	 return VM::getVM().lock()->getHeapPool().lock()->createArrayVMHeapObject(subComponent.lock()->getClassSignature(), size);
+ }
+
 weak_ptr<VMClass> VMHelper::loadClass(const wstring& sig) {
 	return VM::getVM().lock()->getAppClassLoader().lock()->loadClass(sig);
 }
@@ -180,6 +217,11 @@ std::tuple<wstring, wstring, wstring> VMHelper::getFieldOrMethod(const wstring& 
 weak_ptr< VMConstantItem> VMHelper::getVMConstantItem(const wstring& className, u2 index) {
 	auto cp = VM::getVM().lock()->getMethodArea().lock()->getClassConstantPool(className);
 	return cp->getVMConstantItem(index);
+}
+
+wstring VMHelper::getRefClassName(const wstring& className, u2 index) {
+	auto lp = std::dynamic_pointer_cast<VMConstantStringLiteral>(getVMConstantItem(className, index).lock());
+	return getConstantString(lp->literalStringIndex);
 }
 
 wstring VMHelper::getConstantString(size_t index)
