@@ -7,7 +7,8 @@
 一种是通过 clinit调用registerNatives来注册，通过 R2来实现。
 别一种是直接注册。通过RUN来注册。
 */
-#define R2(className, prefix) registerNativeMethod(className, L"()V", L"registerNatives", &##prefix##_registerNatives); count ++
+#define CAST_METHOD(m) (void *)&m 
+#define R2(className, prefix) registerNativeMethod(className, L"()V", L"registerNatives", CAST_METHOD(prefix##_registerNatives)); count ++
 #define RUN(prefix) count += prefix##_runRegisterNatives(); 
 
 int VM::initNativeMethods() {

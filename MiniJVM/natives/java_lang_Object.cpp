@@ -28,19 +28,19 @@ weak_ptr<VMHeapObject> java_lang_Object_wait(weak_ptr<VMHeapObject> thiz, weak_p
 int java_lang_Object_runRegisterNatives() {
 	int count = 0;
 	auto vm = VM::getVM().lock();
-	vm->registerNativeMethod(L"java/lang/Object", L"()Ljava/lang/Class;", L"getClass", &java_lang_Object_getClass);
+	vm->registerNativeMethod(L"java/lang/Object", L"()Ljava/lang/Class;", L"getClass", (void *)&java_lang_Object_getClass);
 	count++;
 
-	vm->registerNativeMethod(L"java/lang/Object", L"()java/lang/Object", L"clone", &java_lang_Object_clone);
+	vm->registerNativeMethod(L"java/lang/Object", L"()java/lang/Object", L"clone", (void *)&java_lang_Object_clone);
 	count++;
 
-	vm->registerNativeMethod(L"java/lang/Object", L"()V", L"notify", &java_lang_Object_notify);
+	vm->registerNativeMethod(L"java/lang/Object", L"()V", L"notify", (void *)&java_lang_Object_notify);
 	count++;
 
-	vm->registerNativeMethod(L"java/lang/Object", L"()V", L"notifyAll", &java_lang_Object_notifyAll);
+	vm->registerNativeMethod(L"java/lang/Object", L"()V", L"notifyAll", (void *)&java_lang_Object_notifyAll);
 	count++;
 
-	vm->registerNativeMethod(L"java/lang/Object", L"(J)V", L"wait", &java_lang_Object_wait);
+	vm->registerNativeMethod(L"java/lang/Object", L"(J)V", L"wait", (void *)&java_lang_Object_wait);
 	count++;
 	return count;
 }

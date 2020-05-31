@@ -355,3 +355,4 @@ MiniJVM/Makefile
 MiniJVM/MiniJVM
 MiniJVM/cmake_install.cmake
 MiniJVM/minijava
+MiniJVM/.vscode/*
