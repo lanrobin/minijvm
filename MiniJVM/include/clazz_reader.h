@@ -1494,8 +1494,11 @@ struct ClassFile
     bool isSupportedClassFile() const { return isSupportedVersion; }
 
     bool isInterface() const { return ((access_flags & CLASS_ACC_INTERFACE) == CLASS_ACC_INTERFACE); }
+    bool isModule() const { return ((access_flags & CLASS_ACC_MODULE) == CLASS_ACC_MODULE); }
     wstring getClassName(u2 index);
     wstring getUtf8String(u2 index);
+    wstring getPackageName(u2 index);
+    wstring getModuleName(u2 index);
     std::pair<wstring, wstring> getNameAndType(u2 index);
     shared_ptr<Attribute_Info> getAttributeByName(const wstring &name) const;
     // these are private members.

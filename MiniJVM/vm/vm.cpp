@@ -30,6 +30,8 @@ VM::~VM()
 	appClassLoader = nullptr;
 	bootstrapClassLoader = nullptr;
 	conf = nullptr;
+	nativeMethods.clear();
+	modules.clear();
 	spdlog::info("VM gone.");
 	//cout << "VM is gone" << endl;
 }
@@ -113,6 +115,26 @@ bool VM::registerNativeMethod(const wstring& className, const wstring& signature
 
 void VM::startUpVM(shared_ptr<VMJavaThread> executingThread) {
 	spdlog::error("Must startup VM First.");
+}
+
+
+bool VM::putModule(const wstring & moduleName, shared_ptr<VMModule> module)
+{
+	auto existing = modules.find(moduleName);
+	if (existing == modules.end()) {
+		assert(module != nullptr);
+		modules[moduleName] = module;
+		return true;
+	}
+	spdlog::warn("Module:{} already exists.", w2s(moduleName));
+	return false;
+}
+weak_ptr<VMModule> VM::getModule(const wstring & moduleName) const {
+	auto existing = modules.find(moduleName);
+	if (existing != modules.end()) {
+		return existing->second;
+	}
+	return std::weak_ptr<VMModule>();
 }
 weak_ptr<NullVMHeapObject> VMHelper::getNullVMHeapObject() {
 	return VM::getVM().lock()->getHeapPool().lock()->getNullVMHeapObject();

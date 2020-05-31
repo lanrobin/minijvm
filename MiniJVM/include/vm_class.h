@@ -13,6 +13,7 @@ class ClassLoader;
 struct VMHeapObject;
 struct VMClass;
 struct VMJavaThread;
+class VMModule;
 
 using std::unordered_map;
 
@@ -128,6 +129,9 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 	vector<weak_ptr<VMClass>> interfaces;
 
 	weak_ptr<ClassLoader> classLoader;
+
+	/*这个类所属的module.*/
+	weak_ptr<VMModule> module;
 
 	const wstring& className() const { return name; }
 	const wstring& getClassSignature() const { return signature; }

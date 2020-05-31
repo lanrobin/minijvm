@@ -6,6 +6,7 @@
 #include "buffer.h"
 
 struct VMClass;
+struct VMModule;
 
 class ClassLoader : public std::enable_shared_from_this<ClassLoader> {
 public:
@@ -28,6 +29,7 @@ protected:
 	bool classLoaded(const wstring& className);
 	weak_ptr<VMClass> getStoredClass(const wstring& className) const;
 	shared_ptr<VMClass> defineArrayClass(const wstring& className);
+	weak_ptr<VMModule> defineModule(const wstring& classRootPath);
 };
 
 class BootstrapClassLoader : public ClassLoader{

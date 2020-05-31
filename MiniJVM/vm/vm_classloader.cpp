@@ -172,6 +172,111 @@ shared_ptr<VMClass> ClassLoader::defineArrayClass(const wstring& sym)
 	ma->put(sym, newArrayClass);
 	return newArrayClass;
 }
+
+weak_ptr<VMModule> ClassLoader::defineModule(const wstring& classRootPath) {
+	std::filesystem::path mi(classRootPath + L"/module-info.class");
+	auto vm = VM::getVM().lock();
+	if (std::filesystem::is_regular_file(mi) && std::filesystem::exists(mi))
+	{
+		auto buffer = Buffer::fromFile(mi.wstring());
+		auto cf = make_shared<ClassFile>(buffer);
+		if (cf->isModule()) {
+			auto m = std::dynamic_pointer_cast<Module_attribute>(cf->getAttributeByName(L"Module"));
+			auto name = cf->getModuleName(m->module_name_index);
+			auto existingModule = vm->getModule(name);
+			if (!existingModule.expired()) {
+				return existingModule;
+			}
+			auto newModule = make_shared<VMModule>(name, getSharedPtr());
+			newModule->flags = m->module_flags;
+			newModule->version = cf->getUtf8String(m->module_version_index);
+
+			// Load Module Info;
+			for (auto r = m->requires.begin(); r != m->requires.end(); r++)
+			{
+				auto req = (*r);
+				auto mr = make_shared<VMModuleRequire>();
+				mr->flags = req->requires_flags;
+				mr->name = cf->getModuleName(req->requires_index);
+				mr->requiredVersion = cf->getUtf8String(req->requires_version_index);
+				newModule->requires[mr->name] = mr;
+			}
+
+			for (auto e = m->exports.begin(); e != m->exports.end(); e++)
+			{
+				auto exp = (*e);
+				auto me = make_shared<VMModuleExport>();
+				me->name = cf->getPackageName(exp->exports_index);
+				me->flags = exp->exports_flags;
+				for (auto eto = exp->exports_to_index.begin(); eto != exp->exports_to_index.end(); eto++)
+				{
+					me->to.insert(cf->getModuleName(*eto));
+				}
+				newModule->exports[me->name] = me;
+			}
+
+			for (auto o = m->opens.begin(); o != m->opens.end(); o++) {
+				auto op = (*o);
+				auto mo = make_shared<VMModuleOpen>();
+				mo->name = cf->getPackageName(op->opens_index);
+				mo->flags = op->opens_flags;
+				for (auto oto = op->opens_to_index.begin(); oto != op->opens_to_index.end(); oto++)
+				{
+					mo->to.insert(cf->getModuleName(*oto));
+				}
+				newModule->opens[mo->name] = mo;
+			}
+
+			for (auto u = m->uses_index.begin(); u != m->uses_index.end(); u++)
+			{
+				newModule->uses.insert(cf->getClassName(*u));
+			}
+
+			for (auto p = m->provides.begin(); p != m->provides.end(); p++)
+			{
+				auto pr = (*p);
+				auto provide = make_shared<VMModuleProvide>();
+				provide->name = cf->getClassName(pr->provides_index);
+				for (auto pw = pr->provides_with_index.begin(); pw != pr->provides_with_index.end(); pw++)
+				{
+					provide->with.insert(cf->getClassName(*pw));
+				}
+				newModule->provides[provide->name] = provide;
+			}
+
+			// Load Main class
+			auto mainClass = std::dynamic_pointer_cast<ModuleMainClass_attribute>(cf->getAttributeByName(L"ModuleMainClass"));
+			if (mainClass != nullptr)
+			{
+				newModule->mainClassName = cf->getClassName(mainClass->main_class_index);
+			}
+			// Load packages.
+			auto mp = std::dynamic_pointer_cast<ModulePackages_attribute>(cf->getAttributeByName(L"ModulePackages"));
+			if(mp != nullptr)
+			{
+				for (auto pi = mp->package_index.begin(); pi != mp->package_index.end(); pi++)
+				{
+					newModule->packages.insert(cf->getPackageName(*pi));
+				}
+			}
+			spdlog::info("Load module:{}", w2s(newModule->name));
+			vm->putModule(newModule->name, newModule);
+			return newModule;
+		}
+		spdlog::warn("File: {} is module a module file, we will make this folder unamed module.", w2s(mi.wstring()));
+	}
+	spdlog::warn("No module file: {} found, we will make this folder unamed module.", w2s(mi.wstring()));
+	auto unnamed = vm->getModule(VMModule::UNNAMED_MODULE);
+	if (unnamed.expired())
+	{
+		auto nm = make_shared<VMModule>(VMModule::UNNAMED_MODULE, getSharedPtr());
+		vm->putModule(VMModule::UNNAMED_MODULE, nm);
+		unnamed = nm;
+		spdlog::info("Create unnamed module.");
+	}
+	return unnamed;
+}
+
 BootstrapClassLoader::BootstrapClassLoader(const wstring &cp, weak_ptr<ClassLoader> p) : ClassLoader(p), bootstrapClassPath(cp), classLoaderName(L"bootstrapClassLoader")
 {
 }
@@ -201,7 +306,10 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
 	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
 	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
-		return loadClass(buffer);
+		auto clz = loadClass(buffer);
+		auto clzModule = defineModule(getClassRootPath());
+		clz.lock()->module = clzModule;
+		return clz;
 	}
 	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
 	return std::weak_ptr<VMClass>();
@@ -253,7 +361,10 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring &className)
 	if (std::filesystem::is_regular_file(clazz) && std::filesystem::exists(clazz))
 	{
 		auto buffer = Buffer::fromFile(clazz.wstring());
-		return loadClass(buffer);
+		auto clz = loadClass(buffer);
+		auto clzModule = defineModule(getClassRootPath());
+		clz.lock()->module = clzModule;
+		return clz;
 	}
 	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
 	return std::weak_ptr<VMClass>();

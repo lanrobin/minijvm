@@ -8,6 +8,7 @@
 #include "vm_classloader.h"
 #include "vm_thread.h"
 #include "vm_heap.h"
+#include "vm_module.h"
 
 /*
 内存管理是只保存一份shared_ptr,因为它会一直存在，所以用weak_ptr给别人用。
@@ -35,6 +36,8 @@ private:
 	/*Native方法*/
 	unordered_map<wstring, void *> nativeMethods;
 
+	/*所有的Module*/
+	unordered_map<wstring, shared_ptr<VMModule>> modules;
 	// 这个函数做一系列的启动工作，准备环境什么的。
 	void startUpVM(shared_ptr<VMJavaThread> executingThread);
 public:
@@ -50,6 +53,8 @@ public:
 	weak_ptr<Configurations> getConf() const { return conf; }
 	void* getNativeMethod(const wstring& className, const wstring& signature, const wstring& name) const;
 	bool registerNativeMethod(const wstring& className, const wstring& signature, const wstring& name, void * methodAddress);
+	bool putModule(const wstring & moduleName, shared_ptr<VMModule> module);
+	weak_ptr<VMModule> getModule(const wstring & moduleName) const;
 
 private:
 	static wstring makeKey(const wstring& className, const wstring& signature, const wstring& name)

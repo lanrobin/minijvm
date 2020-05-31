@@ -575,6 +575,25 @@ std::pair<wstring, wstring> ClassFile::getNameAndType(u2 index)
 	}
 	return std::make_pair(name, type);
 }
+
+wstring ClassFile::getPackageName(u2 index)
+{
+	if (index < 1 || index > constant_pool_count)
+	{
+		return wstring();
+	}
+	auto pn = std::dynamic_pointer_cast<CONSTANT_Package_info>(constant_pool[index]);
+	return getUtf8String(pn->name_index);
+}
+wstring ClassFile::getModuleName(u2 index)
+{
+	if (index < 1 || index > constant_pool_count)
+	{
+		return wstring();
+	}
+	auto mi = std::dynamic_pointer_cast<CONSTANT_Module_info>(constant_pool[index]);
+	return getUtf8String(mi->name_index);
+}
 /*
 先这么实现，应该用unordered_map来加速。
 */
