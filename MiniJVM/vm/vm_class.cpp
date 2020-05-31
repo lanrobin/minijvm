@@ -149,6 +149,16 @@ void VMClass::initializeStaticField() {
 	spdlog::info("No initialize static field required for class:{}", w2s(name));
 }
 
+bool VMClass::setModule(weak_ptr<VMModule> m)
+{
+	module = m;
+	auto sm = module.lock();
+	// 如果是unname module,需要更新package列表。
+	if (sm != nullptr && sm->isUnnamedModule()) {
+		sm->packages.insert(this->packageName);
+	}
+	return true;
+}
 weak_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring &methodSignature, const wstring &name) const
 {
 	auto key = VMClassMethod::makeLookupKey(methodSignature, name);

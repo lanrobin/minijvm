@@ -308,7 +308,7 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
 		auto buffer = Buffer::fromFile(clazz.wstring());
 		auto clz = loadClass(buffer);
 		auto clzModule = defineModule(getClassRootPath());
-		clz.lock()->module = clzModule;
+		clz.lock()->setModule(clzModule);
 		return clz;
 	}
 	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
@@ -363,7 +363,7 @@ weak_ptr<VMClass> AppClassLoader::loadClass(const wstring &className)
 		auto buffer = Buffer::fromFile(clazz.wstring());
 		auto clz = loadClass(buffer);
 		auto clzModule = defineModule(getClassRootPath());
-		clz.lock()->module = clzModule;
+		clz.lock()->setModule(clzModule);
 		return clz;
 	}
 	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));

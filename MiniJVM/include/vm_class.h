@@ -130,9 +130,6 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 
 	weak_ptr<ClassLoader> classLoader;
 
-	/*这个类所属的module.*/
-	weak_ptr<VMModule> module;
-
 	const wstring& className() const { return name; }
 	const wstring& getClassSignature() const { return signature; }
 
@@ -172,6 +169,12 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 
 	virtual void initializeStaticField();
 
+	bool setModule(weak_ptr<VMModule> module);
+	/*这个类所属的module.*/
+	weak_ptr<VMModule> getModule() const {
+		return module;
+	};
+
 private:
 	/*因为JVM规定class在initialized的时候*/
 	pthread_mutex_t initializeMutex;
@@ -190,6 +193,8 @@ protected:
 	inline bool checkAccessFlag(u2 flag) const { return ((accessFlags & flag) == flag); }
 
 	weak_ptr<VMClass> getSharedPtr() { return shared_from_this(); }
+	/*这个类所属的module.*/
+	weak_ptr<VMModule> module;
 
 public:
 	static wstring getNextDimensionSignature(const wstring& sig);
