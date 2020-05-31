@@ -45,7 +45,7 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s) {
 	if (s[0] == L'L' && s[s.length() - 1] == L';') {
 		// 普通的类
 		auto clz = VMHelper::loadClass(s);
-		obj = make_shared< InstanceVMHeapObject>(clz);
+		obj = make_shared<InstanceVMHeapObject>(clz);
 		storeObject(obj);
 	}
 	else {
@@ -56,7 +56,7 @@ weak_ptr<VMHeapObject> VMHeapPool::createVMHeapObject(const wstring& s) {
 weak_ptr<ArrayVMHeapObject> VMHeapPool::createArrayVMHeapObject(const wstring& s, size_t demension) {
 	shared_ptr<ArrayVMHeapObject> obj = nullptr;
 	auto thizClassName = L"[" + s;
-	auto clz = VMHelper::loadClass(thizClassName);
+	auto clz = VMHelper::loadArrayClass(thizClassName);
 	obj = make_shared<ArrayVMHeapObject>(clz, demension);
 	storeObject(obj);
 	return obj;

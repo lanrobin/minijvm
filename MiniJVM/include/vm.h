@@ -83,8 +83,10 @@ public:
 	static weak_ptr<InstanceVMHeapObject> getStringVMHeapObject(const wstring & value);
 	static weak_ptr<VoidVMHeapObject> getVoidVMHeapObject();
 	static weak_ptr<ClassRefVMHeapObject> getClassRefVMHeapObject(weak_ptr<VMClass> clz);
+	static weak_ptr<InstanceVMHeapObject> getInstanceVMHeapObject(weak_ptr<VMClass> clz);
 	static weak_ptr<ArrayVMHeapObject> createArrayVMHelpObject(weak_ptr<VMClass> subComponent, size_t size);
 	static weak_ptr<VMClass> loadClass(const wstring& sig);
+	static weak_ptr<VMClass> loadArrayClass(const wstring& sig);
 	static std::tuple<wstring, wstring, wstring> getFieldOrMethod(const wstring& className, u2 index);
 	static weak_ptr< VMConstantItem> getVMConstantItem(const wstring& className, u2 index);
 	static wstring getRefClassName(const wstring& className, u2 index);

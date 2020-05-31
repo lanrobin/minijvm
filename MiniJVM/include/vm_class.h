@@ -278,6 +278,9 @@ struct VMArrayClass : public VMReferenceClass
 		// 数组的签名就是类名本身。
 		signature = name;
 		state = InitializeState::Initialized;
+
+		// 
+		packageName = L"java.lang";
 	};
 	const shared_ptr<VMClass> componentType;
 };

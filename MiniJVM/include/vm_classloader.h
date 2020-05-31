@@ -6,7 +6,7 @@
 #include "buffer.h"
 
 struct VMClass;
-struct VMModule;
+class VMModule;
 
 class ClassLoader : public std::enable_shared_from_this<ClassLoader> {
 public:

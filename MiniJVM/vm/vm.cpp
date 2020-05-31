@@ -201,6 +201,10 @@ weak_ptr<LongVMHeapObject> VMHelper::getLongVMHeapObject(long long v) {
 	 return VM::getVM().lock()->getHeapPool().lock()->createClassRefVMHeapObject(clz);
 }
 
+ weak_ptr<InstanceVMHeapObject> VMHelper::getInstanceVMHeapObject(weak_ptr<VMClass> clz) {
+	 return std::dynamic_pointer_cast<InstanceVMHeapObject>(VM::getVM().lock()->getHeapPool().lock()->createVMHeapObject(clz.lock()->getClassSignature()).lock());
+ }
+
  weak_ptr<ArrayVMHeapObject> VMHelper::createArrayVMHelpObject(weak_ptr<VMClass> subComponent, size_t size)
  {
 	 return VM::getVM().lock()->getHeapPool().lock()->createArrayVMHeapObject(subComponent.lock()->getClassSignature(), size);
@@ -208,6 +212,10 @@ weak_ptr<LongVMHeapObject> VMHelper::getLongVMHeapObject(long long v) {
 
 weak_ptr<VMClass> VMHelper::loadClass(const wstring& sig) {
 	return VM::getVM().lock()->getAppClassLoader().lock()->loadClass(sig);
+}
+
+weak_ptr<VMClass> VMHelper::loadArrayClass(const wstring& sig) {
+	return VM::getVM().lock()->boostrapClassLoader().lock()->defineClass(sig);
 }
 
 std::tuple<wstring, wstring, wstring> VMHelper::getFieldOrMethod(const wstring& className, u2 index) {

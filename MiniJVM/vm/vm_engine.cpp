@@ -134,6 +134,12 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			f->putLocal(index, obj);
 			break;
 		}
+		case Stack_0x59_dup:
+		{
+			auto top = f->peakStack();
+			f->pushStack(top);
+			break;
+		}
 		case Control_0xb1_return:
 		{
 			printcode("Return int to local", codes[pc]);
@@ -221,6 +227,28 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			}
 			break;
 		}
+		case Reference_0xb7_invokespecial:
+		{
+			u2 index = codes[pc + 1] << 8 | codes[pc + 2];
+			auto methodRef = VMHelper::getFieldOrMethod(clz->className(), index);
+			auto targetClass = VMHelper::loadClass(std::get<0>(methodRef)).lock();
+			assert(targetClass != nullptr);
+			auto className = std::get<0>(methodRef);
+			auto methodSignature = std::get<1>(methodRef);
+			auto methodName = std::get<2>(methodRef);
+			// 如果类还没有初始化，就先初始化。
+			if (!targetClass->needInitializing())
+			{
+				targetClass->initialize(thread);
+			}
+			auto method = targetClass->findMethod(methodSignature, methodName).lock();
+			if (method == nullptr)
+			{
+				throw runtime_error("AbstractMethodError:" + w2s(methodName));
+			}
+			assert(!method->isStatic());
+			break;
+		}
 		case Reference_0xb8_invokestatic:
 		{
 			u2 index = codes[pc + 1] << 8 | codes[pc + 2];
@@ -273,14 +301,25 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 			}
 			break;
 		}
+		case Reference_0xbb_new:
+		{
+			u2 index = codes[pc + 1] << 8 | codes[pc + 2];
+			auto targetClzName = VMHelper::getRefClassName(clz->className(), index);
+
+			auto targetClz = VMHelper::loadClass(targetClzName).lock();
+			targetClz->initialize(t);
+			auto obj = VMHelper::getInstanceVMHeapObject(targetClz);
+			f->pushStack(obj);
+			break;
+		}
 		case Reference_0xbd_anewarray:
 		{
 			u2 index = codes[pc + 1] << 8 | codes[pc + 2];
 			int count = std::dynamic_pointer_cast<IntegerVMHeapObject>(f->popStack().lock())->intValue;
 			assert(count >= 0);
-			auto ownerClzName = VMHelper::getRefClassName(clz->className(), index);
+			auto targetClzName = VMHelper::getRefClassName(clz->className(), index);
 
-			auto targetClz = VMHelper::loadClass(ownerClzName).lock();
+			auto targetClz = VMHelper::loadClass(targetClzName).lock();
 			targetClz->initialize(t);
 			auto arr = VMHelper::createArrayVMHelpObject(targetClz, count);
 			f->pushStack(arr);
