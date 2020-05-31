@@ -181,7 +181,7 @@ weak_ptr<VMClassMethod> VMReferenceClass::findMethod(const wstring &methodSignat
 				}
 			}
 		}
-		spdlog::warn("No method found for key:{}", w2s(key));
+		spdlog::warn("No method found for key:{} for class:{}", w2s(key), w2s(className()));
 		return std::weak_ptr<VMClassMethod>();
 	}
 	return m->second;
@@ -568,15 +568,15 @@ const unordered_map<wchar_t, int> VMPrimitiveClass::PRIMITIVE_TYPES =
 
 unordered_map<wstring, shared_ptr<VMPrimitiveClass>> VMPrimitiveClass::AllPrimitiveClasses =
 	{
-		{L"B", make_shared<VMPrimitiveClass>(L"byte")},
-		{L"C", make_shared<VMPrimitiveClass>(L"char")},
-		{L"D", make_shared<VMPrimitiveClass>(L"double")},
-		{L"F", make_shared<VMPrimitiveClass>(L"float")},
-		{L"I", make_shared<VMPrimitiveClass>(L"int")},
-		{L"J", make_shared<VMPrimitiveClass>(L"long")},
-		{L"S", make_shared<VMPrimitiveClass>(L"short")},
-		{L"Z", make_shared<VMPrimitiveClass>(L"boolean")},
-		{L"V", make_shared<VMPrimitiveClass>(L"void")}
+		{L"B", make_shared<VMPrimitiveClass>(L"byte", VMHelper::getBootstrapClassLoader())},
+		{L"C", make_shared<VMPrimitiveClass>(L"char", VMHelper::getBootstrapClassLoader())},
+		{L"D", make_shared<VMPrimitiveClass>(L"double", VMHelper::getBootstrapClassLoader())},
+		{L"F", make_shared<VMPrimitiveClass>(L"float", VMHelper::getBootstrapClassLoader())},
+		{L"I", make_shared<VMPrimitiveClass>(L"int", VMHelper::getBootstrapClassLoader())},
+		{L"J", make_shared<VMPrimitiveClass>(L"long", VMHelper::getBootstrapClassLoader())},
+		{L"S", make_shared<VMPrimitiveClass>(L"short", VMHelper::getBootstrapClassLoader())},
+		{L"Z", make_shared<VMPrimitiveClass>(L"boolean", VMHelper::getBootstrapClassLoader())},
+		{L"V", make_shared<VMPrimitiveClass>(L"void", VMHelper::getBootstrapClassLoader())}
 	};
 
 weak_ptr<VMPrimitiveClass> VMPrimitiveClass::getPrimitiveVMClass(const wstring& signature) {
@@ -601,3 +601,13 @@ bool VMPrimitiveClass::isPrimitiveTypeSignature(wchar_t c){
 	wstring sig(1, c);
 	return isPrimitiveTypeSignature(sig);
 }
+
+weak_ptr< VMNullObjectClass> VMNullObjectClass::getVMNullObjectClass() {
+
+	if (VMNullObjectClass::_VMNullObjectClass == nullptr)
+	{
+		VMNullObjectClass::_VMNullObjectClass = make_shared<VMNullObjectClass>(L"<nullobject>", VMHelper::getBootstrapClassLoader());
+	}
+	return VMNullObjectClass::_VMNullObjectClass;
+}
+shared_ptr<VMNullObjectClass> VMNullObjectClass::_VMNullObjectClass = nullptr;

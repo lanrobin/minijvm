@@ -92,5 +92,6 @@ public:
 	static wstring getRefClassName(const wstring& className, u2 index);
 	static wstring getConstantString(size_t index);
 	static void* getNativeMethod(const wstring& className, const wstring& signature, const wstring& name);
+	static weak_ptr<ClassLoader> getBootstrapClassLoader();
 };
 #endif //__JVM_VM_H__

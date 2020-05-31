@@ -288,6 +288,11 @@ BootstrapClassLoader::BootstrapClassLoader(weak_ptr<ClassLoader> p) : ClassLoade
 weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
 {
 	wstring canonicalClassPath(className);
+
+	// 如果是 Ljava/lang/String;这种形式，去掉头尾。
+	if (canonicalClassPath[0] == L'L' && canonicalClassPath[canonicalClassPath.size() - 1] == L';') {
+		canonicalClassPath = canonicalClassPath.substr(1, canonicalClassPath.size() - 2);
+	}
 	// replace . with /
 	replaceAll(canonicalClassPath, L".", L"/");
 
@@ -311,7 +316,7 @@ weak_ptr<VMClass> BootstrapClassLoader::loadClass(const wstring &className)
 		clz.lock()->setModule(clzModule);
 		return clz;
 	}
-	spdlog::error("Cannot laod class:{}", w2s(clazz.wstring()));
+	spdlog::error("Cannot load class:{}", w2s(clazz.wstring()));
 	return std::weak_ptr<VMClass>();
 }
 

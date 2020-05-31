@@ -59,7 +59,7 @@ set(Main_File "./main.cpp" "./vm/vm.cpp" "vm/vm_thread.cpp" "vm/vm_method_area.c
 
 Set(Utils "./util/buffer.cpp" "./util/string_utils.cpp" "util/system.cpp"  "util/configurations.cpp")
 
-Set(Java_Natives "natives/java_lang_System.cpp" "natives/java_lang_Object.cpp")
+Set(Java_Natives "natives/java_lang_System.cpp" "natives/java_lang_Object.cpp" "natives/java_lang_Class.cpp")
 
 set(ThirdParty "./thirdparties/zip/zip.c")
 

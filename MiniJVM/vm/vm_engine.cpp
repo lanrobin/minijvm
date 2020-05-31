@@ -158,7 +158,8 @@ void VMEngine::execute(weak_ptr<VMJavaThread> thread, shared_ptr<VMThreadStackFr
 		case Control_0xb1_return:
 		{
 			printcode("Return int to local", codes[pc]);
-			printcodeW("return from method:", w2s(m->lookupKey()));
+			//printcodeW("return from method:", w2s(m->lookupKey()));
+			spdlog::info("return from method:{} in class:{}", w2s(m->lookupKey()), w2s(clz->className()));
 			t->pc = lastPC;
 			t->popStackFrame();
 			// 直接返回。

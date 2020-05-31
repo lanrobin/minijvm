@@ -48,7 +48,7 @@ struct VMHeapObject : std::enable_shared_from_this<VMHeapObject> {
 	const weak_ptr<VMClass> typeClass;
 
 	VMHeapObject(weak_ptr<VMClass> typeClz) : typeClass(typeClz) {
-		spdlog::info("New VMHeapObject.");
+		spdlog::info("New VMHeapObject of class:{}", w2s(typeClz.lock()->className()));
 	}
 
 	virtual ~VMHeapObject() {
@@ -152,7 +152,8 @@ struct ArrayVMHeapObject : public ReferenceVMHeapObject {
 };
 
 struct NullVMHeapObject : public ReferenceVMHeapObject {
-	NullVMHeapObject() :ReferenceVMHeapObject(std::weak_ptr<VMClass>()) {
+	NullVMHeapObject() :ReferenceVMHeapObject(VMNullObjectClass::getVMNullObjectClass())
+	{
 	}
 };
 

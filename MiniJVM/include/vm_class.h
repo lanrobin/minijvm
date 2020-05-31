@@ -122,7 +122,8 @@ struct VMClass : public std::enable_shared_from_this<VMClass>
 		ClassTypeOrdinaryClass,
 		ClassTypeInterface,
 		ClassTypeArrayClass,
-		ClassPrimitiveTypeClass // 这个只是用来表示数组最后一个Component来用的，没有什么实现意义。
+		ClassPrimitiveTypeClass, // 这个只是用来表示数组最后一个Component来用的，没有什么实现意义。
+		ClassNullObjectClass
 	};
 
 	weak_ptr<VMClass> super;
@@ -287,7 +288,7 @@ struct VMArrayClass : public VMReferenceClass
 
 struct VMPrimitiveClass : public VMClass
 {
-	VMPrimitiveClass(const wstring &name) : VMClass(name, std::weak_ptr<ClassLoader>())
+	VMPrimitiveClass(const wstring &name, weak_ptr<ClassLoader> cl) : VMClass(name, cl)
 	{
 		classType = VMClass::ClassType::ClassPrimitiveTypeClass;
 		state = InitializeState::Initialized;
@@ -308,6 +309,20 @@ struct VMPrimitiveClass : public VMClass
 private:
 	static unordered_map<wstring, shared_ptr<VMPrimitiveClass>> AllPrimitiveClasses;
 	static const unordered_map<wchar_t, int> PRIMITIVE_TYPES;
+};
+
+struct VMNullObjectClass : public VMReferenceClass {
+public:
+	VMNullObjectClass(const wstring& name, weak_ptr<ClassLoader> cl) : VMReferenceClass(name, cl)
+	{
+		classType = VMClass::ClassType::ClassNullObjectClass;
+		state = InitializeState::Initialized;
+	};
+
+	static weak_ptr< VMNullObjectClass> getVMNullObjectClass();
+
+private:
+	static shared_ptr<VMNullObjectClass> _VMNullObjectClass;
 };
 
 #endif //__JVM_VM_CLASS_H__

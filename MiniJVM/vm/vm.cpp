@@ -74,6 +74,9 @@ void VM::initVM(shared_ptr<Configurations> cfs)
 		//其它初始化的代码
 		mainThread = make_shared<VMJavaThread>(pthread_self());
 
+		int count = initNativeMethods();
+		spdlog::info("VM initialized, registered {} native methods", count);
+
 		// 初始化VM内部
 		startUpVM(mainThread);
 
@@ -84,8 +87,7 @@ void VM::initVM(shared_ptr<Configurations> cfs)
 		gcThread = make_shared<VMGCThread>();
 		allThreads.push_back(gcThread);
 		gcThread->startExecute();
-		int count = initNativeMethods();
-		spdlog::info("VM initialized, registered {} native methods", count);
+		
 	}
 	else
 	{
@@ -116,7 +118,7 @@ bool VM::registerNativeMethod(const wstring& className, const wstring& signature
 
 void VM::startUpVM(shared_ptr<VMJavaThread> executingThread) {
 	spdlog::error("Must startup VM First.");
-#define INIT(cn, t) bootstrapClassLoader->loadClass(L"java.lang.String").lock()->initialize(t)
+#define INIT(cn, t) bootstrapClassLoader->loadClass(cn).lock()->initialize(t)
 	INIT(L"java.lang.String", executingThread);
 	INIT(L"java.lang.System", executingThread);
 	INIT(L"java.lang.Class", executingThread);
@@ -240,4 +242,9 @@ wstring VMHelper::getConstantString(size_t index)
 
 void* VMHelper::getNativeMethod(const wstring& className, const wstring& signature, const wstring& name) {
 	return VM::getVM().lock()->getNativeMethod(className, signature, name);
+}
+
+weak_ptr<ClassLoader> VMHelper::getBootstrapClassLoader()
+{
+	return VM::getVM().lock()->boostrapClassLoader();
 }
